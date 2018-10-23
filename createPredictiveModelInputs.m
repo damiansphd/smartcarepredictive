@@ -6,10 +6,8 @@ nstudies = size(pmStudyInfo,1);
 tic
 basedir = './';
 subfolder = 'MatlabSavedVariables';
-npatients = 0;
-ndays = 0;
-%pmPatients = table('Size',[1, 9], 'VariableTypes', {'double', 'string(2)', 'double', 'datetime', 'datetime', 'datetime', 'double', 'double', 'double'}, ...
-%    'VariableNames', {'PatientNbr', 'Study', 'ID', 'StudyStartDate', 'FirstMeasDate', 'LastMeasDate', 'StudyStartdn', 'FirstMeasdn', 'LastMeasdn'});
+featureduration = 20;
+predictionduration = 15;
 
 fprintf('Creating Measures table\n');
 for a = 1:nstudies
@@ -18,7 +16,6 @@ for a = 1:nstudies
     if isequal(pmStudyInfo.Study(a), {'TM'})
         physdata = tmphysdata;
     end
-    fprintf('Creating measures table\n');
     [temp_measures, temp_nmeasures] = createMeasuresTable(physdata);
     if a == 1
         measures   = temp_measures;
@@ -39,6 +36,7 @@ for a = 1:nstudies
     end
 end
 
+fprintf('Creating Data cube\n');
 for a = 1:nstudies
     fprintf('Processing study %s\n', pmStudyInfo.StudyName{a});
     fprintf('Loading clinical data\n');
@@ -53,10 +51,11 @@ for a = 1:nstudies
         cdAntibiotics = tmAntibiotics;
         offset = tmoffset;
     end
+    pmStudyInfo.Offset(a) = offset;
     tic
     % create datacube - 3D array of patients/days/measures for model
     fprintf('Creating 3D data array\n');
-    [temp_pmPatients, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMDataCube(physdata, cdPatient, offset, measures, nmeasures, pmStudyInfo.Study{a});
+    [temp_pmPatients, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMDataCube(physdata, cdPatient, pmStudyInfo(a, :), measures, nmeasures);
     
     if a == 1
         pmPatients = temp_pmPatients;
@@ -86,25 +85,30 @@ for a = 1:nstudies
         pmDatacube = [pmDatacube; temp_pmDatacube];
     end
     toc
+    fprintf('\n');
 end
+
+% remove Temperature measure and associated data due to insufficient data
+
+% interpolate missing data
+% for gaps more than  x days, set mask to skip this day from creating a
+% feature/label example
+
+% create feature/label examples from the data
+% need to add setting and using of the measures mask
+tic
+fprintf('Creating Features and Labels\n');
+[pmFeatureIndex, pmFeatures, pmLabels] = createFeaturesAndLabels(pmPatients, pmDatacube, ...
+    pmStudyInfo, cdAntibiotics, measures, nmeasures, npatients, maxdays, featureduration, predictionduration);
 toc
 fprintf('\n');
-
-% create list of interventions with enough data to run model on
-%tic
-%fprintf('Creating list of interventions\n');
-%amInterventions = createListOfInterventions(ivandmeasurestable, physdata, offset);
-%ninterventions = size(amInterventions,1);
-%toc
 
 tic
 basedir = './';
 subfolder = 'MatlabSavedVariables';
 outputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);
-save(fullfile(basedir, subfolder,outputfilename), 'pmPatients', 'pmDatacube', 'measures', 'npatients','maxdays', 'nmeasures');
+save(fullfile(basedir, subfolder,outputfilename), 'pmPatients', 'pmDatacube', ...
+    'pmFeatureIndex', 'pmFeatures', 'pmLabels', 'measures', ...
+    'npatients','maxdays', 'nmeasures', 'studynbr', 'studydisplayname', 'pmStudyInfo');
 toc
-
-
-
-

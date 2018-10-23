@@ -1,8 +1,10 @@
-function [pmPatients, pmDatacube, npatients, maxdays] = createPMDataCube(physdata, cdPatient, offset, measures, nmeasures, study)
+function [pmPatients, pmDatacube, npatients, maxdays] = createPMDataCube(physdata, cdPatient, pmStudyInfoRow, measures, nmeasures)
 
 % createPMDataCube - populates a 3D array from the measurement data of
 % appropriate size
 
+offset = pmStudyInfoRow.Offset(1);
+study = pmStudyInfoRow.Study{1};
 patients = unique(physdata.SmartCareID);
 npatients = size(patients,1);
 
