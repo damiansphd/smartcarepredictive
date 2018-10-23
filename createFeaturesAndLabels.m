@@ -1,5 +1,5 @@
-function [pmFeatureIndex, pmFeatures, pmLabels] = createFeaturesAndLabels(pmPatients, pmDatacube, pmStudyInfo, ...
-    cdAntibiotics, measures, nmeasures, npatients, maxdays, featureduration, predictionduration)
+function [pmFeatureIndex, pmFeatures, pmLabels] = createFeaturesAndLabels(pmStudyInfo, pmPatients, pmAntibiotics, ...
+    pmDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -30,7 +30,7 @@ for a = 1:npatients
             
             % for each patient/day, create row in label array
             labelrow = checkIVInTimeWindow(featureindexrow, ...
-                    cdAntibiotics(cdAntibiotics.ID == pmPatients.ID(a),:), predictionduration);
+                    pmAntibiotics(pmAntibiotics.ID == pmPatients.ID(a),:), predictionduration);
             
             % add to arrays
             pmFeatureIndex = [pmFeatureIndex; featureindexrow];
