@@ -29,13 +29,19 @@ nmeasures = size(measures,1);
 measures.Index = [1:nmeasures]';
 
 % interpolate missing data
-% for gaps more than  x days, set mask to skip this day from creating a
-% feature/label example
 tic
 fprintf('Interpolating missing data\n');
 [pmInterpDatacube] = createPMInterpDatacube(pmPatients, pmRawDatacube, npatients, maxdays, nmeasures); 
 toc
 fprintf('\n');
+
+% handle missing features (eg no sleep measures for a given patient)
+tic
+fprintf('Handling missing features\n');
+[pmInterpDatacube] = handleMissingFeatures(pmPatients, pmRawDatacube, pmInterpDatacube, npatients, maxdays, nmeasures); 
+toc
+fprintf('\n');
+
 
 % create feature/label examples from the data
 % need to add setting and using of the measures mask
