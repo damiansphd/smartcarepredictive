@@ -16,16 +16,16 @@ pmAntibiotics = table('Size',[0, 10], 'VariableTypes', {'double', 'cell', 'doubl
     'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate'});
 
 maxdays = 0;
-for n = 1:npatients
-    scid = patients(n);
-    pmPatients.PatientNbr(n) = n;
-    pmPatients.Study(n) = {study};
-    pmPatients.ID(n) = scid;
-    pmPatients.StudyStartDate(n) = cdPatient.StudyDate(cdPatient.ID == scid);
-    pmPatients.StudyStartdn(n)   = ceil(datenum(pmPatients.StudyStartDate(n) + seconds(1))) - offset;
+for p = 1:npatients
+    scid = patients(p);
+    pmPatients.PatientNbr(p) = p;
+    pmPatients.Study(p) = {study};
+    pmPatients.ID(p) = scid;
+    pmPatients.StudyStartDate(p) = cdPatient.StudyDate(cdPatient.ID == scid);
+    pmPatients.StudyStartdn(p)   = ceil(datenum(pmPatients.StudyStartDate(p) + seconds(1))) - offset;
 
     tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate'});
-    temppnbr = array2table(n * ones(size(tempAntibiotics,1),1));
+    temppnbr = array2table(p * ones(size(tempAntibiotics,1),1));
     temppnbr.Properties.VariableNames({'Var1'}) = {'PatientNbr'};
     tempstudy = array2table(cell(size(tempAntibiotics,1),1));
     tempstudy.Properties.VariableNames({'Var1'}) = {'Study'};
@@ -34,12 +34,12 @@ for n = 1:npatients
     pmAntibiotics = [pmAntibiotics; tempAntibiotics];
     
     tempdata = physdata(physdata.SmartCareID == scid,:);
-    pmPatients.FirstMeasDate(n) = min(tempdata.Date_TimeRecorded);
-    pmPatients.FirstMeasdn(n)   = ceil(datenum(datetime(pmPatients.FirstMeasDate(n)) + seconds(1)) - offset);
-    pmPatients.LastMeasDate(n)  = max(tempdata.Date_TimeRecorded);
-    pmPatients.LastMeasdn(n)    = ceil(datenum(datetime(pmPatients.LastMeasDate(n))  + seconds(1)) - offset);
-    if (pmPatients.LastMeasdn(n) - pmPatients.FirstMeasdn(n)) > maxdays
-        maxdays = (pmPatients.LastMeasdn(n) - pmPatients.FirstMeasdn(n)) + 1;
+    pmPatients.FirstMeasDate(p) = dateshift(min(tempdata.Date_TimeRecorded), 'start', 'day');
+    pmPatients.FirstMeasdn(p)   = ceil(datenum(datetime(pmPatients.FirstMeasDate(p)) + seconds(1)) - offset);
+    pmPatients.LastMeasDate(p)  = dateshift(max(tempdata.Date_TimeRecorded), 'start', 'day');
+    pmPatients.LastMeasdn(p)    = ceil(datenum(datetime(pmPatients.LastMeasDate(p))  + seconds(1)) - offset);
+    if (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p)) > maxdays
+        maxdays = (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p)) + 1;
     end
 end
 

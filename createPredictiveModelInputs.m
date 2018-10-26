@@ -28,6 +28,13 @@ measures(idx,:) = [];
 nmeasures = size(measures,1);
 measures.Index = [1:nmeasures]';
 
+% calculate measurement stats (overall and by patient)
+tic
+fprintf('Calculating measurement stats (overall and by patient\n');
+[pmOverallStats, pmPatientMeasStats] = calcMeasurementStats(pmRawDatacube, pmPatients, measures, npatients, maxdays, nmeasures, studydisplayname);
+toc
+fprintf('\n');
+
 % interpolate missing data
 tic
 fprintf('Interpolating missing data\n');
@@ -38,7 +45,7 @@ fprintf('\n');
 % handle missing features (eg no sleep measures for a given patient)
 tic
 fprintf('Handling missing features\n');
-[pmInterpDatacube] = handleMissingFeatures(pmPatients, pmRawDatacube, pmInterpDatacube, npatients, maxdays, nmeasures); 
+[pmInterpDatacube] = handleMissingFeatures(pmPatients, pmInterpDatacube, pmOverallStats, npatients, maxdays, nmeasures); 
 toc
 fprintf('\n');
 
@@ -47,8 +54,8 @@ fprintf('\n');
 % need to add setting and using of the measures mask
 tic
 fprintf('Creating Features and Labels\n');
-[pmFeatureIndex, pmFeatures, pmLabels] = createFeaturesAndLabels(pmStudyInfo, pmPatients, pmAntibiotics, ...
-    pmRawDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration);
+[pmFeatureIndex, pmFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
+    pmRawDatacube, pmInterpDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration);
 toc
 fprintf('\n');
 
@@ -59,6 +66,7 @@ outputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', 'pmStudyInfo', ...
     'pmPatients', 'npatients', 'pmAntibiotics', ...
-    'pmRawDatacube', 'pmInterpDatacube', 'maxdays', 'pmFeatureIndex', 'pmFeatures', 'pmLabels', ...
+    'pmOverallStats', 'pmPatientMeasStats', ...
+    'pmRawDatacube', 'pmInterpDatacube', 'maxdays', 'pmFeatureIndex', 'pmFeatures', 'pmIVLabels', ...
     'measures', 'nmeasures');
 toc

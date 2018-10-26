@@ -1,5 +1,5 @@
-function [pmFeatureIndex, pmFeatures, pmLabels] = createFeaturesAndLabels(pmStudyInfo, pmPatients, pmAntibiotics, ...
-    pmDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration)
+function [pmFeatureIndex, pmFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
+    pmDatacube, pmInterpDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -9,33 +9,41 @@ pmFeatureIndex = table('Size',[1, 5], 'VariableTypes', {'double', 'cell', 'doubl
 featureindexrow = pmFeatureIndex;
 pmFeatureIndex(1,:) = [];
 pmFeatures = [];
-pmLabels = [];
+pmIVLabels = [];
 
-for a = 1:npatients
-    fprintf('Processing data for patient %d\n', a);
-    offset = pmStudyInfo.Offset(ismember(pmStudyInfo.Study, pmPatients.Study(a)));
+for p = 1:npatients
+    fprintf('Processing data for patient %d\n', p);
+    pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'),:);
+    
     for d = featureduration:maxdays
-        % add check for whether patient is on IV to this logic (skip if
-        % true) and also if data completeness was good enough for this
-        % patient/day
-        if d <= (pmPatients.LastMeasdn(a) - pmPatients.FirstMeasdn(a) + 1) 
-            featureindexrow.PatientNbr = pmPatients.PatientNbr(a);
-            featureindexrow.Study = pmPatients.Study(a);
-            featureindexrow.ID = pmPatients.ID(a);
+        % only include this run day for the period between first and last measurement for
+        % patient for days when the patient wasn't on antibiotics.
+        % potentially add a check on completeness of raw data in this
+        % window
+        if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
+                (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
+                      pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
+                  
+            featureindexrow.PatientNbr = pmPatients.PatientNbr(p);
+            featureindexrow.Study = pmPatients.Study(p);
+            featureindexrow.ID = pmPatients.ID(p);
             featureindexrow.CalcDatedn = d;
-            featureindexrow.CalcDate = datetime(pmPatients.FirstMeasDate(a) + days(d - 1));
+            featureindexrow.CalcDate = pmPatients.FirstMeasDate(p) + days(d - 1);
             
             % for each patient/day, create row in features array
-            featurerow = reshape(pmDatacube(a, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
+            featurerow = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
             
-            % for each patient/day, create row in label array
-            labelrow = checkIVInTimeWindow(featureindexrow, ...
-                    pmAntibiotics(pmAntibiotics.ID == pmPatients.ID(a),:), predictionduration);
+            % for each patient/day, create row in IV label array
+            ivlabelrow = checkIVInTimeWindow(featureindexrow, ...
+                    pmAntibiotics(pmAntibiotics.ID == pmPatients.ID(p),:), predictionduration);
+                
+            % also create label array for Exacerbation having started in
+            % the last n days
             
             % add to arrays
             pmFeatureIndex = [pmFeatureIndex; featureindexrow];
             pmFeatures = [pmFeatures; featurerow];
-            pmLabels = [pmLabels; labelrow];
+            pmIVLabels = [pmIVLabels; ivlabelrow];
         end
     end
 end
