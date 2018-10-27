@@ -1,5 +1,6 @@
-function [pmFeatureIndex, pmFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
-    pmDatacube, pmInterpDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration)
+function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
+    pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, ...
+    featureduration, predictionduration)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -9,7 +10,8 @@ pmFeatureIndex = table('Size',[1, 5], 'VariableTypes', {'double', 'cell', 'doubl
 featureindexrow = pmFeatureIndex;
 pmFeatureIndex(1,:) = [];
 pmFeatures = [];
-pmIVLabels = [];
+pmNormFeatures = [];
+pmIVLabels = logical([]);
 
 for p = 1:npatients
     fprintf('Processing data for patient %d\n', p);
@@ -30,8 +32,9 @@ for p = 1:npatients
             featureindexrow.CalcDatedn = d;
             featureindexrow.CalcDate = pmPatients.FirstMeasDate(p) + days(d - 1);
             
-            % for each patient/day, create row in features array
-            featurerow = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
+            % for each patient/day, create row in features arrays
+            featurerow     = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
+            normfeaturerow = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
             
             % for each patient/day, create row in IV label array
             ivlabelrow = checkIVInTimeWindow(featureindexrow, ...
@@ -42,8 +45,9 @@ for p = 1:npatients
             
             % add to arrays
             pmFeatureIndex = [pmFeatureIndex; featureindexrow];
-            pmFeatures = [pmFeatures; featurerow];
-            pmIVLabels = [pmIVLabels; ivlabelrow];
+            pmFeatures     = [pmFeatures; featurerow];
+            pmNormFeatures = [pmNormFeatures; normfeaturerow];
+            pmIVLabels     = [pmIVLabels; ivlabelrow];
         end
     end
 end

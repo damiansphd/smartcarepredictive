@@ -8,6 +8,7 @@ basedir = './';
 subfolder = 'MatlabSavedVariables';
 featureduration = 20;
 predictionduration = 15;
+trainpct = 0.7;
 
 tic
 fprintf('Creating Measures table\n');
@@ -22,11 +23,11 @@ toc
 fprintf('\n');
 
 % remove Temperature measure and associated data due to insufficient data
-idx = ismember(measures.DisplayName, {'Temperature'});
-pmRawDatacube(:,:,measures.Index(idx)) = [];
-measures(idx,:) = [];
-nmeasures = size(measures,1);
-measures.Index = [1:nmeasures]';
+%idx = ismember(measures.DisplayName, {'Temperature'});
+%pmRawDatacube(:,:,measures.Index(idx)) = [];
+%measures(idx,:) = [];
+%nmeasures = size(measures,1);
+%measures.Index = [1:nmeasures]';
 
 % calculate measurement stats (overall and by patient)
 tic
@@ -49,15 +50,31 @@ fprintf('Handling missing features\n');
 toc
 fprintf('\n');
 
+% create normalised data cube
+tic
+fprintf('Normalising data\n');
+[pmInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmOverallStats, npatients, maxdays, nmeasures); 
+toc
+fprintf('\n');
 
 % create feature/label examples from the data
 % need to add setting and using of the measures mask
 tic
 fprintf('Creating Features and Labels\n');
-[pmFeatureIndex, pmFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
-    pmRawDatacube, pmInterpDatacube, measures, nmeasures, npatients, maxdays, featureduration, predictionduration);
+[pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
+    pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, ...
+    featureduration, predictionduration);
 toc
 fprintf('\n');
+
+tic
+fprintf('Split into training and validation sets\n');
+[pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, ...
+    pmValFeatureIndex, pmValFeatures, pmValNormFeatures, pmValIVLabels] = ...
+    splitTrainVsVal(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, trainpct); 
+toc
+fprintf('\n');
+
 
 tic
 basedir = './';
@@ -67,6 +84,9 @@ fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', 'pmStudyInfo', ...
     'pmPatients', 'npatients', 'pmAntibiotics', ...
     'pmOverallStats', 'pmPatientMeasStats', ...
-    'pmRawDatacube', 'pmInterpDatacube', 'maxdays', 'pmFeatureIndex', 'pmFeatures', 'pmIVLabels', ...
+    'pmRawDatacube', 'pmInterpDatacube', 'pmInterpNormcube', 'maxdays', ...
+    'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', 'pmIVLabels', ...
+    'pmTrFeatureIndex', 'pmTrFeatures', 'pmTrNormFeatures', 'pmTrIVLabels', ...
+    'pmValFeatureIndex', 'pmValFeatures', 'pmValNormFeatures', 'pmValIVLabels', ...
     'measures', 'nmeasures');
 toc
