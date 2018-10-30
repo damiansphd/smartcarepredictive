@@ -1,6 +1,6 @@
 clear; close all; clc;
 
-[modelinputfile, modelidx, modelinputs] = selectModelInputs();
+[modelinputfile, modelidx, modelinputs] = selectFeatureAndLabelInputs();
 
 tic
 basedir = './';
@@ -15,7 +15,9 @@ mdl = fitglm(pmTrNormFeatures, pmTrIVLabels(:,1), ...
     'Distribution', 'binomial', ...
     'Link', 'logit');
 
-[X, Y, T, AUC, OPTROCPT] = perfcurve(pmTrIVLabels(:,1), mdl.Fitted.Probability, 1, 'Cost',[0 0.99;0.01 0]);
+costmatrix = [0 0.99;0.01 0];
+%costmatrix = [0 0.5;0.5 0];
+[X, Y, T, AUC, OPTROCPT] = perfcurve(pmTrIVLabels(:,1), mdl.Fitted.Probability, 1, 'Cost', costmatrix);
 
 plot(X,Y);
 hold on

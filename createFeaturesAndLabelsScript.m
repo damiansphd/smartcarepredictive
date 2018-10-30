@@ -1,8 +1,9 @@
 clear; close all; clc;
 
 RunParameterFiles = {  
-            'pm_stSC_fd20_pd15_mm1_nm1_tp0.7.xlsx';
-            'pm_stSC_fd20_pd15_mm1_nm2_tp0.7.xlsx';
+            'pm_stSC_fd20_pd15_mm1_nm1_sm1_tp0.7.xlsx';
+            'pm_stSC_fd20_pd15_mm1_nm2_sm1_tp0.7.xlsx';
+            'pm_stSC_fd10_pd10_mm2_nm2_sm1_tp0.7.xlsx';
             };
 
 
@@ -28,11 +29,6 @@ fprintf('\n');
 basedir = './';
 subfolder = 'DataFiles';
 runparameterfile = RunParameterFiles{fileidx};
-
-featureduration = 20;
-predictionduration = 15;
-trainpct = 0.7;
-
 pmRunParameters = readtable(fullfile(basedir, subfolder, runparameterfile));
 
 for rp = 1:size(pmRunParameters,1)
@@ -43,6 +39,15 @@ for rp = 1:size(pmRunParameters,1)
     modelinputsmatfile = sprintf('%s.mat',pmRunParameters.modelinputsmatfile{rp});
     fprintf('Loading predictive model input data\n');
     load(fullfile(basedir, subfolder, modelinputsmatfile));
+    toc
+    fprintf('\n');
+    
+    % pre-process to remove unwanted measures and data
+    tic
+    [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
+        pmRawDatacube, pmInterpDatacube] = preprocessMeasuresMask(measures, ...
+        nmeasures, pmOverallStats, pmPatientMeasStats, pmRawDatacube, ...
+        pmInterpDatacube, pmRunParameters.measuresmask(rp));
     toc
     fprintf('\n');
 
@@ -58,7 +63,7 @@ for rp = 1:size(pmRunParameters,1)
     % need to add setting and using of the measures mask
     tic
     fprintf('Creating Features and Labels\n');
-    [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabels(pmPatients, pmAntibiotics, ...
+    [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
         pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, ...
         pmRunParameters.featureduration(rp), pmRunParameters.predictionduration(rp));
     toc
@@ -83,6 +88,11 @@ for rp = 1:size(pmRunParameters,1)
         pmRunParameters.trainpct(rp));
     fprintf('Saving output variables to file %s\n', outputfilename);
     save(fullfile(basedir, subfolder, outputfilename), ...
+        'studynbr', 'studydisplayname', 'pmStudyInfo', ...
+        'pmPatients', 'npatients', 'pmAntibiotics', ...
+        'pmOverallStats', 'pmPatientMeasStats', ...
+        'pmRawDatacube', 'pmInterpDatacube', 'maxdays', ...
+        'measures', 'nmeasures', ...
         'pmRunParameters', 'rp', 'pmInterpNormcube', ...
         'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', 'pmIVLabels', ...
         'pmTrFeatureIndex', 'pmTrFeatures', 'pmTrNormFeatures', 'pmTrIVLabels', ...

@@ -5,6 +5,7 @@ function [modelinputfile, modelidx, modelinputs] = selectFeatureAndLabelInputs()
 
 modelinputs = {  
             'pm_stSC_fd20_pd15_mm1_nm2_sm1_tp0.70';
+            'pm_stSC_fd10_pd10_mm2_nm2_sm1_tp0.70';
             };
 
 nmodels = size(modelinputs,1);
