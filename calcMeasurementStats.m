@@ -66,7 +66,7 @@ for m = 1:nmeasures
 end
 pmOverallStats(pmOverallStats.Count==0,:) = [];
 
-basedir = './';
+basedir = setBaseDir();
 subfolder = 'ExcelFiles';
 outputfilename = sprintf('%sMeasurementStats.xlsx', studydisplayname);
 fprintf('Saving results to excel file %s\n', outputfilename);

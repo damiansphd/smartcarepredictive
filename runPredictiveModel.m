@@ -3,7 +3,7 @@ clear; close all; clc;
 [modelinputfile, modelidx, modelinputs] = selectFeatureAndLabelInputs();
 
 tic
-basedir = './';
+basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 modelinputsmatfile = sprintf('%s.mat',modelinputfile);
 fprintf('Loading predictive model input data\n');

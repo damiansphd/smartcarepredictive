@@ -4,7 +4,7 @@ clear; close all; clc;
 nstudies = size(pmStudyInfo,1);
 
 tic
-basedir = './';
+basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 
 tic
@@ -48,7 +48,7 @@ toc
 fprintf('\n');
 
 tic
-basedir = './';
+basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 outputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);

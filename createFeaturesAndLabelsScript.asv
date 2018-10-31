@@ -26,7 +26,7 @@ if isequal(fileidx,'')
 end
 fprintf('\n');
 
-basedir = setBaseDir();
+basedir = setBaseDir;
 subfolder = 'DataFiles';
 runparameterfile = RunParameterFiles{fileidx};
 pmRunParameters = readtable(fullfile(basedir, subfolder, runparameterfile));
@@ -79,7 +79,7 @@ for rp = 1:size(pmRunParameters,1)
     
     % save output variables
     tic
-    basedir = setBaseDir();
+    basedir = setBaseDir;
     subfolder = 'MatlabSavedVariables';
     outputfilename = sprintf('pm_st%s_fd%d_pd%d_mm%d_nm%d_sm%d_tp%0.2f.mat', ...
         pmRunParameters.StudyDisplayName{rp}, pmRunParameters.featureduration(rp), ...
