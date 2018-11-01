@@ -1,5 +1,5 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
-    pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, ...
+    pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, ...
     featureduration, predictionduration)
  
 % createFeaturesAndLabels - function to create the set of features and
@@ -17,7 +17,7 @@ for p = 1:npatients
     fprintf('Processing data for patient %d\n', p);
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'),:);
     
-    for d = featureduration:maxdays
+    for d = maxfeatureduration:maxdays
         % only include this run day for the period between first and last measurement for
         % patient for days when the patient wasn't on antibiotics.
         % potentially add a check on completeness of raw data in this

@@ -1,35 +1,13 @@
 clear; close all; clc;
 
-RunParameterFiles = {  
-            'pm_stSC_fd20_pd15_mm1_nm1_sm1_tp0.7.xlsx';
-            'pm_stSC_fd20_pd15_mm1_nm2_sm1_tp0.7.xlsx';
-            'pm_stSC_fd10_pd10_mm2_nm2_sm1_tp0.7.xlsx';
-            };
-
-
-nfiles = size(RunParameterFiles,1);
-fprintf('Run parameter files available\n');
-fprintf('-----------------------------\n');
-for i = 1:nfiles
-    fprintf('%d: %s\n', i, RunParameterFiles{i});
-end
-fprintf('\n');
-
-fileidx = input('Choose file to use ? ');
-if fileidx > nfiles
-    fprintf('Invalid choice\n');
-    return;
-end
-if isequal(fileidx,'')
-    fprintf('Invalid choice\n');
-    return;
-end
-fprintf('\n');
-
 basedir = setBaseDir();
 subfolder = 'DataFiles';
-runparameterfile = RunParameterFiles{fileidx};
+runparameterfile = selectModelRunParameters();
+runparameterfile = strcat(runparameterfile, '.xlsx');
+
 pmRunParameters = readtable(fullfile(basedir, subfolder, runparameterfile));
+
+maxfeatureduration = max(pmRunParameters.featureduration);
 
 for rp = 1:size(pmRunParameters,1)
     % load model inputs
@@ -64,7 +42,7 @@ for rp = 1:size(pmRunParameters,1)
     tic
     fprintf('Creating Features and Labels\n');
     [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
-        pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, ...
+        pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, ...
         pmRunParameters.featureduration(rp), pmRunParameters.predictionduration(rp));
     toc
     fprintf('\n');
@@ -81,11 +59,8 @@ for rp = 1:size(pmRunParameters,1)
     tic
     basedir = setBaseDir();
     subfolder = 'MatlabSavedVariables';
-    outputfilename = sprintf('pm_st%s_fd%d_pd%d_mm%d_nm%d_sm%d_tp%0.2f.mat', ...
-        pmRunParameters.StudyDisplayName{rp}, pmRunParameters.featureduration(rp), ...
-        pmRunParameters.predictionduration(rp), pmRunParameters.measuresmask(rp), ...
-        pmRunParameters.normmethod(rp), pmRunParameters.smoothingmethod(rp), ...
-        pmRunParameters.trainpct(rp));
+    basefilename = generateFileNameFromRunParameters(pmRunParameters(rp,:));
+    outputfilename = sprintf('%s.mat',basefilename);
     fprintf('Saving output variables to file %s\n', outputfilename);
     save(fullfile(basedir, subfolder, outputfilename), ...
         'studynbr', 'studydisplayname', 'pmStudyInfo', ...

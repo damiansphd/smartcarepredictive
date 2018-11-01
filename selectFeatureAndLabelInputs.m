@@ -1,33 +1,40 @@
-function [modelinputfile, modelidx, modelinputs] = selectFeatureAndLabelInputs()
+function [modelinputfile] = selectFeatureAndLabelInputs(option)
 
-% selectModelInputs - select the matlab saved variable file for the model
-% inputs
+% selectFeatureAndLabelInputs - select the matlab saved variable file for
+% the features to run the model on
 
-modelinputs = {  
-            'pm_stSC_fd20_pd15_mm1_nm2_sm1_tp0.70';
-            'pm_stSC_fd10_pd10_mm2_nm2_sm1_tp0.70';
-            };
-
-nmodels = size(modelinputs,1);
-fprintf('Model input files available\n');
-fprintf('---------------------------\n');
-for i = 1:nmodels
-    fprintf('%d: %s\n', i, modelinputs{i});
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+modelinputslisting = dir(fullfile(basedir, subfolder, 'pm*.mat'));
+modelinputs = cell(size(modelinputslisting,1),1);
+for a = 1:size(modelinputs,1)
+    modelinputs{a} = strrep(modelinputslisting(a).name, '.mat', '');
 end
-fprintf('\n');
 
-modelidx = input('Choose model run to use ? ');
-if modelidx > nmodels 
-    fprintf('Invalid choice\n');
-    return;
+if isequal(option, 'Single') 
+    nmodels = size(modelinputs,1);
+    fprintf('Model input files available\n');
+    fprintf('---------------------------\n');
+    for i = 1:nmodels
+        fprintf('%d: %s\n', i, modelinputs{i});
+    end
+    fprintf('\n');
+
+    modelidx = input('Choose model run to use ? ');
+    if modelidx > nmodels 
+        fprintf('Invalid choice\n');
+        return;
+    end
+    if isequal(modelidx,'')
+        fprintf('Invalid choice\n');
+        return;
+    end
+    fprintf('\n');
+
+    modelinputfile = modelinputs{modelidx};
+elseif isequal(option, 'List')
+    modelinputfile = modelinputs;
 end
-if isequal(modelidx,'')
-    fprintf('Invalid choice\n');
-    return;
-end
-fprintf('\n');
-
-modelinputfile = modelinputs{modelidx};
-
+    
 end
 

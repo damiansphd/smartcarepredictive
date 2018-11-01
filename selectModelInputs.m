@@ -3,11 +3,13 @@ function [modelinputfile, modelidx, modelinputs] = selectModelInputs()
 % selectModelInputs - select the matlab saved variable file for the model
 % inputs
 
-modelinputs = {  
-            'SCpredictivemodelinputs';
-            'TMpredictivemodelinputs';
-            'SC_TMpredictivemodelinputs';
-            };
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+modelinputslisting = dir(fullfile(basedir, subfolder, '*predictivemodelinputs.mat'));
+modelinputs = cell(size(modelinputslisting,1),1);
+for a = 1:size(modelinputs,1)
+    modelinputs{a} = strrep(modelinputslisting(a).name, '.mat', '');
+end
 
 nmodels = size(modelinputs,1);
 fprintf('Model input files available\n');
