@@ -2,16 +2,14 @@ clear; close all; clc;
 
 basedir = setBaseDir();
 subfolder = 'DataFiles';
-runparameterfile = selectModelRunParameters();
-runparameterfile = strcat(runparameterfile, '.xlsx');
+baserunparameterfile = selectModelRunParameters();
+runparameterfile = strcat(baserunparameterfile, '.xlsx');
 
 pmRunParameters = readtable(fullfile(basedir, subfolder, runparameterfile));
 
-pmModelResults = struct('ModelType', [], 'Model', [], 'FPrate',[], 'TPrate', [], 'Thresh', [], 'AUC', [], ...
-    'OptROCPt', [], 'Pred', [], 'PredLogical', [], 'TP', [], 'TN', [], 'FP', [], 'FN', []);
+pmModelRes = struct('ModelType', [], 'RunParams', [], 'pmLabel', []);
 
 nmodels = size(pmRunParameters,1);
-
 
 for a = 1:nmodels
     
@@ -26,75 +24,99 @@ for a = 1:nmodels
     toc
     fprintf('\n');
 
-    % add loop over prediction duration (and adjust indexing into structure
-    % either just add more instances to structure, or make the structure 2d
-    % I think making 2d would be better
+    predictionduration = pmRunParameters.predictionduration(a);
     
-    tic
-    fprintf('Running Logistic Regression model\n');
-    pmModelResults(a).ModelType = 'Logistic Regression';
+    pmModelRes(a).ModelType = 'Logistic Regression';
+    pmModelRes(a).RunParams = basefilename;
     
-    pmModelResults(a).Model = fitglm(pmTrNormFeatures, pmTrIVLabels(:,1), ...
-        'linear', ...
-        'Distribution', 'binomial', ...
-        'Link', 'logit');
-
-    costmatrix = [0 pmRunParameters.costmethod(a); (1 - pmRunParameters.costmethod(a)) 0];
-
-    [pmModelResults(a).FPRate, pmModelResults(a).TPRate, pmModelResults(a).Thresh, ...
-        pmModelResults(a).AUC, pmModelResults(a).OptROCPt] = perfcurve(pmTrIVLabels(:,1), ...
-        pmModelResults(a).Model.Fitted.Probability, 1, 'Cost', costmatrix);
-    toc
-    fprintf('\n');
+    pmLabel = struct('Model', [], 'FPrate',[], 'TPrate', [], 'Thresh', [], 'AUC', [], ...
+    'OptROCPt', [], 'Pred', [], 'PredLogical', [], 'TP', [], 'TN', [], 'FP', [], 'FN', []);
     
-    tic
-    fprintf('Plotting Results\n');
+    if predictionduration <= 6
+        plotsacross = 2;
+    else
+        plotsacross = 3;
+    end
+    plotsdown = ceil(predictionduration/plotsacross);
     
-    plotsacross = 1;
-    plotsdown = 1;
-    name1 = sprintf('%s-PM ROC Plot (AUC=%.2f)', basefilename, 100 * pmModelResults(a).AUC);
-    [f1,p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
-    ax1 = subplot(plotsdown, plotsacross, 1, 'Parent',p1);
+    baseplotname1 = sprintf('%s-PM ROC Plot', basefilename);
+    baseplotname2 = sprintf('%s-PM Confusion Matrix', basefilename);
+    [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
+    [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
+    
+    for l = 1:predictionduration
+        
+        tic
+        fprintf('Running Logistic Regression model for Label %d\n', l);
+        
+        pmLabel(l).Model = fitglm(pmNormFeatures, pmIVLabels(:,l), ...
+            'linear', ...
+            'Distribution', 'binomial', ...
+            'Link', 'logit');
 
-    plot(pmModelResults(a).FPRate, pmModelResults(a).TPRate);
-    hold on
-    plot(pmModelResults(a).OptROCPt(1),pmModelResults(a).OptROCPt(2),'ro');
-    xlabel('False positive rate'); 
-    ylabel('True positive rate');
-    title(sprintf('PM ROC Plot (AUC %.2f%%)', 100 * pmModelResults(a).AUC));
-    hold off
+        costmatrix = [0 pmRunParameters.costmethod(a); (1 - pmRunParameters.costmethod(a)) 0];
 
+        [pmLabel(l).FPrate, pmLabel(l).TPrate, pmLabel(l).Thresh, ...
+            pmLabel(l).AUC, pmLabel(l).OptROCPt] = perfcurve(pmIVLabels(:,l), ...
+            pmLabel(l).Model.Fitted.Probability, 1, 'Cost', costmatrix);
+        
+        thresh = pmLabel(l).Thresh(pmLabel(l).FPrate>=(pmLabel(l).OptROCPt(1)*.99) & pmLabel(l).FPrate<=(pmLabel(l).OptROCPt(1)*1.01));
+        thresh = thresh(1);
+    
+        pmLabel(l).Pred = predict(pmLabel(l).Model, pmNormFeatures);
+        pmLabel(l).PredLogical = pmLabel(l).Pred > thresh;
+    
+        pmLabel(l).TP = sum(pmLabel(l).PredLogical == 1 & pmIVLabels(:,l) == 1);
+        pmLabel(l).TN = sum(pmLabel(l).PredLogical == 0 & pmIVLabels(:,l) == 0);
+        pmLabel(l).FP = sum(pmLabel(l).PredLogical == 1 & pmIVLabels(:,l) == 0);
+        pmLabel(l).FN = sum(pmLabel(l).PredLogical == 0 & pmIVLabels(:,l) == 1);
+    
+        fprintf('TP: %d TN: %d FP: %d FN: %d - Total: %d ValSetSize %d\n', pmLabel(l).TP, ...
+            pmLabel(l).TN, pmLabel(l).FP, pmLabel(l).FN, ...
+            (pmLabel(l).TP + pmLabel(l).TN + pmLabel(l).FP + pmLabel(l).FN), ...
+            size(pmIVLabels(:,l),1));
+    
+        fprintf('Plotting Results\n');
+        
+        name1 = sprintf('%s - Label %d (AUC=%.2f)', baseplotname1, l, 100 * pmLabel(l).AUC);
+        ax1(l) = subplot(plotsdown, plotsacross, l, 'Parent',p1);
+        hold on
+        plot(ax1(l), pmLabel(l).OptROCPt(1), pmLabel(l).OptROCPt(2),'ro');
+        line(ax1(l), pmLabel(l).FPrate, pmLabel(l).TPrate);
+        xlabel(ax1(l), 'False positive rate'); 
+        ylabel(ax1(l), 'True positive rate');
+        title(ax1(l), sprintf('Label %d - AUC %.2f%%', l, 100 * pmLabel(l).AUC));
+        hold off
+
+        name2 = sprintf('%s - Label %d', baseplotname2, l);
+        ax2(l) = subplot(plotsdown, plotsacross, l, 'Parent',p2);
+        cm = confusionmat(pmIVLabels(:,l), pmLabel(l).PredLogical);
+        plotConfMat(ax2(l), cm, [{'False'} {'True'}], l)
+        
+        toc
+        fprintf('\n');
+    end
+
+    % save plots
     basedir = setBaseDir();
-    subfolder = 'Plots';
-    savePlotInDir(f1, name1, basedir, subfolder);
+    plotsubfolder = strcat('Plots/', baserunparameterfile);
+    mkdir(fullfile(basedir, plotsubfolder));
+    savePlotInDir(f1, baseplotname1, basedir, plotsubfolder);
+    savePlotInDir(f2, baseplotname2, basedir, plotsubfolder);
     close(f1);
-    thresh = pmModelResults(a).Thresh(pmModelResults(a).FPRate>(pmModelResults(a).OptROCPt(1)*.999) & pmModelResults(a).FPRate<(pmModelResults(a).OptROCPt(1)*1.001));
-    thresh = thresh(1);
-    
-    pmModelResults(a).Pred = predict(pmModelResults(a).Model, pmValNormFeatures);
-    pmModelResults(a).PredLogical = pmModelResults(a).Pred > thresh;
-    
-    pmModelResults(a).TP = sum(pmModelResults(a).PredLogical == 1 & pmValIVLabels(:,1) == 1);
-    pmModelResults(a).TN = sum(pmModelResults(a).PredLogical == 0 & pmValIVLabels(:,1) == 0);
-    pmModelResults(a).FP = sum(pmModelResults(a).PredLogical == 1 & pmValIVLabels(:,1) == 0);
-    pmModelResults(a).FN = sum(pmModelResults(a).PredLogical == 0 & pmValIVLabels(:,1) == 1);
-    
-    fprintf('TP: %d TN: %d FP: %d FN: %d - Total: %d ValSetSize %d\n', pmModelResults(a).TP, ...
-        pmModelResults(a).TN, pmModelResults(a).FP, pmModelResults(a).FN, ...
-        (pmModelResults(a).TP + pmModelResults(a).TN + pmModelResults(a).FP +pmModelResults(a).FN), ...
-        size(pmValIVLabels(:,1),1));
-    
-    plotsacross = 1;
-    plotsdown = 1;
-    name2 = sprintf('%s-PM Confusion Matrix', basefilename);
-    [f2,p2] = createFigureAndPanel(name1, 'Portrait', 'A4');
-    ax2 = subplot(plotsdown, plotsacross, 1, 'Parent',p2);
-    cm = confusionmat(pmValIVLabels(:,1), pmModelResults(a).PredLogical);
-    plotConfMat(ax2, cm, [{'False'} {'True'}])
-    basedir = setBaseDir();
-    subfolder = 'Plots';
-    savePlotInDir(f2, name2, basedir, subfolder);
     close(f2);
     toc
     fprintf('\n');
+    
+    pmModelRes(a).pmLabel = pmLabel;
 end
+
+tic
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+outputfilename = sprintf('%s ModelResults.mat',baserunparameterfile);
+fprintf('Saving output variables to file %s\n', outputfilename);
+save(fullfile(basedir, subfolder, outputfilename), ...
+    'pmRunParameters', 'nmodels', 'pmModelRes');
+toc
+fprintf('\n');

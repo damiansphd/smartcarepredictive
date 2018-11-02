@@ -6,19 +6,19 @@ function [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, ...
 % validation set with the percentage split defined by trainpct
 
 rng(2);
-shuffle = randperm(size(pmFeatureIndex,1));
+shuffle = randperm(size(unique(pmFeatureIndex.PatientNbr),1));
 
 splitidx = round(size(shuffle,2) * trainpct);
 
-pmTrFeatureIndex  = pmFeatureIndex(shuffle(1:splitidx),:);
-pmTrFeatures      = pmFeatures(shuffle(1:splitidx),:);
-pmTrNormFeatures  = pmNormFeatures(shuffle(1:splitidx),:);
-pmTrIVLabels      = pmIVLabels(shuffle(1:splitidx),:);
+pmTrFeatureIndex  = pmFeatureIndex(ismember(pmFeatureIndex.PatientNbr, shuffle(1:splitidx)),:);
+pmTrFeatures      = pmFeatures(ismember(pmFeatureIndex.PatientNbr, shuffle(1:splitidx)),:);
+pmTrNormFeatures  = pmNormFeatures(ismember(pmFeatureIndex.PatientNbr, shuffle(1:splitidx)),:);
+pmTrIVLabels      = pmIVLabels(ismember(pmFeatureIndex.PatientNbr, shuffle(1:splitidx)),:);
 
-pmValFeatureIndex = pmFeatureIndex(shuffle((splitidx + 1):end),:);
-pmValFeatures     = pmFeatures(shuffle((splitidx + 1):end),:);
-pmValNormFeatures = pmNormFeatures(shuffle((splitidx + 1):end),:);
-pmValIVLabels     = pmIVLabels(shuffle((splitidx + 1):end),:);
+pmValFeatureIndex = pmFeatureIndex(ismember(pmFeatureIndex.PatientNbr, shuffle((splitidx + 1):end)),:);
+pmValFeatures     = pmFeatures(ismember(pmFeatureIndex.PatientNbr, shuffle((splitidx + 1):end)),:);
+pmValNormFeatures = pmNormFeatures(ismember(pmFeatureIndex.PatientNbr, shuffle((splitidx + 1):end)),:);
+pmValIVLabels     = pmIVLabels(ismember(pmFeatureIndex.PatientNbr, shuffle((splitidx + 1):end)),:);
 
 end
 

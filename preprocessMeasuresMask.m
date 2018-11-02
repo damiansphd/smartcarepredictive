@@ -10,7 +10,6 @@ function [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
 %       2               Cough only
 
 fprintf('Pre-processing for measures mask\n');
-fprintf('--------------------------------\n');
 if measuresmask == 1
     fprintf('Keeping all measures\n');
     return;

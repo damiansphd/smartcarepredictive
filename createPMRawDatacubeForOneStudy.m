@@ -12,8 +12,8 @@ npatients = size(patients,1);
 pmPatients = table('Size',[npatients, 9], 'VariableTypes', {'double', 'cell', 'double', 'datetime', 'datetime', 'datetime', 'double', 'double', 'double'}, ...
     'VariableNames', {'PatientNbr', 'Study', 'ID', 'StudyStartDate', 'FirstMeasDate', 'LastMeasDate', 'StudyStartdn', 'FirstMeasdn', 'LastMeasdn'});
 
-pmAntibiotics = table('Size',[0, 10], 'VariableTypes', {'double', 'cell', 'double', 'cell', 'double',  'cell', 'cell', 'cell', 'datetime', 'datetime'}, ...
-    'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate'});
+pmAntibiotics = table('Size',[0, 12], 'VariableTypes', {'double', 'cell', 'double', 'cell', 'double',  'cell', 'cell', 'cell', 'datetime', 'datetime', 'double', 'double'}, ...
+    'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate', 'Startdn', 'Stopdn'});
 
 maxdays = 0;
 for p = 1:npatients
@@ -30,6 +30,8 @@ for p = 1:npatients
     tempstudy = array2table(cell(size(tempAntibiotics,1),1));
     tempstudy.Properties.VariableNames({'Var1'}) = {'Study'};
     tempstudy.Study(:) = {study};
+    tempAntibiotics.Startdn = ceil(datenum(datetime(tempAntibiotics.StartDate) + seconds(1)) - offset);
+    tempAntibiotics.Stopdn  = ceil(datenum(datetime(tempAntibiotics.StopDate)  + seconds(1)) - offset);
     tempAntibiotics = [temppnbr, tempstudy, tempAntibiotics];
     pmAntibiotics = [pmAntibiotics; tempAntibiotics];
     

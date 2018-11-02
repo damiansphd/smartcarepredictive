@@ -10,15 +10,21 @@ pmRunParameters = readtable(fullfile(basedir, subfolder, runparameterfile));
 maxfeatureduration = max(pmRunParameters.featureduration);
 
 for rp = 1:size(pmRunParameters,1)
+    basefilename = generateFileNameFromRunParameters(pmRunParameters(rp,:));
+    fprintf('Generating features and lables for %s\n', basefilename);
+    fprintf('-----------------------------------------------------------------------\n');
+    
     % load model inputs
     tic
     basedir = setBaseDir();
     subfolder = 'MatlabSavedVariables';
     modelinputsmatfile = sprintf('%s.mat',pmRunParameters.modelinputsmatfile{rp});
-    fprintf('Loading predictive model input data\n');
+    fprintf('Loading model input data\n');
     load(fullfile(basedir, subfolder, modelinputsmatfile));
     toc
     fprintf('\n');
+    
+    
     
     % pre-process to remove unwanted measures and data
     tic
@@ -43,7 +49,7 @@ for rp = 1:size(pmRunParameters,1)
     fprintf('Creating Features and Labels\n');
     [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
         pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, ...
-        pmRunParameters.featureduration(rp), pmRunParameters.predictionduration(rp));
+        pmRunParameters(rp,:));
     toc
     fprintf('\n');
 
@@ -59,7 +65,6 @@ for rp = 1:size(pmRunParameters,1)
     tic
     basedir = setBaseDir();
     subfolder = 'MatlabSavedVariables';
-    basefilename = generateFileNameFromRunParameters(pmRunParameters(rp,:));
     outputfilename = sprintf('%s.mat',basefilename);
     fprintf('Saving output variables to file %s\n', outputfilename);
     save(fullfile(basedir, subfolder, outputfilename), ...

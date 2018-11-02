@@ -1,6 +1,6 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
     pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, ...
-    featureduration, predictionduration)
+    runparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -12,9 +12,13 @@ pmFeatureIndex(1,:) = [];
 pmFeatures = [];
 pmNormFeatures = [];
 pmIVLabels = logical([]);
+featureduration = runparamsrow.featureduration;
+predictionduration = runparamsrow.predictionduration;
+minmaxfeat = runparamsrow.minmaxfeat;
+volfeat = runparamsrow.volfeat;
 
+fprintf('Processing data for patients\n');
 for p = 1:npatients
-    fprintf('Processing data for patient %d\n', p);
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'),:);
     
     for d = maxfeatureduration:maxdays
@@ -35,19 +39,28 @@ for p = 1:npatients
             % for each patient/day, create row in features arrays
             featurerow     = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
             normfeaturerow = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
-            %for m - 1:nmeasures
-            %    vertshift      = pmInterpNormcube(p, (d - featureduration + 1), m);
-            %    normfeaturerow = normfeaturerow - vertshift;
             
-            minmaxrow = zeros(1,nmeasures);
-            volrow = zeros(1,nmeasures);
-            for m = 1:nmeasures
-                minmaxrow(m) = max(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration))) - ...
-                                min(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)));
-                volrow(m) = sum(abs(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)))) ...
-                    / featureduration;
+            % if minmaxfeat is enabled, create additional range features
+            % for each measure
+            if minmaxfeat == 2
+                minmaxrow = zeros(1,nmeasures);
+                for m = 1:nmeasures
+                    minmaxrow(m) = max(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration))) - ...
+                                    min(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)));
+                end
+                normfeaturerow = [normfeaturerow, minmaxrow];
             end
-            normfeaturerow = [normfeaturerow, minmaxrow, volrow];
+            
+            % if volfeat is enabled, create additional volatility features
+            % for each measure
+            if volfeat == 2     
+                volrow = zeros(1,nmeasures);
+                for m = 1:nmeasures
+                    volrow(m) = sum(abs(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)))) ...
+                                    / featureduration;
+                end
+                normfeaturerow = [normfeaturerow, volrow];
+            end
             
             % for each patient/day, create row in IV label array
             ivlabelrow = checkIVInTimeWindow(featureindexrow, ...
@@ -63,6 +76,11 @@ for p = 1:npatients
             pmIVLabels     = [pmIVLabels; ivlabelrow];
         end
     end
+    fprintf('.');
+    if (p/50) == round(p/50)
+        fprintf('\n');
+    end
 end
+fprintf('\n');
 
 end
