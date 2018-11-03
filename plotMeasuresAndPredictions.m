@@ -14,11 +14,16 @@ toc
 
 modelresults = pmModelRes(rp);
 clear pmModelRes;
+labelidx = 5;
 
-for p = 1:npatients
+plotsubfolder = sprintf('Plots/%s_PredictionPlots', modelinputfile);
+mkdir(fullfile(basedir, plotsubfolder));
+
+for p = 1:npatients   
     fprintf('Plotting results for patient %d\n', p);
     plotMeasuresAndPredictionsForPatient(pmPatients(p,:), pmAntibiotics(pmAntibiotics.PatientNbr==p,:), ...
         pmRawDatacube(p, :, :), pmInterpNormcube(p, :, :), pmFeatureIndex, pmIVLabels, ...
-        modelresults, measures, nmeasures, pmRunParameters(rp,:));
+        modelresults, measures, nmeasures, labelidx, pmRunParameters(rp,:), plotsubfolder);
+end 
 
-end  
+
