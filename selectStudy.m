@@ -44,12 +44,10 @@ for a = 1:size(study,1)
         pmStudyInfo.StudyName{a}            = 'SmartCare';
         pmStudyInfo.MeasurementMatFile{a}   = 'smartcaredata.mat';
         pmStudyInfo.ClinicalMatFile{a}      = 'clinicaldata.mat';
-        pmStudyInfo.IVAndMeasuresMatFile{a} = 'SCivandmeasures.mat';
     elseif isequal(study(a), {'TM'})
         pmStudyInfo.StudyName{a}            = 'TeleMed';
         pmStudyInfo.MeasurementMatFile{a}   = 'telemeddata.mat';
         pmStudyInfo.ClinicalMatFile{a}      = 'telemedclinicaldata.mat';
-        pmStudyInfo.IVAndMeasuresMatFile{a} = 'TMivandmeasures.mat';
     else
         fprintf('Unknown study\n')
         return;

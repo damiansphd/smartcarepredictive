@@ -1,6 +1,6 @@
-function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
-    pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, ...
-    runparamsrow)
+function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels] = createFeaturesAndLabelsFcn(pmPatients, ...
+    pmAntibiotics, amInterventions, pmRawDatacube, pmInterpDatacube, pmInterpNormcube, ...
+    measures, nmeasures, npatients, maxdays, maxfeatureduration, ex_start, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -12,10 +12,11 @@ pmFeatureIndex(1,:) = [];
 pmFeatures = [];
 pmNormFeatures = [];
 pmIVLabels = logical([]);
-featureduration = runparamsrow.featureduration;
-predictionduration = runparamsrow.predictionduration;
-minmaxfeat = runparamsrow.minmaxfeat;
-volfeat = runparamsrow.volfeat;
+pmExLabels = logical([]);
+featureduration = featureparamsrow.featureduration;
+predictionduration = featureparamsrow.predictionduration;
+minmaxfeat = featureparamsrow.minmaxfeat;
+volfeat = featureparamsrow.volfeat;
 
 fprintf('Processing data for patients\n');
 for p = 1:npatients
@@ -68,12 +69,15 @@ for p = 1:npatients
                 
             % also create label array for Exacerbation having started in
             % the last n days
+            exlabelrow = checkExStartInTimeWindow(featureindexrow, ...
+                    amInterventions(amInterventions.SmartCareID == pmPatients.ID(p),:), ex_start, predictionduration);
             
             % add to arrays
             pmFeatureIndex = [pmFeatureIndex; featureindexrow];
             pmFeatures     = [pmFeatures; featurerow];
             pmNormFeatures = [pmNormFeatures; normfeaturerow];
             pmIVLabels     = [pmIVLabels; ivlabelrow];
+            pmExLabels     = [pmExLabels; exlabelrow];
         end
     end
     fprintf('.');

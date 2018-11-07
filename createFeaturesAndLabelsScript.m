@@ -2,36 +2,38 @@ clear; close all; clc;
 
 basedir = setBaseDir();
 subfolder = 'DataFiles';
-runparameterfile = selectModelRunParameters();
-runparameterfile = strcat(runparameterfile, '.xlsx');
+featureparamfile = selectFeatureParameters();
+featureparamfile = strcat(featureparamfile, '.xlsx');
 
-pmRunParameters = readtable(fullfile(basedir, subfolder, runparameterfile));
+pmFeatureParams = readtable(fullfile(basedir, subfolder, featureparamfile));
 
-maxfeatureduration = max(pmRunParameters.featureduration);
+maxfeatureduration = max(pmFeatureParams.featureduration);
 
-for rp = 1:size(pmRunParameters,1)
-    basefilename = generateFileNameFromRunParameters(pmRunParameters(rp,:));
+
+for rp = 1:size(pmFeatureParams,1)
+    basefilename = generateFileNameFromFeatureParams(pmFeatureParams(rp,:));
     fprintf('Generating features and lables for %s\n', basefilename);
-    fprintf('-----------------------------------------------------------------------\n');
+    fprintf('-------------------------------------------------------------------------------\n');
     
     % load model inputs
     tic
     basedir = setBaseDir();
     subfolder = 'MatlabSavedVariables';
-    modelinputsmatfile = sprintf('%s.mat',pmRunParameters.modelinputsmatfile{rp});
+    modelinputsmatfile = sprintf('%s.mat',pmFeatureParams.modelinputsmatfile{rp});
     fprintf('Loading model input data\n');
     load(fullfile(basedir, subfolder, modelinputsmatfile));
+    alignmodelresultsfile = sprintf('%s.mat',pmFeatureParams.ampredictionsfile{rp});
+    load(fullfile(basedir, subfolder, alignmodelresultsfile), 'amInterventions', 'ex_start');
+
     toc
     fprintf('\n');
-    
-    
     
     % pre-process to remove unwanted measures and data
     tic
     [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
         pmRawDatacube, pmInterpDatacube] = preprocessMeasuresMask(measures, ...
         nmeasures, pmOverallStats, pmPatientMeasStats, pmRawDatacube, ...
-        pmInterpDatacube, pmRunParameters.measuresmask(rp));
+        pmInterpDatacube, pmFeatureParams.measuresmask(rp));
     toc
     fprintf('\n');
 
@@ -39,7 +41,7 @@ for rp = 1:size(pmRunParameters,1)
     tic
     fprintf('Normalising data\n');
     [pmInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmOverallStats, pmPatientMeasStats, ...
-        npatients, maxdays, nmeasures, pmRunParameters.normmethod(rp)); 
+        npatients, maxdays, nmeasures, pmFeatureParams.normmethod(rp)); 
     toc
     fprintf('\n');
 
@@ -47,19 +49,20 @@ for rp = 1:size(pmRunParameters,1)
     % need to add setting and using of the measures mask
     tic
     fprintf('Creating Features and Labels\n');
-    [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels] = createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, ...
-        pmRawDatacube, pmInterpDatacube, pmInterpNormcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, ...
-        pmRunParameters(rp,:));
+    [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels] = createFeaturesAndLabelsFcn(pmPatients, ...
+        pmAntibiotics, amInterventions, pmRawDatacube, pmInterpDatacube, pmInterpNormcube, ...
+        measures, nmeasures, npatients, maxdays, maxfeatureduration, ex_start, pmFeatureParams(rp,:));
     toc
     fprintf('\n');
 
-    tic
-    fprintf('Split into training and validation sets\n');
-    [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, ...
-        pmValFeatureIndex, pmValFeatures, pmValNormFeatures, pmValIVLabels] = ...
-        splitTrainVsVal(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmRunParameters.trainpct(rp)); 
-    toc
-    fprintf('\n');
+    % move this to the model run stage
+    %tic
+    %fprintf('Split into training and validation sets\n');
+    %[pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, ...
+    %    pmValFeatureIndex, pmValFeatures, pmValNormFeatures, pmValIVLabels] = ...
+    %    splitTrainVsVal(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmFeatureParams.trainpct(rp)); 
+    %toc
+    %fprintf('\n');
     
     % save output variables
     tic
@@ -73,10 +76,9 @@ for rp = 1:size(pmRunParameters,1)
         'pmOverallStats', 'pmPatientMeasStats', ...
         'pmRawDatacube', 'pmInterpDatacube', 'maxdays', ...
         'measures', 'nmeasures', ...
-        'pmRunParameters', 'rp', 'pmInterpNormcube', ...
-        'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', 'pmIVLabels', ...
-        'pmTrFeatureIndex', 'pmTrFeatures', 'pmTrNormFeatures', 'pmTrIVLabels', ...
-        'pmValFeatureIndex', 'pmValFeatures', 'pmValNormFeatures', 'pmValIVLabels');
+        'pmFeatureParams', 'rp', 'pmInterpNormcube', ...
+        'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', ...
+        'pmIVLabels', 'pmExLabels');
     toc
     fprintf('\n');
 end
