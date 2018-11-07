@@ -1,6 +1,6 @@
 function plotMeasuresAndPredictionsForPatient(patientrow, pabs, prawdata, pinterpdata, ...
-    pmFeatureIndex, pmIVLabels, modelresults, pmOverallStats, pmeasstats, measures, ...
-    nmeasures, labelidx, runparamsrow, plotsubfolder)
+    pmFeatureIndex, pmIVLabels, pmExLabels, pmModelRes, pmOverallStats, pmeasstats, measures, ...
+    nmeasures, labelidx, pmFeatureParamsRow, pmModelParamsRow,  plotsubfolder, basefilename)
 
 % plotMeasuresAndPredictions - for a given patient, plot the measures along
 % with the predictions from the predictive classification model and the 
@@ -11,7 +11,6 @@ patientnbr = patientrow.PatientNbr;
 plotsacross = 1;
 plotsdown = nmeasures + 1;
 
-basefilename = generateFileNameFromRunParameters(runparamsrow);
 baseplotname1 = sprintf('%s - %d Day Prediction - Patient %d (Study %s, ID %d)', basefilename, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);
 
 [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
@@ -39,12 +38,18 @@ end
 pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 fidx = (pmFeatureIndex.PatientNbr == patientnbr);
 pfeatindex = pmFeatureIndex(fidx,:);
-ppred = modelresults.pmLabel(labelidx).Pred(fidx);
-plabel = pmIVLabels(fidx,labelidx);
+ppred = pmModelRes.pmLabel(labelidx).Pred(fidx);
+
+if pmModelParamsRow.labelmethod == 1
+    plabel = pmIVLabels(fidx,labelidx);
+elseif pmModelParamsRow.labelmethod == 2
+    plabel = pmExLabels(fidx,labelidx);
+else
+    fprintf('Unknown label method\n');
+end
 
 ppreddata = nan(1, pmaxdays);
 plabeldata = nan(1, pmaxdays);
-
 for d = 1:size(ppred,1)
     ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
     plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
@@ -59,6 +64,7 @@ for m = 1:nmeasures
     interppts(~isnan(mrawdata)) = nan;
     
     xl = [1 pmaxdays];
+    
     % relevant if plotting normalised data
     %if min(mdata) == max(mdata)
     %    if min(mdata) < 0
@@ -129,7 +135,7 @@ basedir = setBaseDir();
 savePlotInDir(f1, baseplotname1, basedir, plotsubfolder);
 close(f1);
 
-predictionduration = runparamsrow.predictionduration;
+predictionduration = pmFeatureParamsRow.predictionduration;
 plotsacross = 1;
 plotsdown = predictionduration;
 
@@ -137,8 +143,14 @@ baseplotname2 = sprintf('%s - All Predictions - Patient %d (Study %s, ID %d)', b
 [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
 
 for n = 1:predictionduration
-    ppred = modelresults.pmLabel(n).Pred(fidx);
-    plabel = pmIVLabels(fidx,n);
+    ppred = pmModelRes.pmLabel(n).Pred(fidx);
+    if pmModelParamsRow.labelmethod == 1
+        plabel = pmIVLabels(fidx, n);
+    elseif pmModelParamsRow.labelmethod == 2
+        plabel = pmExLabels(fidx, n);
+    else
+        fprintf('Unknown label method\n');
+    end
 
     ppreddata = nan(1, pmaxdays);
     plabeldata = nan(1, pmaxdays);

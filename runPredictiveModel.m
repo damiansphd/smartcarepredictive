@@ -13,6 +13,15 @@ pmModelParams = readtable(fullfile(basedir, subfolder, modelparamfile));
 nfeatureparamsets = size(pmFeatureParams,1);
 nmodelparamsets   = size(pmModelParams,1);
 
+% cut and pasted here. Add back in below when ready to do train vs cv split
+%tic
+%fprintf('Split into training and validation sets\n');
+%[pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, ...
+%    pmValFeatureIndex, pmValFeatures, pmValNormFeatures, pmValIVLabels] = ...
+%    splitTrainVsVal(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmFeatureParams.trainpct(rp)); 
+%toc
+%fprintf('\n');
+
 for fs = 1:nfeatureparamsets
     
     for mp = 1:nmodelparamsets 
@@ -121,6 +130,8 @@ for fs = 1:nfeatureparamsets
         fprintf('\n');
     
         pmModelRes.pmLabel = pmLabel;
+        pmFeatureParamsRow = pmFeatureParams(fs,:);
+        pmModelParamsRow   = pmModelParams(mp,:);
         
         tic
         basedir = setBaseDir();
@@ -128,7 +139,7 @@ for fs = 1:nfeatureparamsets
         outputfilename = sprintf('%s ModelResults.mat', mbasefilename);
         fprintf('Saving output variables to file %s\n', outputfilename);
         save(fullfile(basedir, subfolder, outputfilename), ...
-            'pmModelRes', 'pmFeatureParams', 'fs', 'pmModelParams', 'mp');
+            'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow');
         toc
         fprintf('\n');
         
