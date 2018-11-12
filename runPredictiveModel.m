@@ -142,7 +142,6 @@ for fs = 1:nfeatureparamsets
             'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow');
         toc
         fprintf('\n');
-        
     end
 end
 

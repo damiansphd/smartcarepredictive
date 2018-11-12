@@ -15,7 +15,7 @@ fprintf('\n');
 
 tic
 fprintf('Creating Raw Datacube\n');
-[pmStudyInfo, pmPatients, pmAntibiotics, pmRawDatacube, npatients, maxdays] = createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder);
+[pmStudyInfo, pmPatients, pmAntibiotics, pmAMPred, pmRawDatacube, npatients, maxdays] = createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder);
 toc
 fprintf('\n');
 
@@ -53,7 +53,7 @@ subfolder = 'MatlabSavedVariables';
 outputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', 'pmStudyInfo', ...
-    'pmPatients', 'npatients', 'pmAntibiotics', ...
+    'pmPatients', 'npatients', 'pmAntibiotics', 'pmAMPred', ...
     'pmOverallStats', 'pmPatientMeasStats', ...
     'pmRawDatacube', 'pmInterpDatacube', 'maxdays', ...
     'measures', 'nmeasures');

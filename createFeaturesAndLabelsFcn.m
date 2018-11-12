@@ -1,6 +1,6 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels] = createFeaturesAndLabelsFcn(pmPatients, ...
-    pmAntibiotics, amInterventions, pmRawDatacube, pmInterpDatacube, pmInterpNormcube, ...
-    measures, nmeasures, npatients, maxdays, maxfeatureduration, ex_start, featureparamsrow)
+    pmAntibiotics, pmAMPred, pmRawDatacube, pmInterpDatacube, pmInterpNormcube, ...
+    measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -28,13 +28,13 @@ for p = 1:npatients
         % potentially add a check on completeness of raw data in this
         % window
         if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
-                (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
-                      pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
+           (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
+                 pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
                   
             featureindexrow.PatientNbr = pmPatients.PatientNbr(p);
             featureindexrow.Study = pmPatients.Study(p);
             featureindexrow.ID = pmPatients.ID(p);
-            featureindexrow.CalcDatedn = d;
+            featureindexrow.CalcDatedn = d - 1;
             featureindexrow.CalcDate = pmPatients.FirstMeasDate(p) + days(d - 1);
             
             % for each patient/day, create row in features arrays
@@ -65,12 +65,12 @@ for p = 1:npatients
             
             % for each patient/day, create row in IV label array
             ivlabelrow = checkIVInTimeWindow(featureindexrow, ...
-                    pmAntibiotics(pmAntibiotics.ID == pmPatients.ID(p),:), predictionduration);
+                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :), predictionduration);
                 
             % also create label array for Exacerbation having started in
             % the last n days
             exlabelrow = checkExStartInTimeWindow(featureindexrow, ...
-                    amInterventions(amInterventions.SmartCareID == pmPatients.ID(p),:), ex_start, predictionduration);
+                    pmAMPred(pmAMPred.PatientNbr  == p, :), predictionduration);
             
             % add to arrays
             pmFeatureIndex = [pmFeatureIndex; featureindexrow];

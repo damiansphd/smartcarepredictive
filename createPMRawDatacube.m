@@ -1,4 +1,5 @@
-function [pmStudyInfo, pmPatients, pmAntibiotics, pmDatacube, npatients, maxdays] = createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder)
+function [pmStudyInfo, pmPatients, pmAntibiotics, pmAMPred, pmDatacube, npatients, maxdays] = ...
+    createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder)
 
 % createPMDataCube - creates the raw data cube for the predictive model
 % across one or more studies
@@ -9,6 +10,9 @@ for a = 1:nstudies
     load(fullfile(basedir, subfolder, pmStudyInfo.ClinicalMatFile{a}));
     fprintf('Loading measurement data\n');
     load(fullfile(basedir, subfolder, pmStudyInfo.MeasurementMatFile{a}));
+    fprintf('Loading alignment model prediction results\n');
+    load(fullfile(basedir, subfolder, pmStudyInfo.AMPredMatFile{a}), 'amInterventions', 'ex_start');
+
     if isequal(pmStudyInfo.Study(a), {'TM'})
         physdata = tmphysdata;
         cdPatient = tmPatient;
@@ -21,12 +25,13 @@ for a = 1:nstudies
     
     % create datacube - 3D array of patients/days/measures for model
     fprintf('Creating 3D data array\n');
-    [temp_pmPatients, temp_pmAntibiotics, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMRawDatacubeForOneStudy(physdata, cdPatient, cdAntibiotics, pmStudyInfo(a, :), measures, nmeasures);
+    [temp_pmPatients, temp_pmAntibiotics, temp_pmAMPred, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMRawDatacubeForOneStudy(physdata, cdPatient, cdAntibiotics, amInterventions, ex_start, pmStudyInfo(a, :), measures, nmeasures);
     
     % combine results into one array
     if a == 1
         pmPatients    = temp_pmPatients;
         pmAntibiotics = temp_pmAntibiotics;
+        pmAMPred      = temp_pmAMPred;
         pmDatacube    = temp_pmDatacube;
         npatients     = temp_npatients;
         maxdays       = temp_maxdays;
@@ -47,8 +52,12 @@ for a = 1:nstudies
         end
         
         pmAntibiotics = [pmAntibiotics; temp_pmAntibiotics];
-        tempabpnbr = innerjoin(pmAntibiotics(:,{'Study', 'ID'}), pmPatients(:,{'PatientNbr', 'Study', 'ID'}));
+        tempabpnbr    = innerjoin(pmAntibiotics(:,{'Study', 'ID'}), pmPatients(:,{'PatientNbr', 'Study', 'ID'}));
         pmAntibiotics.PatientNbr = tempabpnbr.PatientNbr;
+        
+        pmAMPred      = [pmAMPred; temp_pmAMPred];
+        tempampnbr    = innerjoin(pmAMPred(:,{'Study', 'ID'}), pmPatients(:,{'PatientNbr', 'Study', 'ID'}));
+        pmAMPred.PatientNbr = tempampnbr.PatientNbr;
         
         if maxdays > temp_maxdays
             temp_pmDatacube(:, (temp_maxdays + 1): maxdays, :) = nan;

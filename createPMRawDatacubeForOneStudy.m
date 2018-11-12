@@ -1,4 +1,5 @@
-function [pmPatients, pmAntibiotics, pmDatacube, npatients, maxdays] = createPMRawDatacubeForOneStudy(physdata, cdPatient, cdAntibiotics, pmStudyInfoRow, measures, nmeasures)
+function [pmPatients, pmAntibiotics, pmAMPred, pmDatacube, npatients, maxdays] = createPMRawDatacubeForOneStudy(physdata, ...
+    cdPatient, cdAntibiotics, amInterventions, ex_start, pmStudyInfoRow, measures, nmeasures)
 
 % createPMDataCube - populates a 3D array from the measurement data of
 % appropriate size
@@ -9,8 +10,8 @@ study = pmStudyInfoRow.Study{1};
 patients = unique(physdata.SmartCareID);
 npatients = size(patients,1);
 
-pmPatients = table('Size',[npatients, 9], 'VariableTypes', {'double', 'cell', 'double', 'datetime', 'datetime', 'datetime', 'double', 'double', 'double'}, ...
-    'VariableNames', {'PatientNbr', 'Study', 'ID', 'StudyStartDate', 'FirstMeasDate', 'LastMeasDate', 'StudyStartdn', 'FirstMeasdn', 'LastMeasdn'});
+pmPatients = table('Size',[npatients, 10], 'VariableTypes', {'double', 'cell', 'double', 'cell', 'datetime', 'datetime', 'datetime', 'double', 'double', 'double'}, ...
+    'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'StudyStartDate', 'FirstMeasDate', 'LastMeasDate', 'StudyStartdn', 'FirstMeasdn', 'LastMeasdn'});
 
 pmAntibiotics = table('Size',[0, 12], 'VariableTypes', {'double', 'cell', 'double', 'cell', 'double',  'cell', 'cell', 'cell', 'datetime', 'datetime', 'double', 'double'}, ...
     'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate', 'Startdn', 'Stopdn'});
@@ -21,6 +22,7 @@ for p = 1:npatients
     pmPatients.PatientNbr(p) = p;
     pmPatients.Study(p) = {study};
     pmPatients.ID(p) = scid;
+    pmPatients.Hospital(p) = cdPatient.Hospital(cdPatient.ID == scid);
     pmPatients.StudyStartDate(p) = cdPatient.StudyDate(cdPatient.ID == scid);
     pmPatients.StudyStartdn(p)   = ceil(datenum(pmPatients.StudyStartDate(p) + seconds(1))) - offset;
 
@@ -44,6 +46,9 @@ for p = 1:npatients
         maxdays = (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p)) + 1;
     end
 end
+
+pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys', {'SmartCareID'}, 'LeftVariables', {'PatientNbr', 'Study', 'ID'});
+pmAMPred.Ex_Start(:) = ex_start;
 
 pmDatacube = NaN(npatients, maxdays, nmeasures);
 
