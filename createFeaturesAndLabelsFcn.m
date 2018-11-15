@@ -34,7 +34,7 @@ for p = 1:npatients
             featureindexrow.PatientNbr = pmPatients.PatientNbr(p);
             featureindexrow.Study = pmPatients.Study(p);
             featureindexrow.ID = pmPatients.ID(p);
-            featureindexrow.CalcDatedn = d - 1;
+            featureindexrow.CalcDatedn = d;
             featureindexrow.CalcDate = pmPatients.FirstMeasDate(p) + days(d - 1);
             
             % for each patient/day, create row in features arrays

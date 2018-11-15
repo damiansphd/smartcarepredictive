@@ -6,8 +6,12 @@ labelrow = false(1, predictionduration);
 
 for b = 1:predictionduration
     labelrow(b) = ...
-        any((pmampredrows.IVStartDate + days(pmampredrows.Ex_Start + pmampredrows.Offset)) < featureindexrow.CalcDate & ...
-            (pmampredrows.IVStartDate + days(pmampredrows.Ex_Start + pmampredrows.Offset)) >= (featureindexrow.CalcDate - days(b)));   
+        any((pmampredrows.Pred <  featureindexrow.CalcDatedn) & ...
+            (pmampredrows.Pred >= (featureindexrow.CalcDatedn - b)));   
+
+%        any((pmampredrows.IVStartDate + days(pmampredrows.Ex_Start + pmampredrows.Offset)) < featureindexrow.CalcDate & ...
+%            (pmampredrows.IVStartDate + days(pmampredrows.Ex_Start + pmampredrows.Offset)) >= (featureindexrow.CalcDate - days(b)));   
+
 end
 
 end

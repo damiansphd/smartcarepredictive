@@ -24,7 +24,7 @@ for a = 1:nstudies
     pmStudyInfo.Offset(a) = offset;
     
     % create datacube - 3D array of patients/days/measures for model
-    fprintf('Creating 3D data array\n');
+    fprintf('Creating patient, antibiotics, prediction, and 3D datacube arrays\n');
     [temp_pmPatients, temp_pmAntibiotics, temp_pmAMPred, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMRawDatacubeForOneStudy(physdata, cdPatient, cdAntibiotics, amInterventions, ex_start, pmStudyInfo(a, :), measures, nmeasures);
     
     % combine results into one array

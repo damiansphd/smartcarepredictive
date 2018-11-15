@@ -8,6 +8,7 @@ function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata
 % true labels.
 
 patientnbr = patientrow.PatientNbr;
+pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 
 plotsacross = 1;
 plotsdown = nmeasures + 2;
@@ -16,38 +17,44 @@ baseplotname1 = sprintf('%s - %d Day Prediction - Patient %d (Study %s, ID %d)',
 
 [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
 
-pivabsdates = pabs(ismember(pabs.Route, 'IV'),{'Startdn','Stopdn'});
+pivabsdates = pabs(ismember(pabs.Route, 'IV'),{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
 for ab = 1:size(pivabsdates,1)
     if pivabsdates.Startdn(ab) < patientrow.FirstMeasdn
-        pivabsdates.Startdn(ab) = patientrow.FirstMeasdn;
+        pivabsdates.Startdn(ab)    = patientrow.FirstMeasdn;
+        pivabsdates.RelStartdn(ab) = 1;
     end
     if pivabsdates.Stopdn(ab) > patientrow.LastMeasdn
-        pivabsdates.Stopdn(ab) = patientrow.LastMeasdn;
+        pivabsdates.Stopdn(ab)    = patientrow.LastMeasdn;
+        pivabsdates.RelStopdn(ab) = pmaxdays;
     end
 end
 
-poralabsdates = pabs(ismember(pabs.Route, 'Oral'),{'Startdn','Stopdn'});
+poralabsdates = pabs(ismember(pabs.Route, 'Oral'),{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
 for ab = 1:size(poralabsdates,1)
     if poralabsdates.Startdn(ab) < patientrow.FirstMeasdn
-        poralabsdates.Startdn(ab) = patientrow.FirstMeasdn;
+        poralabsdates.Startdn(ab)    = patientrow.FirstMeasdn;
+        poralabsdates.RelStartdn(ab) = 1;
     end
     if poralabsdates.Stopdn(ab) > patientrow.LastMeasdn
-        poralabsdates.Stopdn(ab) = patientrow.LastMeasdn;
+        poralabsdates.Stopdn(ab)    = patientrow.LastMeasdn;
+        poralabsdates.RelStopdn(ab) = pmaxdays;
     end
 end
 
-pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', 'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2'});
-pexstsdates.Pred = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.Offset      - (patientrow.FirstMeasdn - 1);
-pexstsdates.LB1  = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.LowerBound1 - (patientrow.FirstMeasdn - 1);
-pexstsdates.UB1  = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.UpperBound1 - (patientrow.FirstMeasdn - 1);
-pexstsdates.LB2(:) = -1;
-pexstsdates.UB2(:) = -1;
-pexstsdates.LB2(pexstsdates.LowerBound2 ~= -1) = pexstsdates.IVDateNum(pexstsdates.LowerBound2 ~= -1) + ...
-        pexstsdates.Ex_Start(pexstsdates.LowerBound2 ~= -1) + pexstsdates.LowerBound2(pexstsdates.LowerBound2 ~= -1) - patientrow.FirstMeasdn;
-pexstsdates.UB2(pexstsdates.LowerBound2 ~= -1) = pexstsdates.IVDateNum(pexstsdates.LowerBound2 ~= -1) + ...
-        pexstsdates.Ex_Start(pexstsdates.LowerBound2 ~= -1) + pexstsdates.UpperBound2(pexstsdates.LowerBound2 ~= -1) - patientrow.FirstMeasdn;
+pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
+    'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2', ...
+    'Pred', 'RelLB1', 'RelUB1', 'RelLB2', 'RelUB2'});
+%pexstsdates.Pred = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.Offset      - (patientrow.FirstMeasdn - 1);
+%pexstsdates.LB1  = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.LowerBound1 - (patientrow.FirstMeasdn - 1);
+%pexstsdates.UB1  = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.UpperBound1 - (patientrow.FirstMeasdn - 1);
+%pexstsdates.LB2(:) = -1;
+%pexstsdates.UB2(:) = -1;
+%pexstsdates.LB2(pexstsdates.LowerBound2 ~= -1) = pexstsdates.IVDateNum(pexstsdates.LowerBound2 ~= -1) + ...
+%        pexstsdates.Ex_Start(pexstsdates.LowerBound2 ~= -1) + pexstsdates.LowerBound2(pexstsdates.LowerBound2 ~= -1) - (patientrow.FirstMeasdn - 1);
+%pexstsdates.UB2(pexstsdates.LowerBound2 ~= -1) = pexstsdates.IVDateNum(pexstsdates.LowerBound2 ~= -1) + ...
+%        pexstsdates.Ex_Start(pexstsdates.LowerBound2 ~= -1) + pexstsdates.UpperBound2(pexstsdates.LowerBound2 ~= -1) - (patientrow.FirstMeasdn - 1);
 
-pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
+
 fidx = (pmFeatureIndex.PatientNbr == patientnbr);
 pfeatindex = pmFeatureIndex(fidx,:);
 pivpred  = pmIVModelRes.pmLabel(labelidx).Pred(fidx);
@@ -119,22 +126,22 @@ for m = 1:nmeasures
     
     for ab = 1:size(poralabsdates,1)
         hold on;
-        plotFillArea(ax1(m), poralabsdates.Startdn(ab) - patientrow.FirstMeasdn, poralabsdates.Stopdn(ab) - patientrow.FirstMeasdn, yl(1), yl(2), 'yellow', 0.1, 'none');
+        plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
         hold off;
     end
     
     for ab = 1:size(pivabsdates,1)
         hold on;
-        plotFillArea(ax1(m), pivabsdates.Startdn(ab) - patientrow.FirstMeasdn, pivabsdates.Stopdn(ab) - patientrow.FirstMeasdn, yl(1), yl(2), 'red', 0.1, 'none');
+        plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
         hold off;
     end
     
     for ex = 1:size(pexstsdates, 1)
         hold on;
         [xl, yl] = plotVerticalLine(ax1(m), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax1(m), pexstsdates.LB1(ex), pexstsdates.UB1(ex), yl(1), yl(2), 'cyan', 0.1, 'none');
-        if pexstsdates.LB2(ex) ~= -1
-            plotFillArea(ax1(m), pexstsdates.LB2(ex), pexstsdates.UB2(ex), yl(1), yl(2), 'cyan', 0.1, 'none');
+        plotFillArea(ax1(m), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        if pexstsdates.RelLB2(ex) ~= -1
+            plotFillArea(ax1(m), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
         end
     end
 end
@@ -151,12 +158,12 @@ plottitle = sprintf('%d Day Prediction for IV Labels', labelidx);
 
 for ab = 1:size(poralabsdates, 1)
     hold on;
-    plotFillArea(ax1(m), poralabsdates.Startdn(ab) - patientrow.FirstMeasdn, poralabsdates.Stopdn(ab) - patientrow.FirstMeasdn, yl(1), yl(2), 'yellow', 0.1, 'none');
+    plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
     hold off;
 end
 for ab = 1:size(pivabsdates, 1)
     hold on;
-    plotFillArea(ax1(m), pivabsdates.Startdn(ab) - patientrow.FirstMeasdn, pivabsdates.Stopdn(ab) - patientrow.FirstMeasdn, yl(1), yl(2), 'red', 0.1, 'none');
+    plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
     hold off;
 end
 
@@ -173,9 +180,9 @@ plottitle = sprintf('%d Day Prediction for Exacerbation Start Labels', labelidx)
 for ex = 1:size(pexstsdates, 1)
     hold on;
     [xl, yl] = plotVerticalLine(ax1(m), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-    plotFillArea(ax1(m), pexstsdates.LB1(ex), pexstsdates.UB1(ex), yl(1), yl(2), 'cyan', 0.1, 'none');
-    if pexstsdates.LB2(ex) ~= -1
-        plotFillArea(ax1(m), pexstsdates.LB2(ex), pexstsdates.UB2(ex), yl(1), yl(2), 'cyan', 0.1, 'none');
+    plotFillArea(ax1(m), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+    if pexstsdates.RelLB2(ex) ~= -1
+        plotFillArea(ax1(m), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
     end
 end
 
@@ -212,13 +219,13 @@ for n = 1:predictionduration
 
     for ab = 1:size(poralabsdates,1)
         hold on;
-        plotFillArea(ax2(n), poralabsdates.Startdn(ab) - patientrow.FirstMeasdn, poralabsdates.Stopdn(ab) - patientrow.FirstMeasdn, yl(1), yl(2), 'yellow', 0.1, 'none');
+        plotFillArea(ax2(n), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
         hold off;
     end
     
     for ab = 1:size(pivabsdates,1)
         hold on;
-        plotFillArea(ax2(n), pivabsdates.Startdn(ab) - patientrow.FirstMeasdn, pivabsdates.Stopdn(ab) - patientrow.FirstMeasdn, yl(1), yl(2), 'red', 0.1, 'none');
+        plotFillArea(ax2(n), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
         hold off;
     end
     
@@ -254,9 +261,9 @@ for n = 1:predictionduration
     for ex = 1:size(pexstsdates, 1)
         hold on;
         [xl, yl] = plotVerticalLine(ax3(n), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax3(n), pexstsdates.LB1(ex), pexstsdates.UB1(ex), yl(1), yl(2), 'cyan', 0.1, 'none');
-        if pexstsdates.LB2(ex) ~= -1
-            plotFillArea(ax3(n), pexstsdates.LB2(ex), pexstsdates.UB2(ex), yl(1), yl(2), 'cyan', 0.1, 'none');
+        plotFillArea(ax3(n), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        if pexstsdates.RelLB2(ex) ~= -1
+            plotFillArea(ax3(n), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
         end
     end    
 end
