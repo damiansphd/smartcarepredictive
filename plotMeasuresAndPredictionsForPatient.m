@@ -44,16 +44,6 @@ end
 pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
     'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2', ...
     'Pred', 'RelLB1', 'RelUB1', 'RelLB2', 'RelUB2'});
-%pexstsdates.Pred = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.Offset      - (patientrow.FirstMeasdn - 1);
-%pexstsdates.LB1  = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.LowerBound1 - (patientrow.FirstMeasdn - 1);
-%pexstsdates.UB1  = pexstsdates.IVDateNum + pexstsdates.Ex_Start + pexstsdates.UpperBound1 - (patientrow.FirstMeasdn - 1);
-%pexstsdates.LB2(:) = -1;
-%pexstsdates.UB2(:) = -1;
-%pexstsdates.LB2(pexstsdates.LowerBound2 ~= -1) = pexstsdates.IVDateNum(pexstsdates.LowerBound2 ~= -1) + ...
-%        pexstsdates.Ex_Start(pexstsdates.LowerBound2 ~= -1) + pexstsdates.LowerBound2(pexstsdates.LowerBound2 ~= -1) - (patientrow.FirstMeasdn - 1);
-%pexstsdates.UB2(pexstsdates.LowerBound2 ~= -1) = pexstsdates.IVDateNum(pexstsdates.LowerBound2 ~= -1) + ...
-%        pexstsdates.Ex_Start(pexstsdates.LowerBound2 ~= -1) + pexstsdates.UpperBound2(pexstsdates.LowerBound2 ~= -1) - (patientrow.FirstMeasdn - 1);
-
 
 fidx = (pmFeatureIndex.PatientNbr == patientnbr);
 pfeatindex = pmFeatureIndex(fidx,:);
@@ -61,14 +51,6 @@ pivpred  = pmIVModelRes.pmLabel(labelidx).Pred(fidx);
 pivlabel = pmIVLabels(fidx,labelidx);
 pexpred  = pmExModelRes.pmLabel(labelidx).Pred(fidx);
 pexlabel = pmExLabels(fidx,labelidx);
-
-%if pmModelParamsRow.labelmethod == 1
-%    plabel = pmIVLabels(fidx,labelidx);
-%elseif pmModelParamsRow.labelmethod == 2
-%    plabel = pmExLabels(fidx,labelidx);
-%else
-%    fprintf('Unknown label method\n');
-%end
 
 pivpreddata = nan(1, pmaxdays);
 pivlabeldata = nan(1, pmaxdays);

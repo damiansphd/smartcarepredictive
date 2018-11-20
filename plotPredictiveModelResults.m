@@ -57,15 +57,13 @@ end
 if plottype == 1
     % plot weights
     fprintf('Plotting Model Weights\n');
-    plotModelWeights(pmIVModelRes, pmExModelRes, ...
-        measures, nmeasures, labelidx, pmIVFeatureParamsRow, pmIVModelParamsRow, pmExModelParamsRow, ...
-        plotsubfolder, basemodelresultsfile);
+    plotModelWeights(pmIVModelRes, pmExModelRes, measures, nmeasures, ...
+        pmIVFeatureParamsRow, plotsubfolder, basemodelresultsfile);
 elseif plottype == 2
     % plot PR and ROC Curves
     fprintf('Plotting PR and ROC Curves\n');
-    plotPRAndROCCurves(pmIVModelRes, pmExModelRes, ...
-        measures, nmeasures, labelidx, pmIVFeatureParamsRow, pmIVModelParamsRow, pmExModelParamsRow, ...
-        plotsubfolder, basemodelresultsfile);
+    [pmPRAUC] = plotPRAndROCCurves(pmIVModelRes, pmExModelRes, pmIVLabels, pmExLabels, ...
+        pmIVFeatureParamsRow, plotsubfolder, basemodelresultsfile);
 elseif plottype == 3
     % plot measures and predictions for all patients
     for p = 1:npatients
