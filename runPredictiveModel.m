@@ -4,13 +4,13 @@ basedir = setBaseDir();
 subfolder = 'DataFiles';
 basefeatureparamfile = selectFeatureParameters();
 featureparamfile = strcat(basefeatureparamfile, '.xlsx');
-pmFeatureParams = readtable(fullfile(basedir, subfolder, featureparamfile));
+pmThisFeatureParams = readtable(fullfile(basedir, subfolder, featureparamfile));
 
 basemodelparamfile = selectModelRunParameters();
 modelparamfile = strcat(basemodelparamfile, '.xlsx');
 pmModelParams = readtable(fullfile(basedir, subfolder, modelparamfile));
 
-nfeatureparamsets = size(pmFeatureParams,1);
+nfeatureparamsets = size(pmThisFeatureParams,1);
 nmodelparamsets   = size(pmModelParams,1);
 
 % cut and pasted here. Add back in below when ready to do train vs cv split
@@ -29,7 +29,7 @@ for fs = 1:nfeatureparamsets
         tic
         basedir = setBaseDir();
         subfolder = 'MatlabSavedVariables';
-        fbasefilename = generateFileNameFromFeatureParams(pmFeatureParams(fs,:));
+        fbasefilename = generateFileNameFromFeatureParams(pmThisFeatureParams(fs,:));
         featureinputmatfile = sprintf('%s.mat',fbasefilename);
         fprintf('Loading predictive model input data from file %s\n', featureinputmatfile);
         load(fullfile(basedir, subfolder, featureinputmatfile));
@@ -37,91 +37,57 @@ for fs = 1:nfeatureparamsets
         fprintf('\n');
         mbasefilename = generateFileNameFromModelParams(fbasefilename, pmModelParams(mp,:));
 
-        predictionduration = pmFeatureParams.predictionduration(fs);
-    
-        pmModelRes = struct('ModelType', [], 'RunParams', [], 'pmLabel', []);
-    
-        pmModelRes.ModelType = 'Logistic Regression';
-        pmModelRes.RunParams = mbasefilename;
-    
-        pmLabel = struct('Model', [], 'FPrate',[], 'TPrate', [], 'Thresh', [], 'AUC', [], ...
-        'OptROCPt', [], 'Pred', [], 'PredLogical', [], 'TP', [], 'TN', [], 'FP', [], 'FN', []);
-    
-        %if predictionduration <= 6
-        %    plotsacross = 2;
-        %else
-        %    plotsacross = 3;
-        %end
-        %plotsdown = ceil(predictionduration/plotsacross);
-    
-        %baseplotname1 = sprintf('%s-PM ROC Plot', mbasefilename);
-        %baseplotname2 = sprintf('%s-PM Confusion Matrix', mbasefilename);
-        %[f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
-        %[f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
-    
-        for l = 1:predictionduration
+        predictionduration = pmThisFeatureParams.predictionduration(fs);
+        nexamples = size(pmNormFeatures,1);
         
+        pmModelRes = struct('ModelType', 'Logistic Regression', 'RunParams', mbasefilename);
+
+        for n = 1:predictionduration
             tic
-            fprintf('Running Logistic Regression model for Label %d\n', l);
+            fprintf('Running Logistic Regression model for Label %d\n', n);
+            
+            pmDayRes = struct('Model',     [], 'Pred',   [], 'PredSort', [], 'LabelSort', [], ...
+            'TP'       , zeros(nexamples,1), 'FP'    , zeros(nexamples,1), 'TN' , zeros(nexamples,1), 'FN' , zeros(nexamples,1), ...
+            'Precision', zeros(nexamples,1), 'Recall', zeros(nexamples,1), 'TPR', zeros(nexamples,1), 'FPR', zeros(nexamples,1), ...
+            'PRAUC'    , 0.0               , 'ROCAUC', 0.0, 'Accuracy', 0.0);
             
             if pmModelParams.labelmethod(mp) == 1
-                labels = pmIVLabels(:,l);
+                labels = pmIVLabels(:,n);
             else
-                labels = pmExLabels(:,l);
+                labels = pmExLabels(:,n);
             end
             
-            pmLabel(l).Model = fitglm(pmNormFeatures, labels, ...
+            pmDayRes.Model = compact(fitglm(pmNormFeatures, labels, ...
                 'linear', ...
                 'Distribution', 'binomial', ...
-                'Link', 'logit');
+                'Link', 'logit'));
+            
+            pmDayRes.Pred = predict(pmDayRes.Model, pmNormFeatures);
+            
+            [pmDayRes.PredSort, sortidx] = sort(pmDayRes.Pred, 'descend');
+            pmDayRes.LabelSort = labels(sortidx);
 
-            %costmatrix = [0 pmModelParams.costmethod(mp); (1 - pmModelParams.costmethod(mp)) 0];
-            %[pmLabel(l).FPrate, pmLabel(l).TPrate, pmLabel(l).Thresh, ...
-            %    pmLabel(l).AUC, pmLabel(l).OptROCPt] = perfcurve(labels, ...
-            %    pmLabel(l).Model.Fitted.Probability, 1, 'Cost', costmatrix);
-            %thresh = pmLabel(l).Thresh(pmLabel(l).FPrate>=(pmLabel(l).OptROCPt(1)*.99) & pmLabel(l).FPrate<=(pmLabel(l).OptROCPt(1)*1.01));
-            %thresh = thresh(1);
-            %pmLabel(l).Pred = predict(pmLabel(l).Model, pmNormFeatures);
-            %pmLabel(l).PredLogical = pmLabel(l).Pred > thresh;
-            %pmLabel(l).TP = sum(pmLabel(l).PredLogical == 1 & pmIVLabels(:,l) == 1);
-            %pmLabel(l).TN = sum(pmLabel(l).PredLogical == 0 & pmIVLabels(:,l) == 0);
-            %pmLabel(l).FP = sum(pmLabel(l).PredLogical == 1 & pmIVLabels(:,l) == 0);
-            %pmLabel(l).FN = sum(pmLabel(l).PredLogical == 0 & pmIVLabels(:,l) == 1);
-            %fprintf('TP: %d TN: %d FP: %d FN: %d - Total: %d FeatureSetSize %d\n', pmLabel(l).TP, ...
-            %    pmLabel(l).TN, pmLabel(l).FP, pmLabel(l).FN, ...
-            %    (pmLabel(l).TP + pmLabel(l).TN + pmLabel(l).FP + pmLabel(l).FN), ...
-            %    size(labels,1));
-            %fprintf('Plotting Results\n');
-            %name1 = sprintf('%s - Label %d (AUC=%.2f)', baseplotname1, l, 100 * pmLabel(l).AUC);
-            %ax1(l) = subplot(plotsdown, plotsacross, l, 'Parent',p1);
-            %hold on
-            %plot(ax1(l), pmLabel(l).OptROCPt(1), pmLabel(l).OptROCPt(2),'ro');
-            %line(ax1(l), pmLabel(l).FPrate, pmLabel(l).TPrate);
-            %xlabel(ax1(l), 'False positive rate'); 
-            %ylabel(ax1(l), 'True positive rate');
-            %title(ax1(l), sprintf('Label %d - AUC %.2f%%', l, 100 * pmLabel(l).AUC));
-            %hold off
-            %name2 = sprintf('%s - Label %d', baseplotname2, l);
-            %ax2(l) = subplot(plotsdown, plotsacross, l, 'Parent',p2);
-            %cm = confusionmat(labels, pmLabel(l).PredLogical);
-            %plotConfMat(ax2(l), cm, [{'False'} {'True'}], l)
-            %toc
-            %fprintf('\n');
+            for a = 1:nexamples
+                pmDayRes.TP(a)        = sum(pmDayRes.LabelSort(1:a) == 1);
+                pmDayRes.FP(a)        = sum(pmDayRes.LabelSort(1:a) == 0);
+                pmDayRes.TN(a)        = sum(pmDayRes.LabelSort(a+1:nexamples) == 0);
+                pmDayRes.FN(a)        = sum(pmDayRes.LabelSort(a+1:nexamples) == 1);
+                pmDayRes.Precision(a) = pmDayRes.TP(a) / (pmDayRes.TP(a) + pmDayRes.FP(a));
+                pmDayRes.Recall(a)    = pmDayRes.TP(a) / (pmDayRes.TP(a) + pmDayRes.FN(a)); 
+                pmDayRes.TPR(a)       = pmDayRes.Recall(a);
+                pmDayRes.FPR(a)       = pmDayRes.FP(a) / (pmDayRes.FP(a) + pmDayRes.TN(a));
+            end
+    
+            pmDayRes.PRAUC  = trapz(pmDayRes.Recall, pmDayRes.Precision);
+            pmDayRes.ROCAUC = trapz(pmDayRes.FPR   , pmDayRes.TPR);
+            pmDayRes.Accuracy = sum(abs(pmDayRes.PredSort - pmDayRes.LabelSort))/nexamples;
+            fprintf('PR AUC = %.2f, ROC AUC = %.2f, Accuracy = %.2f\n', pmDayRes.PRAUC, pmDayRes.ROCAUC, pmDayRes.Accuracy);
+            
+            pmModelRes.pmNDayRes(n) = pmDayRes;
+            
         end
 
-        % save plots
-        %basedir = setBaseDir();
-        %plotsubfolder = strcat('Plots/', mbasefilename);
-        %mkdir(fullfile(basedir, plotsubfolder));
-        %savePlotInDir(f1, baseplotname1, basedir, plotsubfolder);
-        %savePlotInDir(f2, baseplotname2, basedir, plotsubfolder);
-        %close(f1);
-        %close(f2);
-        %toc
-        %fprintf('\n');
-    
-        pmModelRes.pmLabel = pmLabel;
-        pmFeatureParamsRow = pmFeatureParams(fs,:);
+        pmFeatureParamsRow = pmThisFeatureParams(fs,:);
         pmModelParamsRow   = pmModelParams(mp,:);
         
         tic

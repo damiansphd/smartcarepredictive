@@ -27,7 +27,7 @@ elseif pmModelParamsRow.labelmethod == 2
     pmExFeatureParamsRow = pmFeatureParamsRow;
     pmExModelParamsRow = pmModelParamsRow;
     modelresultsfile2 = strrep(modelresultsfile,'_lm2','_lm1');
-    modelresultsmatfile2 = sprintf('%s.mat', modelresultsfile);
+    modelresultsmatfile2 = sprintf('%s.mat', modelresultsfile2);
     fprintf('Loading predictive model results data for %s\n', modelresultsfile2);
     load(fullfile(basedir, subfolder, modelresultsmatfile2), 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow');
     pmIVModelRes = pmModelRes;
@@ -62,7 +62,7 @@ if plottype == 1
 elseif plottype == 2
     % plot PR and ROC Curves
     fprintf('Plotting PR and ROC Curves\n');
-    [pmPRAUC] = plotPRAndROCCurves(pmIVModelRes, pmExModelRes, pmIVLabels, pmExLabels, ...
+    plotPRAndROCCurves(pmIVModelRes, pmExModelRes, pmIVLabels, pmExLabels, ...
         pmIVFeatureParamsRow, plotsubfolder, basemodelresultsfile);
 elseif plottype == 3
     % plot measures and predictions for all patients
@@ -73,8 +73,7 @@ elseif plottype == 3
             pmAMPred(pmAMPred.PatientNbr == p,:), ...
             pmRawDatacube(p, :, :), pmInterpDatacube(p, :, :), pmFeatureIndex, pmIVLabels, pmExLabels, ...
             pmIVModelRes, pmExModelRes, pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p,:), ...
-            measures, nmeasures, labelidx, pmIVFeatureParamsRow, pmIVModelParamsRow, pmExModelParamsRow, ...
-            plotsubfolder, basemodelresultsfile);
+            measures, nmeasures, labelidx, pmIVFeatureParamsRow, plotsubfolder, basemodelresultsfile);
     end
 elseif plottype == 4
     % plot measures and predictions for a single patient
@@ -88,8 +87,7 @@ elseif plottype == 4
             pmAMPred(pmAMPred.PatientNbr == p,:), ...
             pmRawDatacube(p, :, :), pmInterpDatacube(p, :, :), pmFeatureIndex, pmIVLabels, pmExLabels, ...
             pmIVModelRes, pmExModelRes, pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p,:), ...
-            measures, nmeasures, labelidx, pmIVFeatureParamsRow, pmIVModelParamsRow, pmExModelParamsRow, ...
-            plotsubfolder, basemodelresultsfile);  
+            measures, nmeasures, labelidx, pmIVFeatureParamsRow, plotsubfolder, basemodelresultsfile);  
 end
 
 

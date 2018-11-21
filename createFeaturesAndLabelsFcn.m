@@ -1,22 +1,52 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels] = createFeaturesAndLabelsFcn(pmPatients, ...
-    pmAntibiotics, pmAMPred, pmRawDatacube, pmInterpDatacube, pmInterpNormcube, ...
-    measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
+    pmAntibiotics, pmAMPred, pmInterpDatacube, pmInterpNormcube, pmBucketedcube, ...
+    nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
 
-pmFeatureIndex = table('Size',[1, 5], 'VariableTypes', {'double', 'cell', 'double', 'datetime', 'double'}, ...
-    'VariableNames', {'PatientNbr', 'Study', 'ID', 'CalcDate', 'CalcDatedn'});
-featureindexrow = pmFeatureIndex;
-pmFeatureIndex(1,:) = [];
-pmFeatures = [];
-pmNormFeatures = [];
-pmIVLabels = logical([]);
-pmExLabels = logical([]);
+% first calculate total number of examples (patients * run days) to
+% pre-allocate tables/arrays
+nexamples = 0;
+for p = 1:npatients
+    pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'),:);
+    for d = maxfeatureduration:maxdays
+        if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
+           (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
+                 pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
+             nexamples = nexamples + 1;
+        end
+    end
+end
+
+% set variousl variables
 featureduration = featureparamsrow.featureduration;
 predictionduration = featureparamsrow.predictionduration;
+bucketfeat = featureparamsrow.bucketfeat;
+nbuckets   = featureparamsrow.nbuckets;
 minmaxfeat = featureparamsrow.minmaxfeat;
-volfeat = featureparamsrow.volfeat;
+volfeat    = featureparamsrow.volfeat;
+nfeatures  = nmeasures * featureduration;
+nnormfeatures = nfeatures;
+if bucketfeat == 2
+    nnormfeatures = nnormfeatures + (nfeatures * (nbuckets + 1));
+end
+if minmaxfeat == 2
+    nnormfeatures = nnormfeatures + nmeasures;
+end
+if volfeat == 2
+    nnormfeatures = nnormfeatures + nmeasures;
+end
+example = 1;
+
+pmFeatureIndex = table('Size',[nexamples, 5], 'VariableTypes', {'double', 'cell', 'double', 'datetime', 'double'}, ...
+    'VariableNames', {'PatientNbr', 'Study', 'ID', 'CalcDate', 'CalcDatedn'});
+featureindexrow = pmFeatureIndex(1,:);
+pmFeatures = zeros(nexamples, nfeatures);
+pmNormFeatures = zeros(nexamples, nnormfeatures);
+normfeaturerow = zeros(1, nnormfeatures);
+pmIVLabels = false(nexamples, predictionduration);
+pmExLabels = false(nexamples, predictionduration);
 
 fprintf('Processing data for patients\n');
 for p = 1:npatients
@@ -39,7 +69,17 @@ for p = 1:npatients
             
             % for each patient/day, create row in features arrays
             featurerow     = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
-            normfeaturerow = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
+            normfeaturerow(1:nfeatures) = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
+            nextfeat = nfeatures + 1;
+            
+            % if bucketedfeat is enabled, create additional bucketed
+            % features
+            if bucketfeat == 2
+                buckfeatrow = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, :, :), [featureduration  * nmeasures, (nbuckets + 1)])', ...
+                    [1, featureduration * nmeasures * (nbuckets + 1)]);
+                normfeaturerow(nextfeat:((nextfeat - 1) + featureduration * nmeasures * (nbuckets + 1)))  = buckfeatrow;
+                nextfeat = nextfeat + featureduration * nmeasures * (nbuckets + 1);
+            end
             
             % if minmaxfeat is enabled, create additional range features
             % for each measure
@@ -49,7 +89,8 @@ for p = 1:npatients
                     minmaxrow(m) = max(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration))) - ...
                                     min(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)));
                 end
-                normfeaturerow = [normfeaturerow, minmaxrow];
+                normfeaturerow(nextfeat:((nextfeat - 1) + nmeasures)) = minmaxrow;
+                nextfeat = nextfeat + nmeasures;
             end
             
             % if volfeat is enabled, create additional volatility features
@@ -60,7 +101,7 @@ for p = 1:npatients
                     volrow(m) = sum(abs(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)))) ...
                                     / featureduration;
                 end
-                normfeaturerow = [normfeaturerow, volrow];
+                normfeaturerow(nextfeat:((nextfeat - 1) + nmeasures)) = volrow;
             end
             
             % for each patient/day, create row in IV label array
@@ -73,11 +114,12 @@ for p = 1:npatients
                     pmAMPred(pmAMPred.PatientNbr  == p, :), predictionduration);
             
             % add to arrays
-            pmFeatureIndex = [pmFeatureIndex; featureindexrow];
-            pmFeatures     = [pmFeatures; featurerow];
-            pmNormFeatures = [pmNormFeatures; normfeaturerow];
-            pmIVLabels     = [pmIVLabels; ivlabelrow];
-            pmExLabels     = [pmExLabels; exlabelrow];
+            pmFeatureIndex(example,:) = featureindexrow;
+            pmFeatures(example,:)     = featurerow;
+            pmNormFeatures(example,:) = normfeaturerow;
+            pmIVLabels(example,:)     = ivlabelrow;
+            pmExLabels(example,:)     = exlabelrow;
+            example = example + 1;
         end
     end
     fprintf('.');

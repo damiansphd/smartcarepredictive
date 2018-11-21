@@ -42,14 +42,25 @@ for rp = 1:size(pmFeatureParams,1)
         npatients, maxdays, nmeasures, pmFeatureParams.normmethod(rp)); 
     toc
     fprintf('\n');
-
+    
+    % create bucketed data cube if this run option is enabled
+    if pmFeatureParams.bucketfeat(rp) == 2
+        tic
+        fprintf('Creating bucketed data\n');
+        [pmBucketedcube] = createPMBucketedcube(pmInterpNormcube, pmFeatureParams.nbuckets(rp), npatients, maxdays, nmeasures); 
+        toc
+        fprintf('\n');
+    else
+        pmBucketedcube = [];
+    end
+    
     % create feature/label examples from the data
     % need to add setting and using of the measures mask
     tic
     fprintf('Creating Features and Labels\n');
     [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels] = createFeaturesAndLabelsFcn(pmPatients, ...
-        pmAntibiotics, pmAMPred, pmRawDatacube, pmInterpDatacube, pmInterpNormcube, ...
-        measures, nmeasures, npatients, maxdays, maxfeatureduration, pmFeatureParams(rp,:));
+        pmAntibiotics, pmAMPred, pmInterpDatacube, pmInterpNormcube, pmBucketedcube, ...
+        nmeasures, npatients, maxdays, maxfeatureduration, pmFeatureParams(rp,:));
     toc
     fprintf('\n');
     
@@ -65,7 +76,7 @@ for rp = 1:size(pmFeatureParams,1)
         'pmOverallStats', 'pmPatientMeasStats', ...
         'pmRawDatacube', 'pmInterpDatacube', 'maxdays', ...
         'measures', 'nmeasures', ...
-        'pmFeatureParams', 'rp', 'pmInterpNormcube', ...
+        'pmFeatureParams', 'rp', 'pmInterpNormcube', 'pmBucketedcube', ...
         'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', ...
         'pmIVLabels', 'pmExLabels');
     toc

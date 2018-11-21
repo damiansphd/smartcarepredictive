@@ -18,10 +18,10 @@ else
 end
 
 for n = 1:predictionduration
-    %ivintercept      = pmIVModelRes.pmLabel(n).Model.Coefficients.Estimate(1);
-    ivfeatureweights = pmIVModelRes.pmLabel(n).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
-    %exintercept      = pmExModelRes.pmLabel(n).Model.Coefficients.Estimate(1);
-    exfeatureweights = pmExModelRes.pmLabel(n).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
+    %ivintercept      = pmIVModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
+    ivfeatureweights = pmIVModelRes.pmNDayRes(n).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
+    %exintercept      = pmExModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
+    exfeatureweights = pmExModelRes.pmNDayRes(n).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
     
     minivval = 0; maxivval = 0; minexval = 0; maxexval = 0;
     minivval = min(minivval, min(ivfeatureweights));

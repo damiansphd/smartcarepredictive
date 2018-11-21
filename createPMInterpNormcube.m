@@ -13,13 +13,13 @@ for m = 1:nmeasures
         % use patient level mean/std (by measure)
         for p = 1:npatients
             pmeas = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p & pmPatientMeasStats.MeasureIndex == m, :);
-            if size(pmeas,1) == 0
+            if size(pmeas,1) == 0 || pmeas.StdDev == 0
                 fprintf('Using Overall study mean and std for patient %d, measure %d\n', p, m);
                 pmean = pmOverallStats.Mean(m);
                 pstd = pmOverallStats.StdDev(m);
             else
-                pmean = pmPatientMeasStats.Mean(pmPatientMeasStats.PatientNbr == p & pmPatientMeasStats.MeasureIndex == m);
-                pstd  = pmPatientMeasStats.StdDev(pmPatientMeasStats.PatientNbr == p & pmPatientMeasStats.MeasureIndex == m);
+                pmean = pmeas.Mean;
+                pstd  = pmeas.StdDev;
             end
             pmInterpNormcube(p,:,m) = (pmInterpDatacube(p,:,m) - pmean) / pstd;
         end

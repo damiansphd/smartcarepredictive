@@ -1,7 +1,6 @@
 function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata, pinterpdata, ...
     pmFeatureIndex, pmIVLabels, pmExLabels, pmIVModelRes, pmExModelRes, pmOverallStats, ...
-    pmeasstats, measures, nmeasures, labelidx, pmFeatureParamsRow, pmIVModelParamsRow, ...
-    pmExModelParamsRow, plotsubfolder, basefilename)
+    pmeasstats, measures, nmeasures, labelidx, pmFeatureParamsRow, plotsubfolder, basefilename)
 
 % plotMeasuresAndPredictions - for a given patient, plot the measures along
 % with the predictions from the predictive classification model and the 
@@ -47,9 +46,9 @@ pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
 
 fidx = (pmFeatureIndex.PatientNbr == patientnbr);
 pfeatindex = pmFeatureIndex(fidx,:);
-pivpred  = pmIVModelRes.pmLabel(labelidx).Pred(fidx);
+pivpred  = pmIVModelRes.pmNDayRes(labelidx).Pred(fidx);
 pivlabel = pmIVLabels(fidx,labelidx);
-pexpred  = pmExModelRes.pmLabel(labelidx).Pred(fidx);
+pexpred  = pmExModelRes.pmNDayRes(labelidx).Pred(fidx);
 pexlabel = pmExLabels(fidx,labelidx);
 
 pivpreddata = nan(1, pmaxdays);
@@ -180,7 +179,7 @@ baseplotname2 = sprintf('%s - All IV Predictions - Patient %d (Study %s, ID %d)'
 [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
 
 for n = 1:predictionduration
-    pivpred  = pmIVModelRes.pmLabel(n).Pred(fidx);
+    pivpred  = pmIVModelRes.pmNDayRes(n).Pred(fidx);
     pivlabel = pmIVLabels(fidx, n);
     
     pivpreddata = nan(1, pmaxdays);
@@ -221,7 +220,7 @@ baseplotname3 = sprintf('%s - All Ex Start Predictions - Patient %d (Study %s, I
 [f3,p3] = createFigureAndPanel(baseplotname3, 'Portrait', 'A4');
 
 for n = 1:predictionduration
-    pexpred  = pmExModelRes.pmLabel(n).Pred(fidx);
+    pexpred  = pmExModelRes.pmNDayRes(n).Pred(fidx);
     pexlabel = pmExLabels(fidx, n);
     
     pexpreddata = nan(1, pmaxdays);
