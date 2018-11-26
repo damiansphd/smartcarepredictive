@@ -9,6 +9,7 @@ function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels] = 
 % pre-allocate tables/arrays
 nexamples = 0;
 for p = 1:npatients
+%for p = 1:2   
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'),:);
     for d = maxfeatureduration:maxdays
         if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
@@ -27,9 +28,10 @@ nbuckets   = featureparamsrow.nbuckets;
 minmaxfeat = featureparamsrow.minmaxfeat;
 volfeat    = featureparamsrow.volfeat;
 nfeatures  = nmeasures * featureduration;
-nnormfeatures = nfeatures;
-if bucketfeat == 2
-    nnormfeatures = nnormfeatures + (nfeatures * (nbuckets + 1));
+if bucketfeat == 1
+    nnormfeatures = nfeatures;
+elseif bucketfeat ==2
+    nnormfeatures = nfeatures * (nbuckets + 1);
 end
 if minmaxfeat == 2
     nnormfeatures = nnormfeatures + nmeasures;
@@ -50,6 +52,7 @@ pmExLabels = false(nexamples, predictionduration);
 
 fprintf('Processing data for patients\n');
 for p = 1:npatients
+%for p = 1:2    
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'),:);
     
     for d = maxfeatureduration:maxdays
@@ -67,18 +70,25 @@ for p = 1:npatients
             featureindexrow.CalcDatedn = d;
             featureindexrow.CalcDate = pmPatients.FirstMeasDate(p) + days(d - 1);
             
-            % for each patient/day, create row in features arrays
+            % for each patient/day, create row in unnormalised features
+            % array (this array is for informational purposes only - model
+            % should always run with normalised features
             featurerow     = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
-            normfeaturerow(1:nfeatures) = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
-            nextfeat = nfeatures + 1;
             
-            % if bucketedfeat is enabled, create additional bucketed
-            % features
-            if bucketfeat == 2
+            % create normalised features
+            if bucketfeat == 1
+                % use regular normalised features
+                normfeaturerow(1:nfeatures) = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, :), [1, (nmeasures * featureduration)]);
+                nextfeat = nfeatures + 1;
+            elseif bucketfeat == 2
+            % use bucketed normalised features
                 buckfeatrow = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, :, :), [featureduration  * nmeasures, (nbuckets + 1)])', ...
                     [1, featureduration * nmeasures * (nbuckets + 1)]);
-                normfeaturerow(nextfeat:((nextfeat - 1) + featureduration * nmeasures * (nbuckets + 1)))  = buckfeatrow;
-                nextfeat = nextfeat + featureduration * nmeasures * (nbuckets + 1);
+                normfeaturerow(1:(featureduration * nmeasures * (nbuckets + 1))) = buckfeatrow;
+                nextfeat = (featureduration * nmeasures * (nbuckets + 1)) + 1;
+            else
+                fprintf('Unknown bucket features mode\n');
+                return;
             end
             
             % if minmaxfeat is enabled, create additional range features

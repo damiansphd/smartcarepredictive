@@ -21,8 +21,6 @@ for p = 1:npatients
         for d = 1:maxdays
             if ~isnan(pmInterpNormcube(p, d, m))
                 datapoint = pmInterpNormcube(p, d, m);
-                %lowerq = max(find(ntilepoints(m,:) <= datapoint));
-                %upperq = min(find(ntilepoints(m,:) >= datapoint));
                 lowerq = find(ntilepoints(m,:) <= datapoint, 1, 'last');
                 upperq = find(ntilepoints(m,:) >= datapoint, 1);
                 if lowerq == upperq
@@ -33,7 +31,7 @@ for p = 1:npatients
                     % features evenly across all of these
                     pmBucketedcube(p, d, m, upperq:lowerq) = 1/(lowerq - upperq + 1);
                 else
-                    % regular care - datapoint is in between two boundaries
+                    % regular case - datapoint is between two boundaries
                     pmBucketedcube(p, d, m, lowerq) = abs(ntilepoints(m, upperq) - datapoint) / abs(ntilepoints(m, upperq) - ntilepoints(m, lowerq));
                     pmBucketedcube(p, d, m, upperq) = abs(ntilepoints(m, lowerq) - datapoint) / abs(ntilepoints(m, upperq) - ntilepoints(m, lowerq));
                 end

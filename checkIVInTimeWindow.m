@@ -7,10 +7,7 @@ labelrow = false(1, predictionduration);
 for b = 1:predictionduration
     labelrow(b) = any(ismember(pabs.Route, 'IV') & ...
                       pabs.RelStartdn >  featureindexrow.CalcDatedn & ...
-                      pabs.RelStartdn <= featureindexrow.CalcDatedn + b);
-                  
-%                      pabs.StartDate > featureindexrow.CalcDate & ...
-%                      pabs.StartDate <= (featureindexrow.CalcDate + days(b)));   
+                      pabs.RelStartdn <= featureindexrow.CalcDatedn + b);                  
 end
 
 end

@@ -33,12 +33,18 @@ for fs = 1:nfeatureparamsets
         featureinputmatfile = sprintf('%s.mat',fbasefilename);
         fprintf('Loading predictive model input data from file %s\n', featureinputmatfile);
         load(fullfile(basedir, subfolder, featureinputmatfile));
+        psplitfile = sprintf('%spatientsplit.mat', pmThisFeatureParams.StudyDisplayName{fs});
+        fprintf('Loading patient splits from file %s\n', psplitfile);
+        load(fullfile(basedir, subfolder, psplitfile));
         toc
         fprintf('\n');
         mbasefilename = generateFileNameFromModelParams(fbasefilename, pmModelParams(mp,:));
 
         predictionduration = pmThisFeatureParams.predictionduration(fs);
         nexamples = size(pmNormFeatures,1);
+        
+        % separate out test data and keep aside
+        testidx = ismember(pmFeatureIndex.PatientNbr, pmPatientSplit.PatientNbr==nsplits);
         
         pmModelRes = struct('ModelType', 'Logistic Regression', 'RunParams', mbasefilename);
 
@@ -47,7 +53,6 @@ for fs = 1:nfeatureparamsets
             fprintf('Running Logistic Regression model for Label %d\n', n);
             
             pmDayRes = struct('Model',     [], 'Pred',   [], 'PredSort', [], 'LabelSort', [], ...
-            'TP'       , zeros(nexamples,1), 'FP'    , zeros(nexamples,1), 'TN' , zeros(nexamples,1), 'FN' , zeros(nexamples,1), ...
             'Precision', zeros(nexamples,1), 'Recall', zeros(nexamples,1), 'TPR', zeros(nexamples,1), 'FPR', zeros(nexamples,1), ...
             'PRAUC'    , 0.0               , 'ROCAUC', 0.0, 'Accuracy', 0.0);
             
@@ -68,14 +73,14 @@ for fs = 1:nfeatureparamsets
             pmDayRes.LabelSort = labels(sortidx);
 
             for a = 1:nexamples
-                pmDayRes.TP(a)        = sum(pmDayRes.LabelSort(1:a) == 1);
-                pmDayRes.FP(a)        = sum(pmDayRes.LabelSort(1:a) == 0);
-                pmDayRes.TN(a)        = sum(pmDayRes.LabelSort(a+1:nexamples) == 0);
-                pmDayRes.FN(a)        = sum(pmDayRes.LabelSort(a+1:nexamples) == 1);
-                pmDayRes.Precision(a) = pmDayRes.TP(a) / (pmDayRes.TP(a) + pmDayRes.FP(a));
-                pmDayRes.Recall(a)    = pmDayRes.TP(a) / (pmDayRes.TP(a) + pmDayRes.FN(a)); 
+                TP        = sum(pmDayRes.LabelSort(1:a) == 1);
+                FP        = sum(pmDayRes.LabelSort(1:a) == 0);
+                TN        = sum(pmDayRes.LabelSort(a+1:nexamples) == 0);
+                FN        = sum(pmDayRes.LabelSort(a+1:nexamples) == 1);
+                pmDayRes.Precision(a) = TP / (TP + FP);
+                pmDayRes.Recall(a)    = TP / (TP + FN); 
                 pmDayRes.TPR(a)       = pmDayRes.Recall(a);
-                pmDayRes.FPR(a)       = pmDayRes.FP(a) / (pmDayRes.FP(a) + pmDayRes.TN(a));
+                pmDayRes.FPR(a)       = FP / (FP + TN);
             end
     
             pmDayRes.PRAUC  = trapz(pmDayRes.Recall, pmDayRes.Precision);

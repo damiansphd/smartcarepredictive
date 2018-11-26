@@ -15,6 +15,8 @@ if measuresmask == 1
     return;
 elseif measuresmask == 2
     mkeepidx = find(ismember(measures.DisplayName, 'Cough'));
+elseif measuresmask == 3
+    mkeepidx = find(ismember(measures.DisplayName,{'Cough','Wellness'}));
 end
 
 mdelidx = 1:nmeasures;

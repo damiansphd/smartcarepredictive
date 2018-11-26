@@ -16,7 +16,7 @@ fprintf('Feature parameter files available\n');
 fprintf('---------------------------------\n');
 
 for i = 1:nmodels
-    fprintf('%d: %s\n', i, modelrunparams{i});
+    fprintf('%2d: %s\n', i, modelrunparams{i});
 end
 fprintf('\n');
 
