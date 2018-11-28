@@ -8,6 +8,7 @@ function [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
 % measuresmask          action
 %       1               all measures included
 %       2               Cough only
+%       3               Cough and Wellness
 
 fprintf('Pre-processing for measures mask\n');
 if measuresmask == 1

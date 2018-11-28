@@ -16,7 +16,7 @@ fprintf('Model parameter files available\n');
 fprintf('-------------------------------\n');
 
 for i = 1:nmodels
-    fprintf('%d: %s\n', i, modelresultsfiles{i});
+    fprintf('%2d: %s\n', i, modelresultsfiles{i});
 end
 fprintf('\n');
 

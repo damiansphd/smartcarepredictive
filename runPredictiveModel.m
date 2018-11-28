@@ -42,10 +42,11 @@ for fs = 1:nfeatureparamsets
         
         ntrcvexamples = size(pmTrCVNormFeatures,1);
         
+        pmModelRes = struct('ModelType', 'Logistic Regression', 'RunParams', mbasefilename);
+        
         for n = 1:predictionduration
             
             fprintf('Running Logistic Regression model for Label %d\n', n);
-            pmModelRes = struct('ModelType', 'Logistic Regression', 'RunParams', mbasefilename);
             
             pmDayRes = struct('Model'    , []                    , 'Pred'     , zeros(ntrcvexamples,1), ...
                               'PredSort' , zeros(ntrcvexamples,1), 'LabelSort', zeros(ntrcvexamples,1), ...
