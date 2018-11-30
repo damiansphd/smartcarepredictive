@@ -15,22 +15,18 @@ load(fullfile(basedir, subfolder, modelresultsmatfile), 'pmModelRes', ...
     'pmTrCVNormFeatures', 'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVPatientSplit');
 if pmModelParamsRow.labelmethod == 1
     pmIVModelRes         = pmModelRes;
-    pmIVModelParamsRow   = pmModelParamsRow;
     modelresultsfile2 = strrep(modelresultsfile,'_lm1','_lm2');
     modelresultsmatfile2 = sprintf('%s.mat', modelresultsfile2);
     fprintf('Loading predictive model results data for %s\n', modelresultsfile2);
     load(fullfile(basedir, subfolder, modelresultsmatfile2), 'pmModelRes', 'pmModelParamsRow');
     pmExModelRes         = pmModelRes;
-    pmExModelParamsRow   = pmModelParamsRow;
 elseif pmModelParamsRow.labelmethod == 2
     pmExModelRes         = pmModelRes;
-    pmExModelParamsRow   = pmModelParamsRow;
     modelresultsfile2 = strrep(modelresultsfile,'_lm2','_lm1');
     modelresultsmatfile2 = sprintf('%s.mat', modelresultsfile2);
     fprintf('Loading predictive model results data for %s\n', modelresultsfile2);
     load(fullfile(basedir, subfolder, modelresultsmatfile2), 'pmModelRes', 'pmModelParamsRow');
     pmIVModelRes         = pmModelRes;
-    pmIVModelParamsRow   = pmModelParamsRow;
 else
     fprintf('Unknown label method\n');
     return;
@@ -39,7 +35,7 @@ featureparamsfile = generateFileNameFromFeatureParams(pmFeatureParamsRow);
 featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
 fprintf('Loading predictive model input data for %s\n', featureparamsfile);
 load(fullfile(basedir, subfolder, featureparamsmatfile));
-clear('pmModelRes', 'pmModelParamsRow');
+clear('pmModelRes');
 toc
 fprintf('\n');
 
@@ -58,12 +54,14 @@ if plottype == 1
     % plot weights
     fprintf('Plotting Model Weights\n');
     plotModelWeights(pmIVModelRes, pmExModelRes, measures, nmeasures, ...
-        pmFeatureParamsRow, plotsubfolder, basemodelresultsfile);
+        pmFeatureParamsRow, pmModelParamsRow, ...
+        plotsubfolder, basemodelresultsfile);
 elseif plottype == 2
     % plot weights for days 2, 5, 8
     fprintf('Plotting Model Weights for prediction days 2, 5, 8\n');
     plotSelectModelWeights(pmIVModelRes, pmExModelRes, measures, nmeasures, ...
-        pmFeatureParamsRow, selectdays, plotsubfolder, basemodelresultsfile);
+        pmFeatureParamsRow, pmModelParamsRow, selectdays, ...
+        plotsubfolder, basemodelresultsfile);
 elseif plottype == 3    
     % plot PR and ROC Curves
     fprintf('Plotting PR and ROC Curves\n');

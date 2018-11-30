@@ -26,6 +26,7 @@ for i = 1:nmodels
 
     resultrow = pmFeatureParamsRow;
     resultrow(:,{'StudyNbr', 'modelinputsmatfile', 'smoothingmethod', 'minmaxfeat', 'volfeat'}) = [];
+    resultrow.Version(:) = pmModelParamsRow.Version;
     resultrow.labelmethod(:) = pmModelParamsRow.labelmethod;
     
     avprauc = 0;

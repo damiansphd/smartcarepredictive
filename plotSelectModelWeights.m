@@ -1,5 +1,5 @@
 function plotSelectModelWeights(pmIVModelRes, pmExModelRes, measures, nmeasures, ...
-    pmFeatureParamsRow, selectdays, plotsubfolder, basemodelresultsfile)
+    pmFeatureParamsRow, pmModelParamsRow, selectdays, plotsubfolder, basemodelresultsfile)
 
 % plotModelWeights - plots the model weights for all prediction labels
 % for both the IV (red) and Ex_Start (blue) labels. 
@@ -19,11 +19,19 @@ else
 end
 
 for n = 1:size(selectdays,2)
-    %ivintercept      = pmIVModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
-    ivfeatureweights = pmIVModelRes.pmNDayRes(selectdays(n)).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
-    %exintercept      = pmExModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
-    exfeatureweights = pmExModelRes.pmNDayRes(selectdays(n)).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
-    
+    if isequal(pmModelParamsRow.Version{1}, 'vPM1')
+        %ivintercept      = pmIVModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
+        ivfeatureweights = pmIVModelRes.pmNDayRes(selectdays(n)).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
+        %exintercept      = pmExModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
+        exfeatureweights = pmExModelRes.pmNDayRes(selectdays(n)).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
+    elseif isequal(pmModelParamsRow.Version{1}, 'vPM2')
+        ivfeatureweights = pmIVModelRes.pmNDayRes(selectdays(n)).Model.w(1:(featureduration * nmeasures));
+        exfeatureweights = pmExModelRes.pmNDayRes(selectdays(n)).Model.w(1:(featureduration * nmeasures));
+    else
+        fprintf('Unknown model version\n');
+        return;
+    end
+        
     minivval = 0; maxivval = 0; minexval = 0; maxexval = 0;
     minivval = min(minivval, min(ivfeatureweights));
     maxivval = max(maxivval, max(ivfeatureweights));

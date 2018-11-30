@@ -31,7 +31,7 @@ nfeatures  = nmeasures * featureduration;
 if bucketfeat == 1
     nnormfeatures = nfeatures;
 elseif bucketfeat ==2
-    nnormfeatures = nfeatures * (nbuckets + 1);
+    nnormfeatures = nfeatures * nbuckets;
 end
 if minmaxfeat == 2
     nnormfeatures = nnormfeatures + nmeasures;
@@ -82,10 +82,10 @@ for p = 1:npatients
                 nextfeat = nfeatures + 1;
             elseif bucketfeat == 2
             % use bucketed normalised features
-                buckfeatrow = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, :, :), [featureduration  * nmeasures, (nbuckets + 1)])', ...
-                    [1, featureduration * nmeasures * (nbuckets + 1)]);
-                normfeaturerow(1:(featureduration * nmeasures * (nbuckets + 1))) = buckfeatrow;
-                nextfeat = (featureduration * nmeasures * (nbuckets + 1)) + 1;
+                buckfeatrow = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, :, :), [featureduration  * nmeasures, nbuckets])', ...
+                    [1, featureduration * nmeasures * nbuckets]);
+                normfeaturerow(1:(featureduration * nmeasures * nbuckets)) = buckfeatrow;
+                nextfeat = (featureduration * nmeasures * nbuckets) + 1;
             else
                 fprintf('Unknown bucket features mode\n');
                 return;

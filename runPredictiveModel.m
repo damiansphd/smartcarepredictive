@@ -30,7 +30,11 @@ for fs = 1:nfeatureparamsets
         toc
         fprintf('\n');
         mbasefilename = generateFileNameFromModelParams(fbasefilename, pmModelParams(mp,:));
+        if ~isequal(pmThisFeatureParams.Version{fs}, pmModelParams.Version{mp})
+            mbasefilename = strrep(mbasefilename, pmThisFeatureParams.Version{fs}, pmModelParams.Version{mp});
+        end
 
+        tic
         predictionduration = pmThisFeatureParams.predictionduration(fs);
         nexamples = size(pmNormFeatures,1);
         
@@ -48,7 +52,7 @@ for fs = 1:nfeatureparamsets
             
             fprintf('Running Logistic Regression model for Label %d\n', n);
             
-            pmDayRes = struct('Model'    , []                    , 'Pred'     , zeros(ntrcvexamples,1), ...
+            pmDayRes = struct('Model'    , [], 'LLH', 0.0        , 'Pred'     , zeros(ntrcvexamples,1), ...
                               'PredSort' , zeros(ntrcvexamples,1), 'LabelSort', zeros(ntrcvexamples,1), ...
                               'Precision', zeros(ntrcvexamples,1), 'Recall'   , zeros(ntrcvexamples,1), ...
                               'TPR'      , zeros(ntrcvexamples,1), 'FPR'      , zeros(ntrcvexamples,1), ...
@@ -63,8 +67,7 @@ for fs = 1:nfeatureparamsets
                 
             for fold = 1:nfolds
                 
-                tic
-                fprintf('CV Fold %d: ', fold);
+                fprintf('CV Fold %d\n', fold);
                 
                 [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, pmTrExLabels, ...
                  pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, pmCVIVLabels, pmCVExLabels, cvidx] ...
@@ -78,14 +81,24 @@ for fs = 1:nfeatureparamsets
                 end
                 
                 fprintf('Training...');
-                pmDayRes.Model = compact(fitglm(pmTrNormFeatures, trlabels, ...
-                    'linear', ...
-                    'Distribution', 'binomial', ...
-                    'Link', 'logit'));
+                if isequal(pmModelParams.Version{mp}, 'vPM1')
+                    pmDayRes.Model = compact(fitglm(pmTrNormFeatures, trlabels, ...
+                        'linear', ...
+                        'Distribution', 'binomial', ...
+                        'Link', 'logit'));
                 
-                fprintf('Predicting on CV set...');
-                pmDayRes.Pred(cvidx) = predict(pmDayRes.Model, pmCVNormFeatures);
-                
+                    fprintf('Predicting on CV set...');
+                    pmDayRes.Pred(cvidx) = predict(pmDayRes.Model, pmCVNormFeatures);
+                    
+                elseif isequal(pmModelParams.Version{mp}, 'vPM2')
+                    [pmDayRes.Model, pmDayRes.LLH] = logitBin(pmTrNormFeatures', trlabels', 1.0);
+                    fprintf('Predicting on CV set...');
+                    [~, temppred] = logitBinPred(pmDayRes.Model, pmCVNormFeatures');
+                    pmDayRes.Pred(cvidx) = temppred';
+                else
+                    fprintf('Unknown model version\n');
+                    return
+                end
                 fprintf('Done\n');
                 
             end
@@ -104,14 +117,19 @@ for fs = 1:nfeatureparamsets
                 pmDayRes.FPR(a)       = FP / (FP + TN);
             end
     
-            pmDayRes.PRAUC  = trapz(pmDayRes.Recall, pmDayRes.Precision);
-            pmDayRes.ROCAUC = trapz(pmDayRes.FPR   , pmDayRes.TPR);
+            pmDayRes.PRAUC  = 100 * trapz(pmDayRes.Recall, pmDayRes.Precision);
+            pmDayRes.ROCAUC = 100 * trapz(pmDayRes.FPR   , pmDayRes.TPR);
             pmDayRes.Accuracy = sum(abs(pmDayRes.PredSort - pmDayRes.LabelSort))/ntrcvexamples;
             fprintf('PR AUC = %.2f, ROC AUC = %.2f, Accuracy = %.2f\n', pmDayRes.PRAUC, pmDayRes.ROCAUC, pmDayRes.Accuracy);
             fprintf('\n');
             
             pmModelRes.pmNDayRes(n) = pmDayRes;
+            
+            
         end
+        
+        toc
+        fprintf('\n');
 
         pmFeatureParamsRow = pmThisFeatureParams(fs,:);
         pmModelParamsRow   = pmModelParams(mp,:);

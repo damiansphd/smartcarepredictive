@@ -40,5 +40,8 @@ for p = 1:npatients
     end
 end
 
+% remove last edge to avoid rank deficiency
+pmBucketedcube(:,:,:,nbuckets+1) = [];
+
 end
 
