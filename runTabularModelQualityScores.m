@@ -1,7 +1,7 @@
 clear; close all; clc;
 
 [~, studydisplayname, ~] = selectStudy();
-selectdays = setFocusDays();
+[selectdays, focusopt] = setFocusDays();
 
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
@@ -28,6 +28,7 @@ for i = 1:nmodels
     resultrow(:,{'StudyNbr', 'modelinputsmatfile', 'smoothingmethod', 'minmaxfeat', 'volfeat'}) = [];
     resultrow.Version(:) = pmModelParamsRow.Version;
     resultrow.labelmethod(:) = pmModelParamsRow.labelmethod;
+    resultrow.lambda(:) = pmModelParamsRow.lambda;
     
     avprauc = 0;
     for a = 1:predictionduration
@@ -52,6 +53,41 @@ for i = 1:nmodels
     avrocauc = avrocauc / predictionduration;
     colname = 'Avg_ROC_AUC';
     resultrow(:,{colname}) = array2table(avrocauc);
+    
+    avllh = 0;
+    for a = 1:predictionduration
+        if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+            avllh = avllh + pmModelRes.pmNDayRes(a).LLH(size(pmModelRes.pmNDayRes(a).LLH,2));
+        end
+        if ismember(a, selectdays)
+            colname = sprintf('LLH_Day%d', a);
+            if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+                resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).LLH(size(pmModelRes.pmNDayRes(a).LLH,2)));
+            else
+                resultrow(:,{colname}) = array2table(0.0);
+            end
+        end
+    end
+    avllh = avllh / predictionduration;
+    colname = 'Avg_LLH';
+    resultrow(:,{colname}) = array2table(avllh);
+    
+    maxiter = 0;
+    for a = 1:predictionduration
+        if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+            maxiter = max(maxiter,size(pmModelRes.pmNDayRes(a).LLH,2));
+        end
+        if ismember(a, selectdays)
+            colname = sprintf('Iter_Day%d', a);
+            if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+                resultrow(:,{colname}) = array2table(size(pmModelRes.pmNDayRes(a).LLH,2));
+            else
+                resultrow(:,{colname}) = array2table(0.0);
+            end
+        end
+    end
+    colname = 'Max_Iter';
+    resultrow(:,{colname}) = array2table(maxiter);
  
     pmModelQualityScores = [pmModelQualityScores; resultrow];
     
@@ -59,7 +95,7 @@ end
 
 basedir = setBaseDir();
 subfolder = 'ExcelFiles';
-outputfilename = sprintf('%s Model Quality Scores.xlsx', studydisplayname);
+outputfilename = sprintf('%s_fo%d Model Quality Scores.xlsx', studydisplayname, focusopt);
 fprintf('Saving results to excel file %s\n', outputfilename);
 writetable(pmModelQualityScores, fullfile(basedir, subfolder, outputfilename), 'Sheet', 'Model Quality Scores');
 

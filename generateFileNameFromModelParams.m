@@ -5,8 +5,8 @@ function [mbasefilename] = generateFileNameFromModelParams(fbasefilename, pmMode
 
 fbasefilename = strrep(fbasefilename, 'pmfp', 'pm');
 
-mbasefilename = sprintf('%s_lm%d', ...
-        fbasefilename, pmModelParamRow.labelmethod);
+mbasefilename = sprintf('%s_lm%d_rg%.2f', ...
+        fbasefilename, pmModelParamRow.labelmethod, pmModelParamRow.lambda);
     
 end
 

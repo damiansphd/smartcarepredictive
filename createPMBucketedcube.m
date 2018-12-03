@@ -1,4 +1,4 @@
-function [pmBucketedcube] = createPMBucketedcube(pmInterpNormcube, nbuckets, npatients, maxdays, nmeasures)
+function [pmBucketedcube, ntilepoints] = createPMBucketedcube(pmInterpNormcube, nbuckets, npatients, maxdays, nmeasures)
 
 % createPMBucketedcube - creates the bucketed features cube
 
