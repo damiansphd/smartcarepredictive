@@ -64,6 +64,8 @@ for d = 1:size(pexpred,1)
     pexlabeldata(pfeatindex.CalcDatedn(d)) = pexlabel(d);
 end
 
+ax1 = gobjects(nmeasures + 2,1);
+
 for m = 1:nmeasures
     
     days = (1:pmaxdays);
@@ -178,6 +180,8 @@ plotsdown = predictionduration;
 baseplotname2 = sprintf('%s - All IV Predictions - Patient %d (Study %s, ID %d)', basefilename, patientnbr, patientrow.Study{1}, patientrow.ID);
 [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
 
+ax2 = gobjects(predictionduration,1);
+
 for n = 1:predictionduration
     pivpred  = pmIVModelRes.pmNDayRes(n).Pred(fidx);
     pivlabel = pmIVLabels(fidx, n);
@@ -218,6 +222,8 @@ close(f2);
 
 baseplotname3 = sprintf('%s - All Ex Start Predictions - Patient %d (Study %s, ID %d)', basefilename, patientnbr, patientrow.Study{1}, patientrow.ID);
 [f3,p3] = createFigureAndPanel(baseplotname3, 'Portrait', 'A4');
+
+ax3 = gobjects(predictionduration,1);
 
 for n = 1:predictionduration
     pexpred  = pmExModelRes.pmNDayRes(n).Pred(fidx);

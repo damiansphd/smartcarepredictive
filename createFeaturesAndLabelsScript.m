@@ -43,6 +43,14 @@ for rp = 1:size(pmFeatureParams,1)
     toc
     fprintf('\n');
     
+    % create volatility measures cube
+    tic
+    fprintf('Creating volatility cube\n');
+    [pmInterpVolcube, mvolstats] = createPMInterpVolcube(pmPatients, pmInterpNormcube, ...
+        npatients, maxdays, nmeasures); 
+    toc
+    fprintf('\n');
+    
     % create bucketed data cube if this run option is enabled
     if pmFeatureParams.bucketfeat(rp) == 2
         tic
@@ -52,6 +60,7 @@ for rp = 1:size(pmFeatureParams,1)
         fprintf('\n');
     else
         pmBucketedcube = [];
+        ntilepoints = [];
     end
     
     % create feature/label examples from the data
@@ -75,8 +84,9 @@ for rp = 1:size(pmFeatureParams,1)
         'pmPatients', 'npatients', 'pmAntibiotics', 'pmAMPred', ...
         'pmOverallStats', 'pmPatientMeasStats', ...
         'pmRawDatacube', 'pmInterpDatacube', 'maxdays', ...
-        'measures', 'nmeasures', 'ntilepoints'...
+        'measures', 'nmeasures', 'ntilepoints', ...
         'pmFeatureParams', 'rp', 'pmInterpNormcube', 'pmBucketedcube', ...
+        'pmInterpVolcube', 'mvolstats', ...
         'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', ...
         'pmIVLabels', 'pmExLabels');
     toc

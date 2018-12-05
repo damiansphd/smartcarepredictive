@@ -29,7 +29,9 @@ for p = 1:npatients
                 elseif lowerq > upperq
                     % multiple ntile boundaries have the same value - spread
                     % features evenly across all of these
-                    pmBucketedcube(p, d, m, upperq:lowerq) = 1/(lowerq - upperq + 1);
+                    %pmBucketedcube(p, d, m, upperq:lowerq) = 1/(lowerq - upperq + 1);
+                    % assign full weight to lowest edge
+                    pmBucketedcube(p, d, m, upperq) = 1;
                 else
                     % regular case - datapoint is between two boundaries
                     pmBucketedcube(p, d, m, lowerq) = abs(ntilepoints(m, upperq) - datapoint) / abs(ntilepoints(m, upperq) - ntilepoints(m, lowerq));

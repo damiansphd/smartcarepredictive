@@ -10,12 +10,14 @@ fprintf('3. PR and ROC Curves\n');
 fprintf('4. PR and ROC Curves for Days 2, 5, 8\n');
 fprintf('5. Measures and Predictions for all Patients\n');
 fprintf('6. Measures and Predictions for a single Patient\n');
+fprintf('7. Volatility Measures for all Patients\n');
+fprintf('8. Volatility Measures for a single Patient\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
 plottype = str2double(splottype);
 
-if (isnan(plottype) || plottype < 1 || plottype > 6)
+if (isnan(plottype) || plottype < 1 || plottype > 8)
     fprintf('Invalid choice\n');
     validresponse = false;
     plottype = 0;

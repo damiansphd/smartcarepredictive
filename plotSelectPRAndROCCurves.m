@@ -1,9 +1,7 @@
 function plotSelectPRAndROCCurves(pmIVModelRes, pmExModelRes, ...
-        pmFeatureParamsRow, selectdays, plotsubfolder, basemodelresultsfile)
+        selectdays, plotsubfolder, basemodelresultsfile)
 
 % plotPRAndROCCurves - plots PR and ROC curves for the model results
-
-predictionduration = pmFeatureParamsRow.predictionduration;
 
 nplots = size(selectdays,2);
 
