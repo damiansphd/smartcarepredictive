@@ -5,10 +5,11 @@ function [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
 % preprocessMeasuresMask - remove data for measurements that are not in the
 % selected measuresmeask for the run.
 
-% measuresmask          action
+% measuresmask          Action
 %       1               all measures included
 %       2               Cough only
 %       3               Cough and Wellness
+%       4               All except Temperature
 
 fprintf('Pre-processing for measures mask\n');
 if measuresmask == 1
@@ -18,6 +19,8 @@ elseif measuresmask == 2
     mkeepidx = find(ismember(measures.DisplayName, 'Cough'));
 elseif measuresmask == 3
     mkeepidx = find(ismember(measures.DisplayName,{'Cough','Wellness'}));
+elseif measuresmask -- 4
+    mkeepidx = find(~ismember(measures.DisplayName,{'Temperature'}));
 end
 
 mdelidx = 1:nmeasures;

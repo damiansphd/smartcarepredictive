@@ -19,13 +19,6 @@ fprintf('Creating Raw Datacube\n');
 toc
 fprintf('\n');
 
-% remove Temperature measure and associated data due to insufficient data
-%idx = ismember(measures.DisplayName, {'Temperature'});
-%pmRawDatacube(:,:,measures.Index(idx)) = [];
-%measures(idx,:) = [];
-%nmeasures = size(measures,1);
-%measures.Index = [1:nmeasures]';
-
 % calculate measurement stats (overall and by patient)
 tic
 fprintf('Calculating measurement stats (overall and by patient\n');

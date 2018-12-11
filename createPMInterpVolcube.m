@@ -10,8 +10,6 @@ for p = 1:npatients
     pduration = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p);
     for m = 1:nmeasures
         for d = 2:pduration
-            %mavg = (pmInterpNormcube(p, d, m) + pmInterpNormcube(p, (d-1), m)) / 2;
-            %pmInterpVolcube(p, d, m) = abs((pmInterpNormcube(p, d, m) - mavg) - (pmInterpNormcube(p, (d-1), m) - mavg));
             pmInterpVolcube(p, d, m) = abs(pmInterpNormcube(p, d, m) - pmInterpNormcube(p, (d-1), m));
         end
     end
