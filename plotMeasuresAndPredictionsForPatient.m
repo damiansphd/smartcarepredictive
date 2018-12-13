@@ -1,8 +1,9 @@
 function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata, pinterpdata, ...
-    pmFeatureIndex, pmIVLabels, pmExLabels, pmIVModelRes, pmExModelRes, pmOverallStats, ...
-    pmeasstats, measures, nmeasures, labelidx, pmFeatureParamsRow, plotsubfolder, basefilename)
+    pmFeatureIndex, trcvlabels, pmModelRes, pmOverallStats, ...
+    pmeasstats, measures, nmeasures, labelidx, pmFeatureParamsRow, ...
+    lbdisplayname, plotsubfolder, basefilename)
 
-% plotMeasuresAndPredictions - for a given patient, plot the measures along
+% plotMeasuresAndPredictionsForPatient - for a given patient, plot the measures along
 % with the predictions from the predictive classification model and the 
 % true labels.
 
@@ -12,7 +13,8 @@ pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 plotsacross = 1;
 plotsdown = nmeasures + 2;
 
-baseplotname1 = sprintf('%s - %d Day Prediction - Patient %d (Study %s, ID %d)', basefilename, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);
+baseplotname1 = sprintf('%s - %s Labels %d Day Prediction - Patient %d (Study %s, ID %d)', ...
+    basefilename, lbdisplayname, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);
 
 [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
 
@@ -46,25 +48,17 @@ pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
 
 fidx = (pmFeatureIndex.PatientNbr == patientnbr);
 pfeatindex = pmFeatureIndex(fidx,:);
-pivpred  = pmIVModelRes.pmNDayRes(labelidx).Pred(fidx);
-pivlabel = pmIVLabels(fidx,labelidx);
-pexpred  = pmExModelRes.pmNDayRes(labelidx).Pred(fidx);
-pexlabel = pmExLabels(fidx,labelidx);
+ppred  = pmModelRes.pmNDayRes(labelidx).Pred(fidx);
+plabel = trcvlabels(fidx,labelidx);
 
-pivpreddata = nan(1, pmaxdays);
-pivlabeldata = nan(1, pmaxdays);
-for d = 1:size(pivpred,1)
-    pivpreddata(pfeatindex.CalcDatedn(d))  = pivpred(d);
-    pivlabeldata(pfeatindex.CalcDatedn(d)) = pivlabel(d);
-end
-pexpreddata = nan(1, pmaxdays);
-pexlabeldata = nan(1, pmaxdays);
-for d = 1:size(pexpred,1)
-    pexpreddata(pfeatindex.CalcDatedn(d))  = pexpred(d);
-    pexlabeldata(pfeatindex.CalcDatedn(d)) = pexlabel(d);
+ppreddata = nan(1, pmaxdays);
+plabeldata = nan(1, pmaxdays);
+for d = 1:size(ppred,1)
+    ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
+    plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
 end
 
-ax1 = gobjects(nmeasures + 2,1);
+ax1 = gobjects(nmeasures + 1,1);
 
 for m = 1:nmeasures
     
@@ -129,15 +123,15 @@ for m = 1:nmeasures
     end
 end
 
-% Predictions for IV Labels
+% Predictions for Labels
 m = nmeasures + 1;
 ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
 xlim(xl);
 yl = [0 1];
 ylim(yl);
-plottitle = sprintf('%d Day Prediction for IV Labels', labelidx);
-[xl, yl] = plotMeasurementData(ax1(m), days, pivlabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-[xl, yl] = plotMeasurementData(ax1(m), days, pivpreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+plottitle = sprintf('%d Day Prediction for %s Labels', labelidx, lbdisplayname);
+[xl, yl] = plotMeasurementData(ax1(m), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
+[xl, yl] = plotMeasurementData(ax1(m), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
 
 for ab = 1:size(poralabsdates, 1)
     hold on;
@@ -149,17 +143,6 @@ for ab = 1:size(pivabsdates, 1)
     plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
     hold off;
 end
-
-% Predictions for Ex_Start Labels
-m = nmeasures + 2;
-ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
-xlim(xl);
-yl = [0 1];
-ylim(yl);
-plottitle = sprintf('%d Day Prediction for Exacerbation Start Labels', labelidx);
-[xl, yl] = plotMeasurementData(ax1(m), days, pexlabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-[xl, yl] = plotMeasurementData(ax1(m), days, pexpreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
-
 for ex = 1:size(pexstsdates, 1)
     hold on;
     [xl, yl] = plotVerticalLine(ax1(m), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
@@ -177,30 +160,31 @@ predictionduration = pmFeatureParamsRow.predictionduration;
 plotsacross = 1;
 plotsdown = predictionduration;
 
-baseplotname2 = sprintf('%s - All IV Predictions - Patient %d (Study %s, ID %d)', basefilename, patientnbr, patientrow.Study{1}, patientrow.ID);
+baseplotname2 = sprintf('%s - %s Labels All Predictions - Patient %d (Study %s, ID %d)', ...
+    basefilename, lbdisplayname, patientnbr, patientrow.Study{1}, patientrow.ID);
 [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
 
 ax2 = gobjects(predictionduration,1);
 
 for n = 1:predictionduration
-    pivpred  = pmIVModelRes.pmNDayRes(n).Pred(fidx);
-    pivlabel = pmIVLabels(fidx, n);
+    ppred  = pmModelRes.pmNDayRes(n).Pred(fidx);
+    plabel = trcvlabels(fidx, n);
     
-    pivpreddata = nan(1, pmaxdays);
-    pivlabeldata = nan(1, pmaxdays);
+    ppreddata = nan(1, pmaxdays);
+    plabeldata = nan(1, pmaxdays);
 
-    for d = 1:size(pivpred,1)
-        pivpreddata(pfeatindex.CalcDatedn(d))  = pivpred(d);
-        pivlabeldata(pfeatindex.CalcDatedn(d)) = pivlabel(d);
+    for d = 1:size(ppred,1)
+        ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
+        plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
     end
 
     ax2(n) = subplot(plotsdown, plotsacross, n, 'Parent',p2);
     xlim(xl);
     yl = [0 1];
     ylim(yl);
-    plottitle = sprintf('%d Day Prediction for IV Labels', n);
-    [xl, yl] = plotMeasurementData(ax2(n), days, pivlabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax2(n), days, pivpreddata,  xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+    plottitle = sprintf('%d Day Prediction for %s Labels', n, lbdisplayname);
+    [xl, yl] = plotMeasurementData(ax2(n), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax2(n), days, ppreddata,  xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
 
     for ab = 1:size(poralabsdates,1)
         hold on;
@@ -213,51 +197,20 @@ for n = 1:predictionduration
         plotFillArea(ax2(n), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
         hold off;
     end
+    for ex = 1:size(pexstsdates, 1)
+        hold on;
+        [xl, yl] = plotVerticalLine(ax2(n), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
+        plotFillArea(ax2(n), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        if pexstsdates.RelLB2(ex) ~= -1
+            plotFillArea(ax2(n), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        end
+    end    
     
 end
 
 basedir = setBaseDir();
 savePlotInDir(f2, baseplotname2, basedir, plotsubfolder);
 close(f2);
-
-baseplotname3 = sprintf('%s - All Ex Start Predictions - Patient %d (Study %s, ID %d)', basefilename, patientnbr, patientrow.Study{1}, patientrow.ID);
-[f3,p3] = createFigureAndPanel(baseplotname3, 'Portrait', 'A4');
-
-ax3 = gobjects(predictionduration,1);
-
-for n = 1:predictionduration
-    pexpred  = pmExModelRes.pmNDayRes(n).Pred(fidx);
-    pexlabel = pmExLabels(fidx, n);
-    
-    pexpreddata = nan(1, pmaxdays);
-    pexlabeldata = nan(1, pmaxdays);
-
-    for d = 1:size(pivpred,1)
-        pexpreddata(pfeatindex.CalcDatedn(d))  = pexpred(d);
-        pexlabeldata(pfeatindex.CalcDatedn(d)) = pexlabel(d);
-    end
-
-    ax3(n) = subplot(plotsdown, plotsacross, n, 'Parent', p3);
-    xlim(xl);
-    yl = [0 1];
-    ylim(yl);
-    plottitle = sprintf('%d Day Prediction for Exacerbation Start Labels', n);
-    [xl, yl] = plotMeasurementData(ax3(n), days, pexlabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax3(n), days, pexpreddata,  xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
-
-    for ex = 1:size(pexstsdates, 1)
-        hold on;
-        [xl, yl] = plotVerticalLine(ax3(n), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax3(n), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
-        if pexstsdates.RelLB2(ex) ~= -1
-            plotFillArea(ax3(n), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
-        end
-    end    
-end
-
-basedir = setBaseDir();
-savePlotInDir(f3, baseplotname3, basedir, plotsubfolder);
-close(f3);
 
 end
 

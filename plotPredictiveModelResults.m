@@ -1,41 +1,27 @@
 clear; close all; clc;
 
-% logic to load in results for model runs with  both Ex and IV labels 
-[modelresultsfile] = selectModelResultsFile();
-basemodelresultsfile = strrep(modelresultsfile, ' ModelResults', '');
-basemodelresultsfile = strrep(basemodelresultsfile, '_lm1', '');
-basemodelresultsfile = strrep(basemodelresultsfile, '_lm2', '');
+% logic to load in results for a given  model run
+[lb, lbdisplayname, validresponse] = selectLabelMethod();
+if validresponse == 0
+    return;
+end
+
+[basemodelresultsfile] = selectModelResultsFile(lb);
+modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
+basemodelresultsfile = strrep(basemodelresultsfile, ' ModelResults', '');
+
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-modelresultsmatfile = sprintf('%s.mat', modelresultsfile);
 fprintf('Loading predictive model results data for %s\n', modelresultsfile);
-load(fullfile(basedir, subfolder, modelresultsmatfile), 'pmModelRes', ...
+load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVFeatures', ...
-    'pmTrCVNormFeatures', 'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVPatientSplit');
-if pmModelParamsRow.labelmethod == 1
-    pmIVModelRes         = pmModelRes;
-    modelresultsfile2 = strrep(modelresultsfile,'_lm1','_lm2');
-    modelresultsmatfile2 = sprintf('%s.mat', modelresultsfile2);
-    fprintf('Loading predictive model results data for %s\n', modelresultsfile2);
-    load(fullfile(basedir, subfolder, modelresultsmatfile2), 'pmModelRes', 'pmModelParamsRow');
-    pmExModelRes         = pmModelRes;
-elseif pmModelParamsRow.labelmethod == 2
-    pmExModelRes         = pmModelRes;
-    modelresultsfile2 = strrep(modelresultsfile,'_lm2','_lm1');
-    modelresultsmatfile2 = sprintf('%s.mat', modelresultsfile2);
-    fprintf('Loading predictive model results data for %s\n', modelresultsfile2);
-    load(fullfile(basedir, subfolder, modelresultsmatfile2), 'pmModelRes', 'pmModelParamsRow');
-    pmIVModelRes         = pmModelRes;
-else
-    fprintf('Unknown label method\n');
-    return;
-end
+    'pmTrCVNormFeatures', 'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVPatientSplit');
+
 featureparamsfile = generateFileNameFromFeatureParams(pmFeatureParamsRow);
 featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
 fprintf('Loading predictive model input data for %s\n', featureparamsfile);
 load(fullfile(basedir, subfolder, featureparamsmatfile));
-clear('pmModelRes');
 toc
 fprintf('\n');
 
@@ -48,30 +34,41 @@ if ~validresponse
     return;
 end
 
-selectdays = setFocusDays();
+if (plottype == 2 || plottype == 4)
+    selectdays = setFocusDays();
+end
+
+if pmModelParamsRow.labelmethod == 1
+    trcvlabels = pmTrCVIVLabels;
+elseif pmModelParamsRow.labelmethod == 2
+    trcvlabels = pmTrCVExLabels;
+elseif pmModelParamsRow.labelmethod == 3
+    trcvlabels = pmTrCVABLabels;
+elseif pmModelParamsRow.labelmethod == 4
+    trcvlabels = pmTrCVExLBLabels;
+end
+
 
 if plottype == 1
     % plot weights
     fprintf('Plotting Model Weights\n');
-    plotModelWeights(pmIVModelRes, pmExModelRes, measures, nmeasures, ...
-        pmFeatureParamsRow, pmModelParamsRow, ...
+    plotModelWeights(pmModelRes, measures, nmeasures, ...
+        pmFeatureParamsRow, pmModelParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile);
 elseif plottype == 2
     % plot weights for days 2, 5, 8
-    fprintf('Plotting Model Weights for prediction days 2, 5, 8\n');
-    plotSelectModelWeights(pmIVModelRes, pmExModelRes, measures, nmeasures, ...
-        pmFeatureParamsRow, pmModelParamsRow, selectdays, ...
+    fprintf('Plotting Model Weights for selected prediction days\n');
+    plotSelectModelWeights(pmModelRes, measures, nmeasures, ...
+        pmFeatureParamsRow, pmModelParamsRow, selectdays, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile);
 elseif plottype == 3    
     % plot PR and ROC Curves
     fprintf('Plotting PR and ROC Curves\n');
-    plotPRAndROCCurves(pmIVModelRes, pmExModelRes, ...
-        pmFeatureParamsRow, plotsubfolder, basemodelresultsfile);
+    plotPRAndROCCurves(pmModelRes, pmFeatureParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile);
 elseif plottype == 4    
     % plot PR and ROC Curves for days 2, 5, 8
-    fprintf('Plotting PR and ROC Curves for prediction days 2, 5, 8\n');
-    plotSelectPRAndROCCurves(pmIVModelRes, pmExModelRes, ...
-        selectdays, plotsubfolder, basemodelresultsfile);      
+    fprintf('Plotting PR and ROC Curves for selected prediction days\n');
+    plotSelectPRAndROCCurves(pmModelRes, selectdays, lbdisplayname, plotsubfolder, basemodelresultsfile);      
 elseif plottype == 5
     % plot measures and predictions for all non-test set patients
     ntrcvpatients = size(pmTrCVPatientSplit,1);
@@ -81,9 +78,9 @@ elseif plottype == 5
         plotMeasuresAndPredictionsForPatient(pmPatients(pnbr,:), ...
             pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr),:), ...
             pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
-            pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmTrCVFeatureIndex, pmTrCVIVLabels, pmTrCVExLabels, ...
-            pmIVModelRes, pmExModelRes, pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
-            measures, nmeasures, labelidx, pmFeatureParamsRow, plotsubfolder, basemodelresultsfile);
+            pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmTrCVFeatureIndex, trcvlabels, ...
+            pmModelRes, pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+            measures, nmeasures, labelidx, pmFeatureParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile);
     end
 elseif plottype == 6
     % plot measures and predictions for a single patient
@@ -95,9 +92,9 @@ elseif plottype == 6
     plotMeasuresAndPredictionsForPatient(pmPatients(pnbr,:), ...
         pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr),:), ...
         pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
-        pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmTrCVFeatureIndex, pmTrCVIVLabels, pmTrCVExLabels, ...
-        pmIVModelRes, pmExModelRes, pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
-        measures, nmeasures, labelidx, pmFeatureParamsRow, plotsubfolder, basemodelresultsfile);
+        pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmTrCVFeatureIndex, trcvlabels, ...
+        pmModelRes, pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, labelidx, pmFeatureParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile);
 elseif plottype == 7
     % plot volatility measures for all patients
     ntrcvpatients = size(pmTrCVPatientSplit,1);

@@ -35,14 +35,22 @@ for fs = 1:nfeatureparamsets
         end
 
         tic
-        predictionduration = pmThisFeatureParams.predictionduration(fs);
+        % for the 'Ex Start to Treatment' label, there is only one task.
+        % for the other label methods, use the predictionduration from the
+        % feature parameters record
+        if (pmModelParams.labelmethod(mp) == 5 || pmModelParams.labelmethod(mp) == 6)
+            predictionduration == 1
+        else
+            predictionduration = pmThisFeatureParams.predictionduration(fs);
+        end
+        
         nexamples = size(pmNormFeatures,1);
         
         % separate out test data and keep aside
-        [pmTestFeatureIndex, pmTestFeatures, pmTestNormFeatures, pmTestIVLabels, pmTestExLabels, ...
-         pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, pmTrCVIVLabels, pmTrCVExLabels, ...
+        [pmTestFeatureIndex, pmTestFeatures, pmTestNormFeatures, pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, ...
+         pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, ...
          pmTrCVPatientSplit, nfolds] = ...
-            splitTestFeatures(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels, pmPatientSplit, nsplits);
+            splitTestFeatures(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels, pmABLabels, pmExLBLabels, pmPatientSplit, nsplits);
         
         ntrcvexamples = size(pmTrCVNormFeatures,1);
         
@@ -59,26 +67,40 @@ for fs = 1:nfeatureparamsets
                               'PRAUC'    , 0.0                   , 'ROCAUC'   , 0.0, ...
                               'Accuracy' , 0.0);
                           
-            if pmModelParams.labelmethod(mp) == 1
-                    trcvlabels = pmTrCVIVLabels(:,n);
-                else
-                    trcvlabels = pmTrCVExLabels(:,n);
+            if     pmModelParams.labelmethod(mp) == 1
+                trcvlabels = pmTrCVIVLabels(:,n);
+            elseif pmModelParams.labelmethod(mp) == 2
+                trcvlabels = pmTrCVExLabels(:,n);
+            elseif pmModelParams.labelmethod(mp) == 3
+                trcvlabels = pmTrCVABLabels(:,n);
+            elseif pmModelParams.labelmethod(mp) == 4
+                trcvlabels = pmTrCVExLBLabels(:,n);
+            else
+                fprintf('Unknown label method\n');
+                return;
             end
                 
             for fold = 1:nfolds
                 
                 fprintf('CV Fold %d\n', fold);
                 
-                [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, pmTrExLabels, ...
-                 pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, pmCVIVLabels, pmCVExLabels, cvidx] ...
-                    = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, pmTrCVIVLabels, pmTrCVExLabels, ...
-                              pmTrCVPatientSplit, fold);
+                [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, trlabels, ...
+                 pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, cvlabels, cvidx] ...
+                    = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
 
-                if pmModelParams.labelmethod(mp) == 1
-                    trlabels = pmTrIVLabels(:,n);
-                else
-                    trlabels = pmTrExLabels(:,n);
-                end
+                %if     pmModelParams.labelmethod(mp) == 1
+                %    trlabels = pmTrIVLabels(:,n);
+                %elseif pmModelParams.labelmethod(mp) == 2
+                %    trlabels = pmTrExLabels(:,n);
+                %elseif pmModelParams.labelmethod(mp) == 3
+                %    trlabels = pmTrABLabels(:,n);
+                %elseif pmModelParams.labelmethod(mp) == 4
+                %    trlabels = pmTrExLBLabels(:,n);
+                %else
+                %    fprintf('Unknown label method\n');
+                %    return;
+                %end
+                
                 
                 fprintf('Training...');
                 if isequal(pmModelParams.Version{mp}, 'vPM1')
@@ -125,7 +147,6 @@ for fs = 1:nfeatureparamsets
             
             pmModelRes.pmNDayRes(n) = pmDayRes;
             
-            
         end
         
         toc
@@ -140,11 +161,13 @@ for fs = 1:nfeatureparamsets
         outputfilename = sprintf('%s ModelResults.mat', mbasefilename);
         fprintf('Saving output variables to file %s\n', outputfilename);
         save(fullfile(basedir, subfolder, outputfilename), ...
-            'pmTestFeatureIndex', 'pmTestFeatures', 'pmTestNormFeatures', 'pmTestIVLabels', 'pmTestExLabels', ...
-            'pmTrCVFeatureIndex', 'pmTrCVFeatures', 'pmTrCVNormFeatures', 'pmTrCVIVLabels', 'pmTrCVExLabels', ...
+            'pmTestFeatureIndex', 'pmTestFeatures', 'pmTestNormFeatures', 'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', ...
+            'pmTrCVFeatureIndex', 'pmTrCVFeatures', 'pmTrCVNormFeatures', 'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels',...
             'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow');
         toc
         fprintf('\n');
     end
 end
 
+beep on;
+beep;

@@ -1,6 +1,6 @@
-function [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, pmTrIVLabels, pmTrExLabels, ...
-          pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, pmCVIVLabels, pmCVExLabels, cvidx] = ...
-          splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVPatientSplit, fold)
+function [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, trlabels, ...
+          pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, cvlabels, cvidx] = ...
+          splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold)
       
 % splitTrCVFeatures - split out training and cross validation data for a
 % given fold
@@ -10,14 +10,12 @@ cvidx = ismember(pmTrCVFeatureIndex.PatientNbr, pmTrCVPatientSplit.PatientNbr(pm
 pmCVFeatureIndex = pmTrCVFeatureIndex(cvidx, :);
 pmCVFeatures     = pmTrCVFeatures(cvidx, :);
 pmCVNormFeatures = pmTrCVNormFeatures(cvidx, :);
-pmCVIVLabels     = pmTrCVIVLabels(cvidx, :);
-pmCVExLabels     = pmTrCVExLabels(cvidx, :);
+cvlabels         = trcvlabels(cvidx);
 
 pmTrFeatureIndex = pmTrCVFeatureIndex(~cvidx, :);
 pmTrFeatures     = pmTrCVFeatures(~cvidx, :);
 pmTrNormFeatures = pmTrCVNormFeatures(~cvidx, :);
-pmTrIVLabels     = pmTrCVIVLabels(~cvidx, :);
-pmTrExLabels     = pmTrCVExLabels(~cvidx, :);
+trlabels         = trcvlabels(~cvidx);
 
 end
 

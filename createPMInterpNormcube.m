@@ -1,5 +1,5 @@
 function [pmInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmOverallStats, ...
-    pmPatientMeasStats, npatients, maxdays, nmeasures, normmethod)
+    pmPatientMeasStats, npatients, maxdays, nmeasures, normmethod, smoothingmethod)
 
 % createPMInterpNormcube - creates the normalised data cube
 
@@ -27,6 +27,16 @@ for m = 1:nmeasures
         fprintf('Unknown normalisation method\n');
     end
 end
+
+if smoothingmethod == 2
+    fprintf('Smoothing normalised cube\n');
+    for p = 1:npatients
+        for m = 1:nmeasures
+            pmInterpNormcube(p,:,m) = smooth(pmInterpNormcube(p,:,m),5);
+        end
+    end
+end
+
 
 end
 

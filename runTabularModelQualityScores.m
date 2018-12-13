@@ -25,7 +25,7 @@ for i = 1:nmodels
     predictionduration = pmFeatureParamsRow.predictionduration;
 
     resultrow = pmFeatureParamsRow;
-    resultrow(:,{'StudyNbr', 'modelinputsmatfile', 'smoothingmethod', 'minmaxfeat', 'volfeat'}) = [];
+    resultrow(:,{'StudyNbr', 'modelinputsmatfile', 'minmaxfeat', 'volfeat'}) = [];
     resultrow.Version(:) = pmModelParamsRow.Version;
     resultrow.labelmethod(:) = pmModelParamsRow.labelmethod;
     resultrow.lambda(:) = pmModelParamsRow.lambda;
