@@ -5,7 +5,7 @@ function plotModelWeights(pmModelRes, measures, nmeasures, ...
 % for both given labels 
 
 featureduration  = pmFeatureParamsRow.featureduration;
-predictionduration = pmFeatureParamsRow.predictionduration;
+predictionduration = size(pmModelRes.pmNDayRes, 2);
 
 xl1 = [1 featureduration];
 

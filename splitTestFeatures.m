@@ -1,7 +1,10 @@
-function [pmTestFeatureIndex, pmTestFeatures, pmTestNormFeatures, pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, ...
-          pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, ...
-          pmTrCVPatientSplit, nfolds] = ...
-            splitTestFeatures(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmExLabels, pmABLabels, pmExLBLabels, pmPatientSplit, nsplits)
+function [pmTestFeatureIndex, pmTestFeatures, pmTestNormFeatures, ...
+    pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, ...
+    pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, ...
+    pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, ...
+    pmTrCVPatientSplit, nfolds] ...
+    = splitTestFeatures(pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, ...
+                        pmExLabels, pmABLabels, pmExLBLabels, pmExABLabels, pmPatientSplit, nsplits)
       
 % splitTestFeatures - split out test data from training & cross validation
 % data
@@ -19,6 +22,7 @@ pmTestIVLabels     = pmIVLabels(testidx, :);
 pmTestExLabels     = pmExLabels(testidx, :);
 pmTestABLabels     = pmABLabels(testidx, :);
 pmTestExLBLabels   = pmExLBLabels(testidx, :);
+pmTestExABLabels   = pmExABLabels(testidx, :);
 
 pmTrCVFeatureIndex = pmFeatureIndex(~testidx, :);
 pmTrCVFeatures     = pmFeatures(~testidx, :);
@@ -27,6 +31,7 @@ pmTrCVIVLabels     = pmIVLabels(~testidx, :);
 pmTrCVExLabels     = pmExLabels(~testidx, :);
 pmTrCVABLabels     = pmABLabels(~testidx, :);
 pmTrCVExLBLabels   = pmExLBLabels(~testidx, :);
+pmTrCVExABLabels   = pmExABLabels(~testidx, :);
 
 end
 

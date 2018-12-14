@@ -3,7 +3,7 @@ function plotPRAndROCCurves(pmModelRes, pmFeatureParamsRow, lbdisplayname, ...
 
 % plotPRAndROCCurves - plots PR and ROC curves for the model results
 
-predictionduration = pmFeatureParamsRow.predictionduration;
+predictionduration = size(pmModelRes.pmNDayRes, 2);
 
 if predictionduration <= 3
     plotsacross = 1;

@@ -15,8 +15,8 @@ basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 fprintf('Loading predictive model results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
-    'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVFeatures', ...
-    'pmTrCVNormFeatures', 'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVPatientSplit');
+    'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVFeatures', 'pmTrCVNormFeatures', ...
+    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVPatientSplit');
 
 featureparamsfile = generateFileNameFromFeatureParams(pmFeatureParamsRow);
 featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
@@ -27,7 +27,8 @@ fprintf('\n');
 
 plotsubfolder = sprintf('Plots/%s', basemodelresultsfile);
 mkdir(fullfile(basedir, plotsubfolder));
-labelidx = 5;
+
+labelidx = min(size(pmModelRes.pmNDayRes, 2), 5);
 
 [plottype, validresponse] = selectPlotType;
 if ~validresponse
@@ -38,16 +39,7 @@ if (plottype == 2 || plottype == 4)
     selectdays = setFocusDays();
 end
 
-if pmModelParamsRow.labelmethod == 1
-    trcvlabels = pmTrCVIVLabels;
-elseif pmModelParamsRow.labelmethod == 2
-    trcvlabels = pmTrCVExLabels;
-elseif pmModelParamsRow.labelmethod == 3
-    trcvlabels = pmTrCVABLabels;
-elseif pmModelParamsRow.labelmethod == 4
-    trcvlabels = pmTrCVExLBLabels;
-end
-
+[trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels);
 
 if plottype == 1
     % plot weights

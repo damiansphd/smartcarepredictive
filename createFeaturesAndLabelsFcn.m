@@ -1,4 +1,4 @@
-function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels] = ...
+function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels] = ...
     createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, pmInterpDatacube, pmInterpNormcube, ...
     pmBucketedcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
  
@@ -49,6 +49,8 @@ pmNormFeatures  = zeros(nexamples, nnormfeatures);
 normfeaturerow  = zeros(1, nnormfeatures);
 pmIVLabels      = false(nexamples, predictionduration);
 pmExLabels      = false(nexamples, predictionduration);
+pmABLabels      = false(nexamples, predictionduration);
+pmExLBLabels    = false(nexamples, predictionduration);
 pmExABLabels    = false(nexamples,1);
 
 fprintf('Processing data for patients\n');
@@ -130,16 +132,19 @@ for p = 1:npatients
                 
             % add new ExAB labels here. First uses Prediction day, second uses lower
             % bound as the ex start point
-            
+            exablabelrow = checkInExStartToTreatmentWindow(featureindexrow, ...
+                    pmAMPred(pmAMPred.PatientNbr  == p, :), ...
+                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :));
             
             % add to arrays
-            pmFeatureIndex(example,:) = featureindexrow;
-            pmFeatures(example,:)     = featurerow;
-            pmNormFeatures(example,:) = normfeaturerow;
-            pmIVLabels(example,:)     = ivlabelrow;
-            pmABLabels(example,:)     = ablabelrow;
-            pmExLabels(example,:)     = exlabelrow;
-            pmExLBLabels(example,:)     = exlblabelrow;
+            pmFeatureIndex(example, :) = featureindexrow;
+            pmFeatures(example, :)     = featurerow;
+            pmNormFeatures(example, :) = normfeaturerow;
+            pmIVLabels(example, :)     = ivlabelrow;
+            pmABLabels(example, :)     = ablabelrow;
+            pmExLabels(example, :)     = exlabelrow;
+            pmExLBLabels(example, :)   = exlblabelrow;
+            pmExABLabels(example, :)   = exablabelrow;
             example = example + 1;
         end
     end

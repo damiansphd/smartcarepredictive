@@ -22,75 +22,126 @@ for i = 1:nmodels
     load(fullfile(basedir, subfolder, modelresultsfiles{i}), 'pmModelRes', ...
         'pmFeatureParamsRow', 'pmModelParamsRow');
     
-    predictionduration = pmFeatureParamsRow.predictionduration;
-
     resultrow = pmFeatureParamsRow;
     resultrow(:,{'StudyNbr', 'modelinputsmatfile', 'minmaxfeat', 'volfeat'}) = [];
-    resultrow.Version(:) = pmModelParamsRow.Version;
+    resultrow.Version(:)     = pmModelParamsRow.Version;
     resultrow.labelmethod(:) = pmModelParamsRow.labelmethod;
-    resultrow.lambda(:) = pmModelParamsRow.lambda;
+    resultrow.lambda(:)      = pmModelParamsRow.lambda;
     
-    avprauc = 0;
+    predictionduration = pmFeatureParamsRow.predictionduration;
+    labelmethod        = pmModelParamsRow.labelmethod;
+    
     for a = 1:predictionduration
-        avprauc = avprauc + pmModelRes.pmNDayRes(a).PRAUC;
         if ismember(a, selectdays)
             colname = sprintf('PR_AUC_Day%d', a);
-            resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).PRAUC);
+            resultrow(:,{colname}) = array2table(0.0);
         end
     end
-    avprauc = avprauc / predictionduration;
     colname = 'Avg_PR_AUC';
-    resultrow(:,{colname}) = array2table(avprauc);
-            
-    avrocauc = 0;
+    resultrow(:,{colname}) = array2table(0.0);
+    
     for a = 1:predictionduration
-        avrocauc = avrocauc + pmModelRes.pmNDayRes(a).ROCAUC;
         if ismember(a, selectdays)
             colname = sprintf('ROC_AUC_Day%d', a);
-            resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).ROCAUC);
+            resultrow(:,{colname}) = array2table(0.0);
         end
     end
-    avrocauc = avrocauc / predictionduration;
     colname = 'Avg_ROC_AUC';
-    resultrow(:,{colname}) = array2table(avrocauc);
+    resultrow(:,{colname}) = array2table(0.0);
     
-    avllh = 0;
     for a = 1:predictionduration
-        if isequal(pmModelParamsRow.Version{1}, 'vPM2')
-            avllh = avllh + pmModelRes.pmNDayRes(a).LLH(size(pmModelRes.pmNDayRes(a).LLH,2));
-        end
         if ismember(a, selectdays)
             colname = sprintf('LLH_Day%d', a);
-            if isequal(pmModelParamsRow.Version{1}, 'vPM2')
-                resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).LLH(size(pmModelRes.pmNDayRes(a).LLH,2)));
-            else
-                resultrow(:,{colname}) = array2table(0.0);
-            end
-        end
+            resultrow(:,{colname}) = array2table(0.0);
+        end  
     end
-    avllh = avllh / predictionduration;
     colname = 'Avg_LLH';
-    resultrow(:,{colname}) = array2table(avllh);
+    resultrow(:,{colname}) = array2table(0.0);
     
-    maxiter = 0;
     for a = 1:predictionduration
-        if isequal(pmModelParamsRow.Version{1}, 'vPM2')
-            maxiter = max(maxiter,size(pmModelRes.pmNDayRes(a).LLH,2));
-        end
         if ismember(a, selectdays)
-            colname = sprintf('Iter_Day%d', a);
-            if isequal(pmModelParamsRow.Version{1}, 'vPM2')
-                resultrow(:,{colname}) = array2table(size(pmModelRes.pmNDayRes(a).LLH,2));
-            else
-                resultrow(:,{colname}) = array2table(0.0);
-            end
-        end
+            colname = sprintf('Iter_Day%d', a);        
+            resultrow(:,{colname}) = array2table(0.0);
+        end    
     end
     colname = 'Max_Iter';
-    resultrow(:,{colname}) = array2table(maxiter);
- 
-    pmModelQualityScores = [pmModelQualityScores; resultrow];
+    resultrow(:,{colname}) = array2table(0.0);
     
+    
+   
+    if labelmethod == 5
+        
+        avprauc  = pmModelRes.pmNDayRes.PRAUC;
+        colname  = 'Avg_PR_AUC';
+        resultrow(:,{colname}) = array2table(avprauc);
+        
+        avrocauc = pmModelRes.pmNDayRes.ROCAUC;
+        colname = 'Avg_ROC_AUC';
+        resultrow(:,{colname}) = array2table(avrocauc);
+        
+    else
+        
+        avprauc = 0;
+        for a = 1:predictionduration
+            avprauc = avprauc + pmModelRes.pmNDayRes(a).PRAUC;
+            if ismember(a, selectdays)
+                colname = sprintf('PR_AUC_Day%d', a);
+                resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).PRAUC);
+            end
+        end
+        avprauc = avprauc / predictionduration;
+        colname = 'Avg_PR_AUC';
+        resultrow(:,{colname}) = array2table(avprauc);
+            
+        avrocauc = 0;
+        for a = 1:predictionduration
+            avrocauc = avrocauc + pmModelRes.pmNDayRes(a).ROCAUC;
+            if ismember(a, selectdays)
+                colname = sprintf('ROC_AUC_Day%d', a);
+                resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).ROCAUC);
+            end
+        end
+        avrocauc = avrocauc / predictionduration;
+        colname = 'Avg_ROC_AUC';
+        resultrow(:,{colname}) = array2table(avrocauc);
+    
+        avllh = 0;
+        for a = 1:predictionduration
+            if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+                avllh = avllh + pmModelRes.pmNDayRes(a).LLH(size(pmModelRes.pmNDayRes(a).LLH,2));
+            end
+            if ismember(a, selectdays)
+                colname = sprintf('LLH_Day%d', a);
+                if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+                    resultrow(:,{colname}) = array2table(pmModelRes.pmNDayRes(a).LLH(size(pmModelRes.pmNDayRes(a).LLH,2)));
+                else
+                    resultrow(:,{colname}) = array2table(0.0);
+                end
+            end
+        end
+        avllh = avllh / predictionduration;
+        colname = 'Avg_LLH';
+        resultrow(:,{colname}) = array2table(avllh);
+    
+        maxiter = 0;
+        for a = 1:predictionduration
+            if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+                maxiter = max(maxiter,size(pmModelRes.pmNDayRes(a).LLH,2));
+            end
+            if ismember(a, selectdays)
+                colname = sprintf('Iter_Day%d', a);
+                if isequal(pmModelParamsRow.Version{1}, 'vPM2')
+                    resultrow(:,{colname}) = array2table(size(pmModelRes.pmNDayRes(a).LLH,2));
+                else
+                    resultrow(:,{colname}) = array2table(0.0);
+                end
+            end
+        end
+        colname = 'Max_Iter';
+        resultrow(:,{colname}) = array2table(maxiter);
+    end
+    
+    pmModelQualityScores = [pmModelQualityScores; resultrow];
 end
 
 basedir = setBaseDir();

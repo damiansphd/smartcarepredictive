@@ -156,61 +156,64 @@ basedir = setBaseDir();
 savePlotInDir(f1, baseplotname1, basedir, plotsubfolder);
 close(f1);
 
-predictionduration = pmFeatureParamsRow.predictionduration;
-plotsacross = 1;
-plotsdown = predictionduration;
+predictionduration = size(pmModelRes.pmNDayRes, 2);
+if predictionduration > 1
+    plotsacross = 1;
+    plotsdown = pmFeatureParamsRow.predictionduration;
 
-baseplotname2 = sprintf('%s - %s Labels All Predictions - Patient %d (Study %s, ID %d)', ...
-    basefilename, lbdisplayname, patientnbr, patientrow.Study{1}, patientrow.ID);
-[f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
+    baseplotname2 = sprintf('%s - %s Labels All Predictions - Patient %d (Study %s, ID %d)', ...
+                        basefilename, lbdisplayname, patientnbr, patientrow.Study{1}, patientrow.ID);
+    [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
 
-ax2 = gobjects(predictionduration,1);
+    ax2 = gobjects(predictionduration,1);
 
-for n = 1:predictionduration
-    ppred  = pmModelRes.pmNDayRes(n).Pred(fidx);
-    plabel = trcvlabels(fidx, n);
+    for n = 1:predictionduration
+        ppred  = pmModelRes.pmNDayRes(n).Pred(fidx);
+        plabel = trcvlabels(fidx, n);
     
-    ppreddata = nan(1, pmaxdays);
-    plabeldata = nan(1, pmaxdays);
+        ppreddata = nan(1, pmaxdays);
+        plabeldata = nan(1, pmaxdays);
 
-    for d = 1:size(ppred,1)
-        ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
-        plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
-    end
-
-    ax2(n) = subplot(plotsdown, plotsacross, n, 'Parent',p2);
-    xlim(xl);
-    yl = [0 1];
-    ylim(yl);
-    plottitle = sprintf('%d Day Prediction for %s Labels', n, lbdisplayname);
-    [xl, yl] = plotMeasurementData(ax2(n), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax2(n), days, ppreddata,  xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
-
-    for ab = 1:size(poralabsdates,1)
-        hold on;
-        plotFillArea(ax2(n), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
-        hold off;
-    end
-    
-    for ab = 1:size(pivabsdates,1)
-        hold on;
-        plotFillArea(ax2(n), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
-        hold off;
-    end
-    for ex = 1:size(pexstsdates, 1)
-        hold on;
-        [xl, yl] = plotVerticalLine(ax2(n), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax2(n), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
-        if pexstsdates.RelLB2(ex) ~= -1
-            plotFillArea(ax2(n), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        for d = 1:size(ppred,1)
+            ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
+            plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
         end
-    end    
-    
-end
 
-basedir = setBaseDir();
-savePlotInDir(f2, baseplotname2, basedir, plotsubfolder);
-close(f2);
+        ax2(n) = subplot(plotsdown, plotsacross, n, 'Parent',p2);
+        xlim(xl);
+        yl = [0 1];
+        ylim(yl);
+        plottitle = sprintf('%d Day Prediction for %s Labels', n, lbdisplayname);
+        [xl, yl] = plotMeasurementData(ax2(n), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
+        [xl, yl] = plotMeasurementData(ax2(n), days, ppreddata,  xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+
+        for ab = 1:size(poralabsdates,1)
+            hold on;
+            plotFillArea(ax2(n), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
+            hold off;
+        end
+    
+        for ab = 1:size(pivabsdates,1)
+            hold on;
+            plotFillArea(ax2(n), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
+            hold off;
+        end
+        
+        for ex = 1:size(pexstsdates, 1)
+            hold on;
+            [xl, yl] = plotVerticalLine(ax2(n), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
+            plotFillArea(ax2(n), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+            if pexstsdates.RelLB2(ex) ~= -1
+                plotFillArea(ax2(n), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+            end
+        end    
+    end
+
+    basedir = setBaseDir();
+    savePlotInDir(f2, baseplotname2, basedir, plotsubfolder);
+    close(f2);
+
+end
 
 end
 

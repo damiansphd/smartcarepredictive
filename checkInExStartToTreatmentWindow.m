@@ -10,8 +10,9 @@ ampredidx = find(pmampredrows.Pred <= featureindexrow.CalcDatedn & pmampredrows.
 
 treatidx = find(pabs.RelStartdn >= featureindexrow.CalcDatedn, 1, 'first');
 
-if size(ampredidx,1)~=0 && (featureindexrow.CalcDatedn >= pmampredrows.Pred(ampredidx) && ...
-        featureindexrow.CalcDatedn <= pabs.RelStartdn(treatidx))    
+if size(ampredidx,1)~=0 && ...
+        (featureindexrow.CalcDatedn >= pmampredrows.Pred(ampredidx) && ...
+         featureindexrow.CalcDatedn <= pabs.RelStartdn(treatidx))    
     labelrow = true;
 end
 
