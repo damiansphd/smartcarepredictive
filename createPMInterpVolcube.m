@@ -7,7 +7,7 @@ pmInterpVolcube = nan(npatients, maxdays, nmeasures);
 mvolstats = zeros(nmeasures, 6);
 
 for p = 1:npatients
-    pduration = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p);
+    pduration = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
     for m = 1:nmeasures
         for d = 2:pduration
             pmInterpVolcube(p, d, m) = abs(pmInterpNormcube(p, d, m) - pmInterpNormcube(p, (d-1), m));

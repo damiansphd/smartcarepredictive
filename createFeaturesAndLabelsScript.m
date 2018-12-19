@@ -12,7 +12,7 @@ maxfeatureduration = max(pmFeatureParams.featureduration);
 
 for rp = 1:size(pmFeatureParams,1)
     basefilename = generateFileNameFromFeatureParams(pmFeatureParams(rp,:));
-    fprintf('Generating features and lables for %s\n', basefilename);
+    fprintf('%2d. Generating features and lables for %s\n', rp, basefilename);
     fprintf('-------------------------------------------------------------------------------\n');
     
     % load model inputs
@@ -45,11 +45,19 @@ for rp = 1:size(pmFeatureParams,1)
     toc
     fprintf('\n');
     
-    % create volatility measures cube
+    % create measures volatility cube
     tic
     fprintf('Creating volatility cube\n');
     [pmInterpVolcube, mvolstats] = createPMInterpVolcube(pmPatients, pmInterpNormcube, ...
         npatients, maxdays, nmeasures); 
+    toc
+    fprintf('\n');
+    
+    % create measures range cube
+    tic
+    fprintf('Creating range cube\n');
+    [pmInterpRangecube] = createPMInterpRangecube(pmPatients, pmInterpNormcube, ...
+        npatients, maxdays, nmeasures, pmFeatureParams.featureduration(rp)); 
     toc
     fprintf('\n');
     
@@ -66,7 +74,7 @@ for rp = 1:size(pmFeatureParams,1)
     fprintf('Creating Features and Labels\n');
     [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels] ...
         = createFeaturesAndLabelsFcn(pmPatients, ...
-        pmAntibiotics, pmAMPred, pmInterpDatacube, pmInterpNormcube, pmBucketedcube, ...
+        pmAntibiotics, pmAMPred, pmInterpDatacube, pmInterpNormcube, pmInterpVolcube, pmInterpRangecube, pmBucketedcube, ...
         measures, nmeasures, npatients, maxdays, maxfeatureduration, pmFeatureParams(rp,:));
     toc
     fprintf('\n');
@@ -84,7 +92,7 @@ for rp = 1:size(pmFeatureParams,1)
         'pmRawDatacube', 'pmInterpDatacube', 'maxdays', ...
         'measures', 'nmeasures', 'ntilepoints', ...
         'pmFeatureParams', 'rp', 'pmInterpNormcube', 'pmBucketedcube', ...
-        'pmInterpVolcube', 'mvolstats', ...
+        'pmInterpVolcube', 'mvolstats', 'pmInterpRangecube', ...
         'pmFeatureIndex', 'pmFeatures', 'pmNormFeatures', ...
         'pmIVLabels', 'pmABLabels', 'pmExLabels', 'pmExLBLabels', 'pmExABLabels');
     toc

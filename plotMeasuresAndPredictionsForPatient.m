@@ -11,7 +11,11 @@ patientnbr = patientrow.PatientNbr;
 pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 
 plotsacross = 1;
-plotsdown = nmeasures + 2;
+if nmeasures < 6
+    plotsdown = 8;
+else
+    plotsdown = nmeasures + 2;
+end
 
 baseplotname1 = sprintf('%s - %s Labels %d Day Prediction - Patient %d (Study %s, ID %d)', ...
     basefilename, lbdisplayname, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);

@@ -23,7 +23,7 @@ for i = 1:nmodels
         'pmFeatureParamsRow', 'pmModelParamsRow');
     
     resultrow = pmFeatureParamsRow;
-    resultrow(:,{'StudyNbr', 'modelinputsmatfile', 'minmaxfeat', 'volfeat'}) = [];
+    resultrow(:,{'StudyNbr', 'modelinputsmatfile'}) = [];
     resultrow.Version(:)     = pmModelParamsRow.Version;
     resultrow.labelmethod(:) = pmModelParamsRow.labelmethod;
     resultrow.lambda(:)      = pmModelParamsRow.lambda;

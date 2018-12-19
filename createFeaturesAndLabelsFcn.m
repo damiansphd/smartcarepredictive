@@ -1,6 +1,7 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels] = ...
-    createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, pmInterpDatacube, pmInterpNormcube, ...
-    pmBucketedcube, measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
+    createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, pmInterpDatacube, ...
+    pmInterpNormcube, pmInterpVolcube, pmInterpRangecube, pmBucketedcube, ...
+    measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -25,15 +26,15 @@ featureduration = featureparamsrow.featureduration;
 predictionduration = featureparamsrow.predictionduration;
 nbuckets        = featureparamsrow.nbuckets;
 
-nbucketmeasures = sum(measures.Bucket);
-nrawmeasures    = nmeasures - nbucketmeasures;
+nrawmeasures    = sum(measures.RawMeas);
+nbucketmeasures = sum(measures.BucketMeas);
 nrangemeasures  = sum(measures.Range);
 nvolmeasures    = sum(measures.Volatility);
 
 nrawfeatures    = nrawmeasures * featureduration;
 nbucketfeatures = nbucketmeasures * nbuckets * featureduration;
 nrangefeatures  = nrangemeasures;
-nvolfeatures    = nvolmeasures;
+nvolfeatures    = nvolmeasures * (featureduration - 1);
 
 nfeatures       = nmeasures * featureduration;
 nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures;
@@ -82,35 +83,24 @@ for p = 1:npatients
             % create normalised features
             
             % 1) Raw features
-            normfeaturerow(1: nrawfeatures) = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, ~logical(measures.Bucket)), [1, nrawfeatures]);
+            normfeaturerow(1: nrawfeatures) = reshape(pmInterpNormcube(p, (d - featureduration + 1): d, logical(measures.RawMeas)), [1, nrawfeatures]);
             nextfeat = nrawfeatures + 1;
             
             % 2) Bucketed features
-            buckfeatrow = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, logical(measures.Bucket), :), [featureduration  * nbucketmeasures, nbuckets])', ...
+            buckfeatrow = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, logical(measures.BucketMeas), :), [featureduration  * nbucketmeasures, nbuckets])', ...
                     [1, nbucketfeatures]);
             normfeaturerow(nextfeat: (nextfeat - 1) + nbucketfeatures) = buckfeatrow;
             nextfeat = nextfeat + nbucketfeatures;
             
             % 3) Range features
-            % needs reworking to use pmInterpNormcube
-            %minmaxrow = zeros(1,nmeasures);
-            %for m = 1:nmeasures
-            %    minmaxrow(m) = max(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration))) - ...
-            %                   min(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)));
-            %end
-            %normfeaturerow(nextfeat: ((nextfeat - 1) + nmeasures)) = minmaxrow;
-            %    nextfeat = nextfeat + nmeasures;
+            rangefeatrow = reshape(pmInterpRangecube(p, d, logical(measures.Range)), [1, nrangefeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + nrangefeatures) = rangefeatrow;
+            nextfeat = nextfeat + nrangefeatures;
             
             % 4) Volatility features
-            % needs reworking to use pmInterpVolcube
-            % if volfeat is enabled, create additional volatility features
-            % for each measure
-            %volrow = zeros(1,nmeasures);
-            %for m = 1:nmeasures
-            %    volrow(m) = sum(abs(normfeaturerow(((m-1)*featureduration) + 1:(m * featureduration)))) ...
-            %                / featureduration;
-            %end
-            %normfeaturerow(nextfeat:((nextfeat - 1) + nvolmeasures)) = volrow;
+            volfeatrow = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, logical(measures.Volatility)), [1, nvolfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + nvolfeatures) = volfeatrow;
+            nextfeat = nextfeat + nvolfeatures;
             
             % for each patient/day, create row in IV label array
             ivlabelrow = checkABInTimeWindow(featureindexrow, ...
