@@ -7,6 +7,12 @@ function plotModelWeights(pmModelRes, measures, nmeasures, ...
 featureduration  = pmFeatureParamsRow.featureduration;
 predictionduration = size(pmModelRes.pmNDayRes, 2);
 
+%if (pmModelParams.labelmethod(mp) == 5 || pmModelParams.labelmethod(mp) == 6)
+%    predictionduration = 1;
+%else
+%    predictionduration = pmThisFeatureParams.predictionduration(fs);
+%end
+
 xl1 = [1 featureduration];
 
 if nmeasures <= 4

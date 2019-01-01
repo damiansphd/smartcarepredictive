@@ -1,6 +1,6 @@
-function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata, pinterpdata, ...
+function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata, pinterpdata, pinterpvoldata, ...
     pmFeatureIndex, trcvlabels, pmModelRes, pmOverallStats, ...
-    pmeasstats, measures, nmeasures, labelidx, pmFeatureParamsRow, ...
+    pmeasstats, measures, nmeasures, mvolstats, labelidx, pmFeatureParamsRow, ...
     lbdisplayname, plotsubfolder, basefilename)
 
 % plotMeasuresAndPredictionsForPatient - for a given patient, plot the measures along
@@ -14,13 +14,16 @@ plotsacross = 1;
 if nmeasures < 6
     plotsdown = 8;
 else
-    plotsdown = nmeasures + 2;
+    plotsdown = nmeasures + 1;
 end
 
 baseplotname1 = sprintf('%s - %s Labels %d Day Prediction - Patient %d (Study %s, ID %d)', ...
     basefilename, lbdisplayname, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);
 
 [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
+left_color = [0, 0.65, 1];
+right_color = [0.13, 0.55, 0.13];
+set(f1,'defaultAxesColorOrder',[left_color; right_color]);
 
 pivabsdates = pabs(ismember(pabs.Route, 'IV'),{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
 for ab = 1:size(pivabsdates,1)
@@ -62,32 +65,23 @@ for d = 1:size(ppred,1)
     plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
 end
 
-ax1 = gobjects(nmeasures + 1,1);
+%ax1 = gobjects(nmeasures + 1,1);
 
 for m = 1:nmeasures
     
     days = (1:pmaxdays);
     mrawdata = prawdata(1, 1:pmaxdays, m);
     mdata = pinterpdata(1, 1:pmaxdays, m);
+    vdata = pinterpvoldata(1, 1:pmaxdays, m);
+    %intermppts = mdata;
     interppts = mdata;
     interppts(~isnan(mrawdata)) = nan;
+    intervppts = vdata;
+    intervppts(~isnan(mrawdata)) = nan;
+    [combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setPlotColorsAndText(measures(m, :));
     
     xl = [1 pmaxdays];
-    
-    % relevant if plotting normalised data
-    %if min(mdata) == max(mdata)
-    %    if min(mdata) < 0
-    %        yl = [min(mdata) * 1.01 min(mdata) * 0.99];
-    %    elseif min(mdata) > 0
-    %        yl = [min(mdata) * 0.99 min(mdata) * 1.01];
-    %    else
-    %        yl = [-0.01 0.01];
-    %    end
-    %else
-    %    yl = [min(mdata) max(mdata)];
-    %end
-    
-    % relevant if plotting actual data
+
     % set minimum y display range to be mean +/- 1 stddev (using patient/
     % measure level stats where they exist, otherwise overall study level
     % stats
@@ -99,11 +93,12 @@ for m = 1:nmeasures
     end
     
     ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
+    yyaxis(ax1(m),'left');
     
-    [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, measures.DisplayName(m), measures.Mask(m), [0, 0.65, 1], ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, measures.DisplayName(m), measures.Mask(m), [0, 0.65, 1], '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
     
-    [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, measures.DisplayName(m), measures.Mask(m), [0, 0.65, 1], 'none', 1.0, 'o', 1.0, 'red', 'red');
+    [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
     
     for ab = 1:size(poralabsdates,1)
         hold on;
@@ -125,6 +120,13 @@ for m = 1:nmeasures
             plotFillArea(ax1(m), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
         end
     end
+    
+    yl2 = [0 mvolstats(m, 6)];
+    yyaxis(ax1(m),'right');
+    
+    [xl, yl2] = plotMeasurementData(ax1(m), days, vdata, xl, yl2, plottext, combinedmask, right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(m), days, smooth(vdata,5), xl, yl2, plottext, combinedmask, right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(m), days, intervppts, xl, yl2, plottext, combinedmask, right_color, 'none', 1.0, 'o', 1.0, rint_color, rint_color);
 end
 
 % Predictions for Labels

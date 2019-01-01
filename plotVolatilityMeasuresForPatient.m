@@ -57,6 +57,7 @@ for m = 1:nmeasures
     intermppts(~isnan(mrawdata)) = nan;
     intervppts = vdata;
     intervppts(~isnan(mrawdata)) = nan;
+    [combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setPlotColorsAndText(measures(m, :));
     
     xl = [1 pmaxdays];
     
@@ -71,9 +72,9 @@ for m = 1:nmeasures
     ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
     yyaxis(ax1(m),'left');
     
-    [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, measures.DisplayName(m), measures.Mask(m), left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, measures.DisplayName(m), measures.Mask(m), left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, intermppts, xl, yl, measures.DisplayName(m), measures.Mask(m), left_color, 'none', 1.0, 'o', 1.0, 'red', 'red');
+    [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, intermppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
     
     for ab = 1:size(poralabsdates,1)
         hold on;
@@ -98,9 +99,9 @@ for m = 1:nmeasures
     
     yl2 = [0 mvolstats(m, 6)];
     yyaxis(ax1(m),'right');
-    [xl, yl2] = plotMeasurementData(ax1(m), days, vdata, xl, yl2, measures.DisplayName(m), measures.Mask(m), right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl2] = plotMeasurementData(ax1(m), days, smooth(vdata,5), xl, yl2, measures.DisplayName(m), measures.Mask(m), right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl2] = plotMeasurementData(ax1(m), days, intervppts, xl, yl2, measures.DisplayName(m), measures.Mask(m), right_color, 'none', 1.0, 'o', 1.0, 'red', 'red');
+    [xl, yl2] = plotMeasurementData(ax1(m), days, vdata, xl, yl2, plottext, combinedmask, right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(m), days, smooth(vdata,5), xl, yl2, plottext, combinedmask, right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(m), days, intervppts, xl, yl2, plottext, combinedmask, right_color, 'none', 1.0, 'o', 1.0, rint_color, rint_color);
     
 end
 
