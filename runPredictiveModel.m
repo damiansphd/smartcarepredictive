@@ -68,7 +68,8 @@ for fs = 1:nfeatureparamsets
                               'Precision', zeros(ntrcvexamples,1), 'Recall'   , zeros(ntrcvexamples,1), ...
                               'TPR'      , zeros(ntrcvexamples,1), 'FPR'      , zeros(ntrcvexamples,1), ...
                               'PRAUC'    , 0.0                   , 'ROCAUC'   , 0.0, ...
-                              'Accuracy' , 0.0);
+                              'Accuracy' , 0.0                   , 'PosAcc'   , 0.0, ...
+                              'NegAcc'   , 0.0);
             
             [labels] = setLabelsForLabelMethod(pmModelParams.labelmethod(mp), pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels);
             trcvlabels = labels(:,n);
@@ -120,8 +121,13 @@ for fs = 1:nfeatureparamsets
     
             pmDayRes.PRAUC  = 100 * trapz(pmDayRes.Recall, pmDayRes.Precision);
             pmDayRes.ROCAUC = 100 * trapz(pmDayRes.FPR   , pmDayRes.TPR);
-            pmDayRes.Accuracy = sum(abs(pmDayRes.PredSort - pmDayRes.LabelSort))/ntrcvexamples;
-            fprintf('PR AUC = %.2f, ROC AUC = %.2f, Accuracy = %.2f\n', pmDayRes.PRAUC, pmDayRes.ROCAUC, pmDayRes.Accuracy);
+            pmDayRes.Accuracy = 100 * (1 - sum(abs(pmDayRes.PredSort - pmDayRes.LabelSort)) / ntrcvexamples);
+            pmDayRes.PosAcc   = 100 * (sum(pmDayRes.PredSort(pmDayRes.LabelSort)) ...
+                                      / size(pmDayRes.LabelSort(pmDayRes.LabelSort), 1));
+            pmDayRes.NegAcc   = 100* (sum(1 - pmDayRes.PredSort(~pmDayRes.LabelSort)) ...
+                                      / size(pmDayRes.LabelSort(~pmDayRes.LabelSort), 1));
+            fprintf('PR AUC = %.2f%%, ROC AUC = %.2f%%, Accuracy = %.2f%%, PosAcc = %.2f%%, NegAcc = %.2f%%\n', ...
+                pmDayRes.PRAUC, pmDayRes.ROCAUC, pmDayRes.Accuracy, pmDayRes.PosAcc, pmDayRes.NegAcc);
             fprintf('\n');
             
             pmModelRes.pmNDayRes(n) = pmDayRes;

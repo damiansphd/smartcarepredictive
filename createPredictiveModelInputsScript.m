@@ -3,7 +3,6 @@ clear; close all; clc;
 [studynbr, studydisplayname, pmStudyInfo] = selectStudy();
 nstudies = size(pmStudyInfo,1);
 
-tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 

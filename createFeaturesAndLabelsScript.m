@@ -9,6 +9,8 @@ pmFeatureParams = readtable(fullfile(basedir, subfolder, featureparamfile));
 
 maxfeatureduration = max(pmFeatureParams.featureduration);
 
+fprintf('Creating Feature and Label files for %2d permutations of parameters\n', size(pmFeatureParams,1));
+fprintf('\n');
 
 for rp = 1:size(pmFeatureParams,1)
     basefilename = generateFileNameFromFeatureParams(pmFeatureParams(rp,:));
@@ -30,10 +32,7 @@ for rp = 1:size(pmFeatureParams,1)
     % features are to be bucketed.
     
     tic
-    [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
-        pmRawDatacube, pmInterpDatacube] = preprocessMeasuresMask(measures, ...
-        nmeasures, pmOverallStats, pmPatientMeasStats, pmRawDatacube, ...
-        pmInterpDatacube, pmFeatureParams(rp, :));
+    [measures] = preprocessMeasuresMask(measures, nmeasures, pmFeatureParams(rp, :));
     toc
     fprintf('\n');
 

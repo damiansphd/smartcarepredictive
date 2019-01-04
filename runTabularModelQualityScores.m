@@ -67,8 +67,6 @@ for i = 1:nmodels
     colname = 'Max_Iter';
     resultrow(:,{colname}) = array2table(0.0);
     
-    
-   
     if labelmethod == 5
         
         avprauc  = pmModelRes.pmNDayRes.PRAUC;

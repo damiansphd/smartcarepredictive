@@ -7,28 +7,26 @@ function plotModelWeights(pmModelRes, measures, nmeasures, ...
 featureduration  = pmFeatureParamsRow.featureduration;
 predictionduration = size(pmModelRes.pmNDayRes, 2);
 
-%if (pmModelParams.labelmethod(mp) == 5 || pmModelParams.labelmethod(mp) == 6)
-%    predictionduration = 1;
-%else
-%    predictionduration = pmThisFeatureParams.predictionduration(fs);
-%end
-
 xl1 = [1 featureduration];
 
-if nmeasures <= 4
+tempmeasures  = measures(measures.RawMeas == 1,:);
+tempnmeasures = size(tempmeasures,1);
+
+if tempnmeasures <= 4
     plotsacross = 1;
-    plotsdown = nmeasures;
+    plotsdown = tempnmeasures;
 else
     plotsacross = 2;
-    plotsdown = round(nmeasures/plotsacross);
+    plotsdown = round(tempnmeasures/plotsacross);
 end
 
 for n = 1:predictionduration
+    
     if isequal(pmModelParamsRow.Version{1}, 'vPM1')
         %ivintercept      = pmIVModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
-        featureweights = pmModelRes.pmNDayRes(n).Model.Coefficients.Estimate(2 : (featureduration * nmeasures) + 1);
+        featureweights = pmModelRes.pmNDayRes(n).Model.Coefficients.Estimate(2 : (featureduration * tempnmeasures) + 1);
     elseif isequal(pmModelParamsRow.Version{1}, 'vPM2')
-        featureweights = pmModelRes.pmNDayRes(n).Model.w(1:(featureduration * nmeasures));
+        featureweights = pmModelRes.pmNDayRes(n).Model.w(1:(featureduration * tempnmeasures));
     else
         fprintf('Unknown model version\n');
         return;
@@ -41,9 +39,10 @@ for n = 1:predictionduration
 
     name1 = sprintf('%s Feature Weights - %s Labels %d Day Prediction', basemodelresultsfile, lbdisplayname, n);
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
-    ax1 = gobjects(nmeasures,1);
-
-    for m = 1:nmeasures
+    ax1 = gobjects(tempnmeasures,1);
+    
+    for m = 1:tempnmeasures
+        
         ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
         % plot feature weights for a given prediction day (labelidx)
         line(ax1(m), (1:featureduration), featureweights(((m-1)*featureduration) + 1:(m * featureduration)), ...
@@ -53,7 +52,7 @@ for n = 1:predictionduration
         xlim(ax1(m), xl1);
         ylim(ax1(m), yl1);
         set(gca,'fontsize',6);
-        title(ax1(m), measures.DisplayName{m},'FontSize', 6);
+        title(ax1(m), tempmeasures.DisplayName{m},'FontSize', 6);
         xlabel('Feature Window', 'FontSize', 6);
         ylabel('Feature Weights', 'FontSize', 6);
         lgd = legend(ax1(m), {'Raw', 'Smooth'}, 'Location', 'southwest');

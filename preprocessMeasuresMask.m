@@ -1,127 +1,74 @@
-function [measures, nmeasures, pmOverallStats, pmPatientMeasStats, ...
-    pmRawDatacube, pmInterpDatacube] = preprocessMeasuresMask(measures, nmeasures, ...
-    pmOverallStats, pmPatientMeasStats, pmRawDatacube, pmInterpDatacube, featureparamsrow)
+function [measures] = preprocessMeasuresMask(measures, nmeasures, featureparamsrow)
 
-% preprocessMeasuresMask - remove data for measurements that are not in the
-% selected measuresmeask for the run.
+% preprocessMeasuresMask - set the various masks for different types of
+% measure feature
 
-rawmeasmask  = featureparamsrow.rawmeasfeat;
-bucketmask   = featureparamsrow.bucketfeat;
-rangemask    = featureparamsrow.rangefeat;
-volmask      = featureparamsrow.volfeat;
+masks = [featureparamsrow.rawmeasfeat; 
+         featureparamsrow.bucketfeat ;
+         featureparamsrow.rangefeat  ;
+         featureparamsrow.volfeat];
+     
+colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'};
 
-fprintf('Setting raw measures mask\n');
-if rawmeasmask == 1
-    fprintf('Set to use raw features for no measures\n');
-    measures.RawMeas(:) = 0;
-elseif rawmeasmask == 2
-    fprintf('Set to use raw features for all measures\n');
-    measures.RawMeas(:) = 1;
-elseif rawmeasmask == 3
-    fprintf('Set to use raw features for LungFunction, O2Saturation, and PulseRate\n');
-    mkeepidx = ismember(measures.DisplayName,{'LungFunction','O2Saturation', 'PulseRate'});
-    measures.RawMeas(:) = 0;
-    measures.RawMeas(mkeepidx) = 1;
-elseif rawmeasmask == 4
-    fprintf('Set to use raw features for Cough and Wellness\n');
-    mkeepidx = ismember(measures.DisplayName,{'Cough','Wellness'});
-    measures.RawMeas(:) = 0;
-    measures.RawMeas(mkeepidx) = 1;
+for a = 1:size(masks,1)
+    fprintf('Setting %s mask\n', colnames{a});
+    keepidx = false(nmeasures,1);
+    mask = zeros(nmeasures,1);
+    if     masks(a) == 1
+        fprintf('Set to use raw features for no measures\n');
+    elseif masks(a) == 2
+        fprintf('Set to use raw features for all measures\n');
+        keepidx = true(nmeasures,1);
+    elseif masks(a) == 3
+        fprintf('Set to use raw features for LungFunction, O2Saturation, PulseRate\n');
+        keepidx = ismember(measures.DisplayName,{'LungFunction','O2Saturation', 'PulseRate'});
+    elseif masks(a) == 4
+        fprintf('Set to use raw features for Cough and Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness'});
+    elseif masks(a) == 5
+        fprintf('Set to use raw features for Cough, Wellness, LungFunction\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction'});
+    elseif masks(a) == 6
+        fprintf('Set to use raw features for Cough, Wellness, LungFunction, O2 Saturation\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction', 'O2Saturation'});
+    elseif masks(a) == 7
+        fprintf('Set to use raw features for Cough, Wellness, LungFunction, O2 Saturation, Pulse Rate\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction', 'O2Saturation', 'PulseRate'});
+    elseif masks(a) == 8
+        fprintf('Set to use raw features for Cough, Wellness, LungFunction, O2 Saturation, Pulse Rate, Weight\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction', 'O2Saturation', 'PulseRate', 'Weight'});
+    elseif masks(a) == 9
+        fprintf('Set to use raw features for Cough, Wellness, LungFunction, O2 Saturation, Pulse Rate, Weight, Sleep Activity\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction', 'O2Saturation', 'PulseRate', 'Weight', 'SleepActivity'});
+    elseif masks(a) == 10
+        fprintf('Set to use raw features for Cough, Wellness, Pulse Rate\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'PulseRate'}); 
+    elseif masks(a) == 11
+        fprintf('Set to use raw features for Cough, Wellness, Pulse Rate, LungFunction\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction', 'PulseRate'});
+    elseif masks(a) == 12
+        fprintf('Set to use raw features for Cough, Wellness, Pulse Rate, O2 Saturation\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'PulseRate', 'O2Saturation'});
+    elseif masks(a) == 13
+        fprintf('Set to use raw features for Cough, Wellness, Pulse Rate, Weight\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'PulseRate', 'Weight'});
+    elseif masks(a) == 14
+        fprintf('Set to use raw features for Cough, Wellness, Pulse Rate, Weight, Lung Function\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'PulseRate', 'Weight', 'LungFunction'});
+    end
+    mask(keepidx) = 1;
+    measures(:, colnames(a)) = array2table(mask);
 end
 
-fprintf('Setting bucketed measures mask\n');
-if bucketmask == 1
-    fprintf('Set to use bucketed features for no measures\n');
-    measures.BucketMeas(:) = 0;
-elseif bucketmask == 2
-    fprintf('Set to use bucketed features for all measures\n');
-    measures.BucketMeas(:) = 1;
-elseif bucketmask == 3
-    fprintf('Set to use bucketed features for LungFunction, O2Saturation, and PulseRate\n');
-    bkeepidx = ismember(measures.DisplayName,{'LungFunction','O2Saturation', 'PulseRate'});
-    measures.BucketMeas(:) = 0;
-    measures.BucketMeas(bkeepidx) = 1;
-elseif bucketmask == 4
-    fprintf('Set to use bucketed features for Cough and Wellness\n');
-    bkeepidx = ismember(measures.DisplayName,{'Cough','Wellness'});
-    measures.BucketMeas(:) = 0;
-    measures.BucketMeas(bkeepidx) = 1;
+% If both raw and bucketed features are set for a given measure, update to
+% have only bucketed to avoid duplicative features
+
+for m = 1:nmeasures
+    if measures.RawMeas(m) && measures.BucketMeas(m)
+        fprintf('Both raw and bucketed features selected for %s - keep only bucketed\n', measures.DisplayName{m});
+        measures.RawMeas(m) = 0;
+    end
 end
-
-fprintf('Setting range mask\n');
-if rangemask == 1
-    fprintf('Not adding any range features\n');
-    measures.Range(:) = 0;
-elseif rangemask == 2
-    fprintf('Adding range features for all measures\n');
-    measures.Range(:) = 1;
-elseif rangemask == 3
-    fprintf('Adding range features for LungFunction, O2Saturation, and PulseRate\n');
-    rkeepidx = ismember(measures.DisplayName,{'LungFunction','O2Saturation', 'PulseRate'});
-    measures.Range(:) = 0;
-    measures.Range(rkeepidx) = 1;
-elseif rangemask == 4
-    fprintf('Adding volatility features for Cough and Wellness\n');
-    rkeepidx = ismember(measures.DisplayName,{'Cough','Wellness'});
-    measures.Range(:) = 0;
-    measures.Range(rkeepidx) = 1;
-end
-
-fprintf('Setting volatility mask\n');
-if volmask == 1
-    fprintf('Not adding any volatility features\n');
-    measures.Volatility(:) = 0;
-elseif volmask == 2
-    fprintf('Adding volatility features for all measures\n');
-    measures.Volatility(:) = 1;
-elseif volmask == 3
-    fprintf('Adding volatility features for LungFunction, O2Saturation, and PulseRate\n');
-    vkeepidx = ismember(measures.DisplayName,{'LungFunction','O2Saturation', 'PulseRate'});
-    measures.Volatility(:) = 0;
-    measures.Volatility(vkeepidx) = 1;
-elseif volmask == 4
-    fprintf('Adding volatility features for Cough and Wellness\n');
-    vkeepidx = ismember(measures.DisplayName,{'Cough','Wellness'});
-    measures.Volatility(:) = 0;
-    measures.Volatility(vkeepidx) = 1;
-end
-
-% 1) need to add check to pick only one of raw or bucketed if both are on for
-% a measure
-
-
-% 2) need to comment out the deleting of measures that aren't used - going
-% to keep all measures going forward - but check where nmeasures is used
-% first
-%fprintf('Pre-processing for measures mask\n');
-%if rawmeasmask == 1
-%    fprintf('Keeping all measures\n');
-%    mkeepidx = (1:nmeasures)';
-%elseif rawmeasmask == 2
-%    fprintf('Keeping Cough\n');
-%    mkeepidx = find(ismember(measures.DisplayName, 'Cough'));
-%elseif rawmeasmask == 3
-%    fprintf('Keeping Cough and Wellness\n');
-%    mkeepidx = find(ismember(measures.DisplayName,{'Cough','Wellness'}));
-%elseif rawmeasmask -- 4
-%    fprintf('Keeping all except Temperature\n');
-%    mkeepidx = find(~ismember(measures.DisplayName,{'Temperature'}));
-%end
-%
-%mdelidx = 1:nmeasures;
-%mdelidx(mkeepidx) = [];
-%
-%fprintf('Deleting measures :-\n');
-%for m = 1:size(mdelidx, 2)
-%    fprintf('%d %s\n', mdelidx(m), measures.DisplayName{mdelidx(m)});
-%end
-%measures(mdelidx, :) = [];
-%nmeasures = size(measures, 1);
-%pmOverallStats(mdelidx, :) = [];
-%pmPatientMeasStats(ismember(pmPatientMeasStats.MeasureIndex, mdelidx),:) = [];
-%pmRawDatacube(:,:,mdelidx) = [];
-%pmInterpDatacube(:,:,mdelidx) = [];
-
 
 end
 
