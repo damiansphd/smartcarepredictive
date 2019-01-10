@@ -73,7 +73,6 @@ for m = 1:nmeasures
     mrawdata = prawdata(1, 1:pmaxdays, m);
     mdata = pinterpdata(1, 1:pmaxdays, m);
     vdata = pinterpvoldata(1, 1:pmaxdays, m);
-    %intermppts = mdata;
     interppts = mdata;
     interppts(~isnan(mrawdata)) = nan;
     intervppts = vdata;

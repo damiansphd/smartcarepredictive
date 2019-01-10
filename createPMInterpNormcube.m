@@ -1,9 +1,10 @@
-function [pmInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmOverallStats, ...
+function [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmPatients, pmOverallStats, ...
     pmPatientMeasStats, npatients, maxdays, nmeasures, normmethod, smoothingmethod)
 
 % createPMInterpNormcube - creates the normalised data cube
 
 pmInterpNormcube = nan(npatients, maxdays, nmeasures);
+pmSmoothInterpNormcube = nan(npatients, maxdays, nmeasures);
 
 for m = 1:nmeasures
     if normmethod == 1
@@ -31,8 +32,9 @@ end
 if smoothingmethod == 2
     fprintf('Smoothing normalised cube\n');
     for p = 1:npatients
+        pmaxdays = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
         for m = 1:nmeasures
-            pmInterpNormcube(p,:,m) = smooth(pmInterpNormcube(p,:,m),5);
+            pmSmoothInterpNormcube(p,1:pmaxdays,m) = smooth(pmInterpNormcube(p,1:pmaxdays,m),5);
         end
     end
 end

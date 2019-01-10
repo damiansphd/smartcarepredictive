@@ -5,7 +5,7 @@ function [modelrpfile, moderplidx, modelrunparams] = selectFeatureParameters()
 
 basedir = setBaseDir();
 subfolder = 'DataFiles';
-modelinputslisting = dir(fullfile(basedir, subfolder, 'pmfp*.xlsx'));
+modelinputslisting = dir(fullfile(basedir, subfolder, '*pmfp*.xlsx'));
 modelrunparams = cell(size(modelinputslisting,1),1);
 for a = 1:size(modelrunparams,1)
     modelrunparams{a} = strrep(modelinputslisting(a).name, '.xlsx', '');

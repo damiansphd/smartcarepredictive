@@ -43,7 +43,8 @@ for fs = 1:nfeatureparamsets
         else
             predictionduration = pmThisFeatureParams.predictionduration(fs);
         end
-        
+
+        featureduration = pmThisFeatureParams.featureduration(fs);
         nexamples = size(pmNormFeatures,1);
         
         % separate out test data and keep aside
@@ -57,11 +58,25 @@ for fs = 1:nfeatureparamsets
         
         ntrcvexamples = size(pmTrCVNormFeatures,1);
         
-        pmModelRes = struct('ModelType', 'Logistic Regression', 'RunParams', mbasefilename);
+        if isequal(pmModelParams.Version{mp}, 'vPM1')
+            modeltype = 'MATLAB Logistic Regression';
+        elseif isequal(pmModelParams.Version{mp}, 'vPM2')
+            modeltype = 'PRML Logistic Regression';
+        elseif isequal(pmModelParams.Version{mp}, 'vPM3')
+            modeltype = 'ADA Boost Tree Ensemble';
+        elseif isequal(pmModelParams.Version{mp}, 'vPM4')
+            modeltype = 'Decision Tree';
+        elseif isequal(pmModelParams.Version{mp}, 'vPM5')
+            modeltype = 'RUS Boost Tree Ensemble';
+        elseif isequal(pmModelParams.Version{mp}, 'vPM6')
+            modeltype = 'Manual Model';    
+        end
+        
+        pmModelRes = struct('ModelType', modeltype, 'RunParams', mbasefilename);
         
         for n = 1:predictionduration
             
-            fprintf('Running Logistic Regression model for Label %d\n', n);
+            fprintf('Running %s model for Label %d\n', modeltype, n);
             
             pmDayRes = struct('Model'    , [], 'LLH', 0.0        , 'Pred'     , zeros(ntrcvexamples,1), ...
                               'PredSort' , zeros(ntrcvexamples,1), 'LabelSort', zeros(ntrcvexamples,1), ...
@@ -82,8 +97,8 @@ for fs = 1:nfeatureparamsets
                  pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, cvlabels, cvidx] ...
                     = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
                 
-                fprintf('Training...');
                 if isequal(pmModelParams.Version{mp}, 'vPM1')
+                    fprintf('Training...');
                     pmDayRes.Model = compact(fitglm(pmTrNormFeatures, trlabels, ...
                         'linear', ...
                         'Distribution', 'binomial', ...
@@ -93,10 +108,50 @@ for fs = 1:nfeatureparamsets
                     pmDayRes.Pred(cvidx) = predict(pmDayRes.Model, pmCVNormFeatures);
                     
                 elseif isequal(pmModelParams.Version{mp}, 'vPM2')
+                    fprintf('Training...');
                     [pmDayRes.Model, pmDayRes.LLH] = logitBin(pmTrNormFeatures', trlabels', 1.0);
                     fprintf('Predicting on CV set...');
                     [~, temppred] = logitBinPred(pmDayRes.Model, pmCVNormFeatures');
                     pmDayRes.Pred(cvidx) = temppred';
+                    
+                elseif isequal(pmModelParams.Version{mp}, 'vPM3')
+                    fprintf('Training...');
+                    template = templateTree('MaxNumSplits', 40);
+                    pmDayRes.Model = compact(fitcensemble(pmTrNormFeatures, trlabels, ...
+                        'Method', 'AdaBoostM1', ...
+                        'NumLearningCycles', 60, ...
+                        'Learners', template, ...
+                        'LearnRate', 0.1));
+                    fprintf('Predicting on CV set...');
+                    pmDayRes.Pred(cvidx) = predict(pmDayRes.Model, pmCVNormFeatures);
+                    
+                elseif isequal(pmModelParams.Version{mp}, 'vPM4')
+                    fprintf('Training...');
+                    pmDayRes.Model = compact(fitctree(pmTrNormFeatures, trlabels, ...
+                        'SplitCriterion', 'gdi', ...
+                        'MaxNumSplits', 20, ...
+                        'Surrogate', 'off'));
+                    fprintf('Predicting on CV set...');
+                    pmDayRes.Pred(cvidx) = predict(pmDayRes.Model, pmCVNormFeatures);
+                    
+                elseif isequal(pmModelParams.Version{mp}, 'vPM5')
+                    fprintf('Training...');
+                    template = templateTree('MaxNumSplits', 40);
+                    pmDayRes.Model = compact(fitcensemble(pmTrNormFeatures, trlabels, ...
+                        'Method', 'RUSBoost', ...
+                        'NumLearningCycles', 60, ...
+                        'Learners', template, ...
+                        'LearnRate', 0.1, ...
+                        'RatioToSmallest', 1));
+                    fprintf('Predicting on CV set...');
+                    pmDayRes.Pred(cvidx) = predict(pmDayRes.Model, pmCVNormFeatures); 
+                
+                elseif isequal(pmModelParams.Version{mp}, 'vPM6')
+                    fprintf('Predicting with manual rules...');
+                    pmDayRes.Pred(cvidx) = manualPredModel(pmInterpNormcube, ...
+                        pmCVNormFeatures, pmDayRes.Pred(cvidx), measures, nmeasures, ...
+                        npatients, maxdays, featureduration);
+                    
                 else
                     fprintf('Unknown model version\n');
                     return
@@ -139,9 +194,7 @@ for fs = 1:nfeatureparamsets
 
         pmFeatureParamsRow = pmThisFeatureParams(fs,:);
         pmModelParamsRow   = pmModelParams(mp,:);
-        
-        
-        
+
         tic
         basedir = setBaseDir();
         subfolder = 'MatlabSavedVariables';

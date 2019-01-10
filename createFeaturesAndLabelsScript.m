@@ -39,7 +39,7 @@ for rp = 1:size(pmFeatureParams,1)
     % create normalised data cube
     tic
     fprintf('Normalising data\n');
-    [pmInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmOverallStats, pmPatientMeasStats, ...
+    [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmPatients, pmOverallStats, pmPatientMeasStats, ...
         npatients, maxdays, nmeasures, pmFeatureParams.normmethod(rp), pmFeatureParams.smoothingmethod(rp)); 
     toc
     fprintf('\n');
@@ -60,7 +60,11 @@ for rp = 1:size(pmFeatureParams,1)
     toc
     fprintf('\n');
     
-    % create bucketed data cube if this run option is enabled
+    if pmFeatureParams.smoothingmethod(rp) == 2
+        pmInterpNormcube = pmSmoothInterpNormcube;
+    end
+    
+    % create bucketed data cube
     tic
     fprintf('Creating bucketed data\n');
     [pmBucketedcube, ntilepoints] = createPMBucketedcube(pmInterpNormcube, pmFeatureParams.nbuckets(rp), npatients, maxdays, nmeasures); 

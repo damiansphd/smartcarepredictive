@@ -66,7 +66,7 @@ end
 
 % plot results and observe any correlations
 
-baseplotname = sprintf('%s - FEV1 vs O2Sat - %s', studydisplayname);
+baseplotname = sprintf('%s - FEV1 vs O2Sat', studydisplayname);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     
 plotsacross = 1;
