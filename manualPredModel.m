@@ -18,9 +18,10 @@ for m = 1:nmeasures
         measures.Weight(m) = 0.6;
     end
     data = reshape(pmInterpNormcube(:, :, m), [1 (npatients * maxdays)]);
-    data = data(~isnan(data))';
-    measures.Floor(m) = std(data);
-    measures.Cap(m) = 2 * measures.Floor(m);
+    data = data(~isnan(data));
+    datastd = std(data);
+    measures.Floor(m) = 0 * datastd;
+    measures.Cap(m)   = 2 * datastd;
 end
 
 nexamples = size(normfeatures,1);
@@ -59,9 +60,10 @@ for n = 1:nexamples
             mscore(m) = rmmeasures.Cap(m);
         end
         if mscore(m) < rmmeasures.Floor(m);
-            mscore(m) = rmmeasures.Floor(m)
+            mscore(m) = rmmeasures.Floor(m);
+        end
         
-        mscore(m) = (rmmeasures.Weight(m) * (mscore(m) - rmmeasures.Floor)) / (rmmeasures.Cap(m) - rmmeasures.Floor(m));
+        mscore(m) = (rmmeasures.Weight(m) * (mscore(m) - rmmeasures.Floor(m))) / (rmmeasures.Cap(m) - rmmeasures.Floor(m));
         
     end
     

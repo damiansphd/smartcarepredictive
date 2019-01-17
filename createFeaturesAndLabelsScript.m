@@ -48,7 +48,7 @@ for rp = 1:size(pmFeatureParams,1)
     tic
     fprintf('Creating volatility cube\n');
     [pmInterpVolcube, mvolstats] = createPMInterpVolcube(pmPatients, pmInterpNormcube, ...
-        npatients, maxdays, nmeasures); 
+        npatients, maxdays, nmeasures, pmFeatureParams.featureduration(rp)); 
     toc
     fprintf('\n');
     

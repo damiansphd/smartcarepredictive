@@ -32,7 +32,7 @@ end
 pmRandomRes.PRAUC  = 100 * trapz(pmRandomRes.Recall, pmRandomRes.Precision);
 pmRandomRes.ROCAUC = 100 * trapz(pmRandomRes.FPR   , pmRandomRes.TPR);
 pmRandomRes.Accuracy = sum(abs(pmRandomRes.PredSort - pmRandomRes.LabelSort))/ntrcvexamples;
-fprintf('PR AUC = %.2f, ROC AUC = %.2f, Accuracy = %.2f\n', pmRandomRes.PRAUC, pmRandomRes.ROCAUC, pmRandomRes.Accuracy);
+fprintf('Random Baseline: PR AUC = %.2f, ROC AUC = %.2f, Accuracy = %.2f\n', pmRandomRes.PRAUC, pmRandomRes.ROCAUC, pmRandomRes.Accuracy);
 fprintf('\n');
                 
 end

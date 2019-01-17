@@ -36,20 +36,25 @@ nvolmeasures    = sum(measures.Volatility);
 nrawfeatures    = nrawmeasures * featureduration;
 nbucketfeatures = nbucketmeasures * nbuckets * featureduration;
 nrangefeatures  = nrangemeasures;
-nvolfeatures    = nvolmeasures * (featureduration - 1);
-if monthfeat == 2
-    nmonthfeatures = 1;
+%nvolfeatures    = nvolmeasures * (featureduration - 1);
+nvolfeatures    = nvolmeasures;
+if monthfeat == 0
+    ndatefeatures = 0;
+elseif monthfeat == 1
+    ndatefeatures = 2;
 else
-    nmonthfeatures = 0;
+    ndatefeatures = monthfeat;
 end
-if demofeat == 2
+if demofeat == 1
+    ndemofeatures = 0;
+elseif demofeat == 2
     ndemofeatures = 5;
 else
-    ndemofeatures = 0;
+    ndemofeatures = 1;
 end
 
 nfeatures       = nmeasures * featureduration;
-nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures + nmonthfeatures + ndemofeatures;
+nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures + ndatefeatures + ndemofeatures;
 
 example = 1;
 
@@ -122,27 +127,39 @@ for p = 1:npatients
             nextfeat = nextfeat + nrangefeatures;
             
             % 4) Volatility features
-            volfeatrow = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, logical(measures.Volatility)), [1, nvolfeatures]);
+            %volfeatrow = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, logical(measures.Volatility)), [1, nvolfeatures]);
+            volfeatrow = reshape(pmInterpVolcube(p, d, logical(measures.Volatility)), [1, nvolfeatures]);
             normfeaturerow(nextfeat: (nextfeat - 1) + nvolfeatures) = volfeatrow;
             nextfeat = nextfeat + nvolfeatures;
             
             % 5) Month of year feature
-            if nmonthfeatures ~= 0
-                monthofyear = month(featureindexrow.CalcDate) / 12;
-                normfeaturerow(nextfeat) = monthofyear;
-                nextfeat = nextfeat + nmonthfeatures;
+            if monthfeat ~= 0
+                datefeat = createCyclicDateFeatures(featureindexrow.CalcDate, ndatefeatures, monthfeat);
+                %datefeat = month(featureindexrow.CalcDate) / 12;
+                normfeaturerow(nextfeat: (nextfeat - 1) + ndatefeatures) = datefeat;
+                nextfeat = nextfeat + ndatefeatures;
             end
             
             % 6) Patient demographic features (Age, Height, Weight, Sex,
             % PredFEV1
-            if ndemofeatures ~= 0
+            if demofeat == 2
                 normfeaturerow(nextfeat)     = age;
                 normfeaturerow(nextfeat + 1) = height;
                 normfeaturerow(nextfeat + 2) = weight;
                 normfeaturerow(nextfeat + 3) = predfev1;
                 normfeaturerow(nextfeat + 4) = sex;
-                nextfeat = nextfeat + ndemofeatures;
+            elseif demofeat == 3
+                normfeaturerow(nextfeat)     = age;
+            elseif demofeat == 4
+                normfeaturerow(nextfeat)     = height;
+            elseif demofeat == 5
+                normfeaturerow(nextfeat)     = weight;
+            elseif demofeat == 6
+                normfeaturerow(nextfeat)     = predfev1;
+            elseif demofeat == 7
+                normfeaturerow(nextfeat)     = sex;    
             end
+            nextfeat = nextfeat + ndemofeatures;
             
             % for each patient/day, create row in IV label array
             ivlabelrow = checkABInTimeWindow(featureindexrow, ...
