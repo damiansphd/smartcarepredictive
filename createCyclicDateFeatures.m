@@ -11,10 +11,10 @@ if monthfeat == 1
     datefeat(2) = cos(2 * pi * thisdoy / daysinyear);
 else
     % set relevant variables
-    ntilepoints = zeros(1, ndatefeatures + 1);
-    datefeat    = zeros(1, ndatefeatures + 1);
-    for n = 1:ndatefeatures
-            ntilepoints(n + 1) = (daysinyear * n) / ndatefeatures;
+    ntilepoints = zeros(1, ndatefeatures + 2);
+    datefeat    = zeros(1, ndatefeatures + 2);
+    for n = 1:ndatefeatures + 1
+            ntilepoints(n + 1) = (daysinyear * n) / (ndatefeatures + 1);
     end
 
     lowerq = find(ntilepoints <= thisdoy, 1, 'last');
@@ -29,10 +29,10 @@ else
     end
 
     % make the bucketed date features cyclic
-    if upperq == ndatefeatures + 1
-        datefeat(1) = datefeat(ndatefeatures + 1);
+    if upperq == ndatefeatures + 2
+        datefeat(1) = datefeat(ndatefeatures + 2);
     end
-    datefeat(ndatefeatures + 1) = [];
+    datefeat((ndatefeatures + 1):(ndatefeatures + 2)) = [];
 end
 
 end

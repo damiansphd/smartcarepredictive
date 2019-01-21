@@ -12,6 +12,7 @@ if (isnan(lb1) || lb1 < 1 || lb1 > 5)
     fprintf('Invalid choice\n');
     validresponse = false;
     lb1 = 0;
+    lb1displayname = '';
     return;
 end
 

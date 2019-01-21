@@ -43,7 +43,7 @@ if monthfeat == 0
 elseif monthfeat == 1
     ndatefeatures = 2;
 else
-    ndatefeatures = monthfeat;
+    ndatefeatures = monthfeat - 1;
 end
 if demofeat == 1
     ndemofeatures = 0;

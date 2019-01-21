@@ -1,11 +1,10 @@
 clear; close all; clc;
 
-% logic to load in results for a given  model run
+% logic to load in results for a given  label method and model run
 [lb, lbdisplayname, validresponse] = selectLabelMethod();
 if validresponse == 0
     return;
 end
-
 [basemodelresultsfile] = selectModelResultsFile(lb);
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
 basemodelresultsfile = strrep(basemodelresultsfile, ' ModelResults', '');
