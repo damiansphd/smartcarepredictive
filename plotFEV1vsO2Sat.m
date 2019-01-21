@@ -1,4 +1,4 @@
-function gradient = plotFEV1vsO2Sat(ax1, fev1data, o2satdata, dcolor, xl, yl)
+function gradient = plotFEV1vsO2Sat(ax1, fev1data, o2satdata, dcolor, xl, yl, plottitle)
 
 % plotFEV1vsO2Sat - plots the fev1 vs o2saturation data and adds a
 % regression line. Return the gradient of the regression line to be
@@ -22,7 +22,7 @@ xlim(ax1, xl);
 ylim(ax1, yl);
 xlabel(ax1, 'FEV1');
 ylabel(ax1, 'O2 Sat');
-title(ax1, 'FEV1 vs O2 Saturation');
+title(ax1, plottitle);
 
 gradient = pu(1);
 
