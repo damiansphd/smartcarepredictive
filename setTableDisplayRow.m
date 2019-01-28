@@ -3,14 +3,16 @@ function [resultrow] = setTableDisplayRow(pmFeatureParamsRow, pmModelParamsRow, 
 % setTableDisplayRow - creates the tabular results row for a given model
 % results file (with less cryptic values for parameters)
 
-resultrow = table('Size',[1 18], ...
+resultrow = table('Size',[1 23], ...
     'VariableTypes', {'cell', 'cell', 'double', 'double', ...
                       'cell', 'cell', 'cell', 'cell', 'double', ...
-                      'cell', 'cell','cell', 'cell', ...
+                      'cell', 'cell', 'cell', 'double', 'cell', 'double', ...
+                      'cell', 'cell', 'cell', ...
                       'double', 'double', 'double', 'double', 'double'}, ...
     'VariableNames', {'Version', 'StudyDisplayName', 'FeatureDuration', 'LabelMethod', ...
                       'NormMethod', 'Smoothing', 'RawMeas', 'BucketMeas', 'NumBuckets',  ...
-                      'Range', 'Volatility', 'DateFeat', 'DemoFeat', ...
+                      'Range', 'Volatility', 'AvgSeg', 'NumAvgSeg', 'VolSeg', 'NumVolSeg', ...
+                      'CChange', 'DateFeat', 'DemoFeat', ...
                       'PR_AUC', 'ROC_AUC', 'Accuracy', 'PosAcc', 'NegAcc'});
 
 resultrow.Version     = pmModelParamsRow.Version;
@@ -64,10 +66,40 @@ if sum(measures.Volatility) == 0
 elseif sum(measures.Volatility) == nmeasures    
     voltext= 'All';
 else
-    %voltext= strcat(sprintf('%d:', pmFeatureParamsRow.volfeat), measures.ShortName{logical(measures.Volatility)})};
     voltext= strcat(measures.ShortName{logical(measures.Volatility)});
 end
 resultrow.Volatility = {sprintf('%d:%s', pmFeatureParamsRow.volfeat, voltext)};
+
+if sum(measures.AvgSeg) == 0
+    avgsegtext = 'None';
+elseif sum(measures.AvgSeg) == nmeasures    
+    avgsegtext= 'All';
+else
+    avgsegtext= strcat(measures.ShortName{logical(measures.AvgSeg)});
+end
+resultrow.AvgSeg = {sprintf('%d:%s', pmFeatureParamsRow.avgsegfeat, avgsegtext)};
+
+resultrow.NumAvgSeg = pmFeatureParamsRow.navgseg;
+
+if sum(measures.VolSeg) == 0
+    volsegtext = 'None';
+elseif sum(measures.VolSeg) == nmeasures    
+    volsegtext= 'All';
+else
+    volsegtext= strcat(measures.ShortName{logical(measures.VolSeg)});
+end
+resultrow.VolSeg = {sprintf('%d:%s', pmFeatureParamsRow.volsegfeat, volsegtext)};
+
+resultrow.NumVolSeg = pmFeatureParamsRow.nvolseg;
+
+if sum(measures.CChange) == 0
+    cchangetext = 'None';
+elseif sum(measures.CChange) == nmeasures    
+    cchangetext= 'All';
+else
+    cchangetext= strcat(measures.ShortName{logical(measures.CChange)});
+end
+resultrow.CChange = {sprintf('%d:%s', pmFeatureParamsRow.cchangefeat, cchangetext)};
 
 if pmFeatureParamsRow.monthfeat == 0
     datetext = 'None';

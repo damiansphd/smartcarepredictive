@@ -6,9 +6,12 @@ function [measures] = preprocessMeasuresMask(measures, nmeasures, featureparamsr
 masks = [featureparamsrow.rawmeasfeat; 
          featureparamsrow.bucketfeat ;
          featureparamsrow.rangefeat  ;
-         featureparamsrow.volfeat];
+         featureparamsrow.volfeat    ;
+         featureparamsrow.avgsegfeat ;
+         featureparamsrow.volsegfeat ;
+         featureparamsrow.cchangefeat];
      
-colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'};
+colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'};
 
 for a = 1:size(masks,1)
     fprintf('Setting %s mask : ', colnames{a});
@@ -88,6 +91,18 @@ for a = 1:size(masks,1)
     elseif masks(a) == 25
         fprintf('Set for Lung Function, Pulse Rate, Sleep Activity\n');
         keepidx = ismember(measures.DisplayName,{'LungFunction', 'PulseRate', 'SleepActivity'});
+    elseif masks(a) == 26
+        fprintf('Set for Pulse Rate, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'PulseRate', 'Wellness'});
+    elseif masks(a) == 27
+        fprintf('Set for O2 Saturation, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'O2Saturation', 'Wellness'});
+    elseif masks(a) == 28
+        fprintf('Set for O2 Saturation, Pulse Rate, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'O2Saturation', 'PulseRate', 'Wellness'});
+    elseif masks(a) == 29
+        fprintf('Set for Cough, O2 Saturation, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'O2Saturation', 'Wellness'});
     end
     mask(keepidx) = 1;
     measures(:, colnames(a)) = array2table(mask);

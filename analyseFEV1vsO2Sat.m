@@ -7,13 +7,15 @@ clear; close all; clc;
 fprintf('\n');
 fprintf('Plots to run\n');
 fprintf('-------------------\n');
-fprintf('1: Patient by Patient\n');
-fprintf('2: Upper vs Lower 50%%\n');
-fprintf('3: Ntiles\n');
+fprintf('1: Change in measures - By Patient\n');
+fprintf('2: Change in measures - Upper vs Lower 50%%\n');
+fprintf('3: Change in measures - Ntiles\n');
+fprintf('4: Raw measures - Ntiles\n');
+fprintf('4: Raw measures - By Patient\n');
 fprintf('\n');
 runtype = input('Choose plots to run for: ');
 
-if runtype > 3
+if runtype > 4
     fprintf('Invalid choice\n');
     return;
 end
@@ -23,13 +25,15 @@ if isequal(runtype,'')
 end
 fprintf('\n');
 
-ntiles = input('Choose number of ntiles (2-5): ');
-if runtype > 5 || runtype < 2
+ntiles = input('Choose number of ntiles (1-5): ');
+if runtype > 5 || runtype < 1
     fprintf('Invalid choice\n');
     return;
 end
 fprintf('\n');
-if ntiles == 2
+if ntiles == 1
+    ntiletext = 'All';
+elseif ntiles == 2
     ntiletext = 'Half';
 elseif ntiles == 3
     ntiletext = 'Third';
@@ -74,7 +78,7 @@ plotsdown   = 1;
 xl = [-80, 0];
 yl = [-25, 0];
 
-if runtype == 1 || runtype == 2
+if runtype == 1 || runtype == 2 
     
     midpoint = ceil(npatients/2);
     lpatients = patientgradients.PatientNbr(1:midpoint);
@@ -161,8 +165,8 @@ elseif runtype == 3
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
     %patientgradients = sortrows(patientgradients, {'NTile', 'PatientNbr'}, 'ascend');
     for i = 1:ntiles
-        fev1data  = zeros(npatients * maxdays, 1);
-        o2satdata  = zeros(npatients * maxdays, 1);
+        fev1data   = nan(npatients * maxdays, 1);
+        o2satdata  = nan(npatients * maxdays, 1);
         lastpoint = 0;
         for n = 1:npatients
             pnbr  = patientgradients.PatientNbr(n);
@@ -174,7 +178,9 @@ elseif runtype == 3
                 %plmdn = pmPatients.RelLastMeasdn(n);
                 pfev1data  = pmRawDatacube(pnbr, :, mfev1idx) - pfev1max;
                 po2satdata = pmRawDatacube(pnbr, :, mo2satidx) - po2satmax;
-    
+                if min(pfev1data) < -60
+                    fprintf('Large change in FEV1 for patient %d\n', pnbr);
+                end
                 fev1data((lastpoint + 1):(lastpoint + maxdays))  = pfev1data;
                 o2satdata((lastpoint + 1):(lastpoint + maxdays)) = po2satdata;
                 lastpoint = lastpoint + maxdays;
@@ -197,6 +203,87 @@ elseif runtype == 3
     savePlotInDir(f, baseplotname, basedir, plotsubfolder);
     close(f);
     
+elseif runtype == 4 || runtype == 5
+    
+    % plot data and regression lines for each ntile
+    plotsacross = 2;
+    plotsdown   = ceil(ntiles/plotsacross);
+    if plotsdown == 1
+        plotsdown = 2;
+    end
+    xl = [min(min(pmRawDatacube(:,:,3))) * 0.95, max(max(pmRawDatacube(:,:,3))) * 1.05];
+    yl = [min(min(pmRawDatacube(:,:,4))) * 0.95, max(max(pmRawDatacube(:,:,4))) * 1.05];
+    qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
+    baseplotname = sprintf('%s - Raw FEV1 vs O2Sat - by %s', studydisplayname, ntiletext);
+    [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    ax1 = gobjects(ntiles,1);
+    hold on;
+    patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
+    for i = 1:ntiles
+        rawfev1data  = nan(npatients * maxdays, 1);
+        rawo2satdata  = nan(npatients * maxdays, 1);
+        lastpoint = 0;
+        for n = 1:npatients
+            pnbr  = patientgradients.PatientNbr(n);
+            pntile = patientgradients.NTile(n);
+            if pntile == i
+                prawfev1data  = pmRawDatacube(pnbr, :, mfev1idx);
+                prawo2satdata = pmRawDatacube(pnbr, :, mo2satidx);
+    
+                rawfev1data((lastpoint + 1):(lastpoint + maxdays))  = prawfev1data;
+                rawo2satdata((lastpoint + 1):(lastpoint + maxdays)) = prawo2satdata;
+                lastpoint = lastpoint + maxdays;
+                
+                if runtype == 5
+                    plotsacross2 = 1;
+                    plotsdown2   = 1;
+                    baseplotname2 = sprintf('%s - Raw FEV1 vs O2Sat - Patient %d, %s %d', studydisplayname, n, ntiletext, pntile);
+                    [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
+                    ax2 = subplot(plotsdown2, plotsacross2, 1, 'Parent', p2);
+                    hold on;
+                    scatter(ax2, prawfev1data, prawo2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 0.3);
+                    xlim(ax2, xl);
+                    ylim(ax2, yl);
+                    xlabel(ax2, 'Raw FEV1');
+                    ylabel(ax2, 'Raw O2 Sat');
+                    title(ax2, 'Raw FEV1 vs O2 Saturation');
+                    legend(ax2, {'FEV1 data'}, 'Location', 'best', 'FontSize', 6);
+                    hold off;
+                    basedir = setBaseDir();
+                    savePlotInDir(f2, baseplotname2, basedir, plotsubfolder);
+                    close(f2);
+                end
+            end
+            
+        end
+        minrawfev1 = min(fev1max.Max(patientgradients.NTile==i));
+        maxrawfev1 = max(fev1max.Max(patientgradients.NTile==i));
+        plottitle = sprintf('FEV1 (%.0f-%.0f%%) vs O2 Sat ', minrawfev1, maxrawfev1);
+        
+        ax1(i) = subplot(plotsdown, plotsacross, i, 'Parent', p);
+        hold on;
+        fidx = ~isnan(rawfev1data);
+        oidx = ~isnan(rawo2satdata);
+        idx = fidx & oidx;
+    
+        nnrawfev1data  = rawfev1data(idx);
+        nnrawo2satdata = rawo2satdata(idx);
+
+        % plot results and observe any correlations
+    
+        scatter(ax1(i), nnrawfev1data, nnrawo2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 0.3);
+        xlim(ax1(i), xl);
+        ylim(ax1(i), yl);
+        xlabel(ax1(i), 'Raw FEV1');
+        ylabel(ax1(i), 'Raw O2 Sat');
+        title(ax1(i), plottitle);
+        legend(ax1(i), {'FEV1 data'}, 'Location', 'best', 'FontSize', 6);
+        hold off;
+        
+    end
+    basedir = setBaseDir();
+    savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+    close(f);
 end
     
 %    for n = 1:ntiles

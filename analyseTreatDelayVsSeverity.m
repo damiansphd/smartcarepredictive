@@ -37,6 +37,9 @@ for n = 1:ninterventions
     results.MeasDuration(n) = (pmPatients.RelLastMeasdn(pmPatients.PatientNbr == pnbr) - pmPatients.RelFirstMeasdn(pmPatients.PatientNbr == pnbr) + 1);
     results.IntrFreq(n) =  results.MeasDuration(n) / (sum(results.PatientNbr == pnbr));
     results.IntrFreqQuartile(n) = ceil(results.IntrFreq(n) / quartiledivider);
+    if results.IntrFreqQuartile(n) > 3
+        results.IntrFreqQuartile(n) = 3;
+    end
     
     tempab = pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStartdn >= intrdn & pmAntibiotics.RelStartdn < intrdn + 30,:);
     tempiv = tempab(ismember(tempab.Route, 'IV'),:);
@@ -63,14 +66,15 @@ end
 % plot results and observe any correlations
 
 ntypes = 5;
-nplots = 5;
+nplots = size(unique(results.IntrFreqQuartile),1);
 % colormap - red, green, blue, black
 cmap = [1, 0, 0;
         0, 1, 0;
         0, 0, 1;
         0, 0, 0];
-plottypes = {'All', 'IntrFreq0-74', 'IntrFreq75-149', 'IntrFreq150-224', 'IntrFreq225-299'};
+plottypes = {'All', 'IntrFreq 0-74', 'IntrFreq 75-149', 'IntrFreq >150'};
 coloffset = 10;
+xl = [0 max(results.Delay)];
 
 for t = 1:ntypes
     baseplotname = sprintf('%s - Treatment delay vs Severity - %s', studydisplayname, results.Properties.VariableNames{coloffset + t});
@@ -78,18 +82,24 @@ for t = 1:ntypes
     ax1 = gobjects(nplots,1);
     
     plotsacross = 2;
-    plotsdown = round(nplots/plotsacross);
-    
+    plotsdown = ceil(nplots/plotsacross);
+    yl = [0 max(table2array(results(:, coloffset + t)))];
     ax1(1) = subplot(plotsdown, plotsacross, 1, 'Parent', p);
-    scatter(ax1(1), results.Delay, table2array(results(:,coloffset + t)), [], cmap(3, :));
+    nonzeroidx = table2array(results(:, coloffset + t)) ~= 0;
+    scatter(ax1(1), results.Delay(nonzeroidx), table2array(results(nonzeroidx,coloffset + t)), [], cmap(3, :));
+    xlim(ax1(1), xl);
+    ylim(ax1(1), yl);
     xlabel(ax1(1), 'Treatment Delay');
     ylabel(ax1(1), 'Severity');
     title(ax1(1), plottypes{1});
     hold on;
 
-    for n = 2:nplots
+    for n = 2:(nplots + 1)
         ax1(n) = subplot(plotsdown, plotsacross, n, 'Parent', p);
-        scatter(ax1(n), results.Delay(results.IntrFreqQuartile == (n-1)), table2array(results(results.IntrFreqQuartile == (n-1),coloffset + t)), [], cmap(n - 1,:));
+        qidx = results.IntrFreqQuartile == (n-1);
+        scatter(ax1(n), results.Delay(nonzeroidx & qidx), table2array(results(nonzeroidx & qidx,coloffset + t)), [], cmap(n - 1,:));
+        xlim(ax1(n), xl);
+        ylim(ax1(n), yl);
         xlabel(ax1(n), 'Treatment Delay');
         ylabel(ax1(n), 'Severity');
         title(ax1(n), plottypes{n});

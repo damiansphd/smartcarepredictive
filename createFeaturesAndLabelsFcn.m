@@ -1,6 +1,7 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels] = ...
     createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, pmInterpDatacube, ...
-    pmInterpNormcube, pmInterpVolcube, pmInterpRangecube, pmBucketedcube, ...
+    pmInterpNormcube, pmInterpVolcube, pmInterpSegVolcube, pmInterpRangecube, ...
+    pmInterpSegAvgcube, pmBucketedcube, ...
     measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
@@ -22,22 +23,33 @@ for p = 1:npatients
 end
 
 % set various variables
-featureduration = featureparamsrow.featureduration;
+featureduration    = featureparamsrow.featureduration;
 predictionduration = featureparamsrow.predictionduration;
-nbuckets        = featureparamsrow.nbuckets;
-monthfeat       = featureparamsrow.monthfeat;
-demofeat        = featureparamsrow.demofeat;
+monthfeat          = featureparamsrow.monthfeat;
+demofeat           = featureparamsrow.demofeat;
 
-nrawmeasures    = sum(measures.RawMeas);
-nbucketmeasures = sum(measures.BucketMeas);
-nrangemeasures  = sum(measures.Range);
-nvolmeasures    = sum(measures.Volatility);
+nbuckets           = featureparamsrow.nbuckets;
+navgseg            = featureparamsrow.navgseg;
+nvolseg            = featureparamsrow.nvolseg;
 
-nrawfeatures    = nrawmeasures * featureduration;
-nbucketfeatures = nbucketmeasures * nbuckets * featureduration;
-nrangefeatures  = nrangemeasures;
-%nvolfeatures    = nvolmeasures * (featureduration - 1);
-nvolfeatures    = nvolmeasures;
+nrawmeasures       = sum(measures.RawMeas);
+nbucketmeasures    = sum(measures.BucketMeas);
+nrangemeasures     = sum(measures.Range);
+nvolmeasures       = sum(measures.Volatility);
+navgsegmeasures    = sum(measures.AvgSeg);
+nvolsegmeasures    = sum(measures.VolSeg);
+ncchangemeasures   = sum(measures.CChange);
+
+nrawfeatures       = nrawmeasures * featureduration;
+nbucketfeatures    = nbucketmeasures * nbuckets * featureduration;
+nrangefeatures     = nrangemeasures;
+nvolfeatures       = nvolmeasures * (featureduration - 1);
+%nvolfeatures      = nvolmeasures;
+navgsegfeatures    = navgsegmeasures * navgseg;
+nvolsegfeatures    = nvolsegmeasures * nvolseg;
+ncchangefeatures   = ncchangemeasures;
+%ncchangefeatures   = ncchangemeasures * 2;
+
 if monthfeat == 0
     ndatefeatures = 0;
 elseif monthfeat == 1
@@ -54,7 +66,9 @@ else
 end
 
 nfeatures       = nmeasures * featureduration;
-nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures + ndatefeatures + ndemofeatures;
+nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures + ...
+                    navgsegfeatures + nvolsegfeatures + ncchangefeatures + ...
+                    ndatefeatures + ndemofeatures;
 
 example = 1;
 
@@ -127,12 +141,46 @@ for p = 1:npatients
             nextfeat = nextfeat + nrangefeatures;
             
             % 4) Volatility features
-            %volfeatrow = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, logical(measures.Volatility)), [1, nvolfeatures]);
-            volfeatrow = reshape(pmInterpVolcube(p, d, logical(measures.Volatility)), [1, nvolfeatures]);
+            volfeatrow = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, logical(measures.Volatility)), [1, nvolfeatures]);
+            %volfeatrow = reshape(pmInterpVolcube(p, d, logical(measures.Volatility)), [1, nvolfeatures]);
             normfeaturerow(nextfeat: (nextfeat - 1) + nvolfeatures) = volfeatrow;
             nextfeat = nextfeat + nvolfeatures;
             
-            % 5) Month of year feature
+            % 5) add average measuresment segment features
+            avgsegfeatrow = reshape(reshape(pmInterpSegAvgcube(p, d, logical(measures.AvgSeg), :), [navgsegmeasures, navgseg])', ...
+                    [1, navgsegfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + navgsegfeatures) = avgsegfeatrow;
+            nextfeat = nextfeat + navgsegfeatures;
+            
+            % 6) add average volatility segment features
+            volsegfeatrow = reshape(reshape(pmInterpSegVolcube(p, d, logical(measures.VolSeg), :), [nvolsegmeasures, nvolseg])', ...
+                    [1, nvolsegfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + nvolsegfeatures) = volsegfeatrow;
+            nextfeat = nextfeat + nvolsegfeatures;
+            
+            % 7) contiguous change feature
+            nextm = 0;
+            for m = 1:nmeasures
+                if measures.CChange(m) == 1
+                    cchange = 0;
+                    %seg = 0;
+                    for i = 2:navgseg
+                        if (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, i)) > (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, (i - 1)))
+                            cchange = cchange +  (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, i)) - (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, (i - 1)));
+                            %seg = i - 1;
+                        else
+                            break;
+                        end
+                    end
+                    normfeaturerow(nextfeat + nextm) = cchange;
+                    nextm = nextm + 1;
+                    %normfeaturerow(nextfeat + nextm + 1) = seg;
+                    %nextm = nextm + 2;
+                end
+            end
+            nextfeat = nextfeat + ncchangefeatures;
+            
+            % 8) Date feature
             if monthfeat ~= 0
                 datefeat = createCyclicDateFeatures(featureindexrow.CalcDate, ndatefeatures, monthfeat);
                 %datefeat = month(featureindexrow.CalcDate) / 12;
@@ -140,7 +188,7 @@ for p = 1:npatients
                 nextfeat = nextfeat + ndatefeatures;
             end
             
-            % 6) Patient demographic features (Age, Height, Weight, Sex,
+            % 9) Patient demographic features (Age, Height, Weight, Sex,
             % PredFEV1
             if demofeat == 2
                 normfeaturerow(nextfeat)     = age;
