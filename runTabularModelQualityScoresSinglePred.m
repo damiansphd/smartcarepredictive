@@ -38,7 +38,7 @@ for i = 1:nmodels
     load(fullfile(basedir, subfolder, featureparamsmatfile), 'measures', 'nmeasures');
     fprintf('\n');
     
-    resultrow = setTableDisplayRow(pmFeatureParamsRow, pmModelParamsRow, pmModelRes, measures, nmeasures);              
+    resultrow = setTableDisplayRow(pmFeatureParamsRow, pmModelParamsRow, pmModelRes.pmNDayRes, measures, nmeasures);              
                   
     pmModelQualityScores = [pmModelQualityScores; resultrow];
 end

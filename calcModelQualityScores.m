@@ -20,14 +20,14 @@ end
     
 mdlres.PRAUC    = 100 * trapz(mdlres.Recall, mdlres.Precision);
 mdlres.ROCAUC   = 100 * trapz(mdlres.FPR   , mdlres.TPR);
-mdlres.Accuracy = 100 * (1 - sum(abs(mdlres.PredSort - mdlres.LabelSort)) / nexamples);
+mdlres.Acc      = 100 * (1 - sum(abs(mdlres.PredSort - mdlres.LabelSort)) / nexamples);
 mdlres.PosAcc   = 100 * (sum(mdlres.PredSort(mdlres.LabelSort)) ...
                             / size(mdlres.LabelSort(mdlres.LabelSort), 1));
 mdlres.NegAcc   = 100* (sum(1 - mdlres.PredSort(~mdlres.LabelSort)) ...
                             / size(mdlres.LabelSort(~mdlres.LabelSort), 1));
             
-fprintf('PR AUC = %.3f%%, ROC AUC = %.3f%%, Accuracy = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
-         mdlres.PRAUC, mdlres.ROCAUC, mdlres.Accuracy, mdlres.PosAcc, mdlres.NegAcc);
+fprintf('PR AUC = %.3f%%, ROC AUC = %.3f%%, Acc = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
+         mdlres.PRAUC, mdlres.ROCAUC, mdlres.Acc, mdlres.PosAcc, mdlres.NegAcc);
 
 end
 
