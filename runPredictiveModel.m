@@ -13,10 +13,21 @@ pmModelParams = readtable(fullfile(basedir, subfolder, modelparamfile));
 nfeatureparamsets = size(pmThisFeatureParams,1);
 nmodelparamsets   = size(pmModelParams,1);
 
+nbssamples = 50; % temporary hardcoding - replace with model parameter when have more time
+
+pmBSAllQS = struct('FeatureParams', []);
+
 for fs = 1:nfeatureparamsets
+    
+    pmBSAllQS(fs).FeatureParams = pmThisFeatureParams(fs, :);
+    
+    ModelRuns = struct('ModelParams', []);
     
     for mp = 1:nmodelparamsets 
     
+        fprintf('%2d of %2d Feature/Model Parameter combinations\n', ((fs - 1) * nmodelparamsets) + mp, nfeatureparamsets * nmodelparamsets);
+        fprintf('---------------------------------------------\n');
+        
         tic
         basedir = setBaseDir();
         subfolder = 'MatlabSavedVariables';
@@ -33,6 +44,8 @@ for fs = 1:nfeatureparamsets
         if ~isequal(pmThisFeatureParams.Version{fs}, pmModelParams.Version{mp})
             mbasefilename = strrep(mbasefilename, pmThisFeatureParams.Version{fs}, pmModelParams.Version{mp});
         end
+        
+        ModelRuns(mp).ModelParams = pmModelParams(mp,:);
 
         tic
         % for the 'Ex Start to Treatment' label, there is only one task.
@@ -78,13 +91,16 @@ for fs = 1:nfeatureparamsets
             
             fprintf('Running %s model for Label %d\n', modeltype, n);
             
-            pmDayRes = struct('Model'    , [], 'LLH', 0.0        , 'Pred'     , zeros(ntrcvexamples,1), ...
-                              'PredSort' , zeros(ntrcvexamples,1), 'LabelSort', zeros(ntrcvexamples,1), ...
-                              'Precision', zeros(ntrcvexamples,1), 'Recall'   , zeros(ntrcvexamples,1), ...
-                              'TPR'      , zeros(ntrcvexamples,1), 'FPR'      , zeros(ntrcvexamples,1), ...
-                              'PRAUC'    , 0.0                   , 'ROCAUC'   , 0.0, ...
-                              'Accuracy' , 0.0                   , 'PosAcc'   , 0.0, ...
-                              'NegAcc'   , 0.0);
+            pmDayRes = struct('Model'     , [], 'LLH', 0.0        , 'Pred'     , zeros(ntrcvexamples,1), ...
+                              'PredSort'  , zeros(ntrcvexamples,1), 'LabelSort', zeros(ntrcvexamples,1), ...
+                              'Precision' , zeros(ntrcvexamples,1), 'Recall'   , zeros(ntrcvexamples,1), ...
+                              'TPR'       , zeros(ntrcvexamples,1), 'FPR'      , zeros(ntrcvexamples,1), ...
+                              'PRAUC'     , 0.0                   , 'ROCAUC'   , 0.0, ...
+                              'Accuracy'  , 0.0                   , 'PosAcc'   , 0.0, ...
+                              'NegAcc'    , 0.0, ...
+                              'bsPRAUC'   , zeros(nbssamples,1)    , 'bsROCAUC' , zeros(nbssamples,1), ...
+                              'bsAccuracy', zeros(nbssamples,1)    , 'bsPosAcc' , zeros(nbssamples,1), ...
+                              'bsNegAcc'  , zeros(nbssamples,1));
             
             [labels] = setLabelsForLabelMethod(pmModelParams.labelmethod(mp), pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels);
             trcvlabels = labels(:,n);
@@ -160,32 +176,67 @@ for fs = 1:nfeatureparamsets
                 
             end
             
-            [pmDayRes.PredSort, sortidx] = sort(pmDayRes.Pred, 'descend');
-            pmDayRes.LabelSort = trcvlabels(sortidx);
-
-            for a = 1:ntrcvexamples
-                TP        = sum(pmDayRes.LabelSort(1:a) == 1);
-                FP        = sum(pmDayRes.LabelSort(1:a) == 0);
-                TN        = sum(pmDayRes.LabelSort(a+1:ntrcvexamples) == 0);
-                FN        = sum(pmDayRes.LabelSort(a+1:ntrcvexamples) == 1);
-                pmDayRes.Precision(a) = TP / (TP + FP);
-                pmDayRes.Recall(a)    = TP / (TP + FN); 
-                pmDayRes.TPR(a)       = pmDayRes.Recall(a);
-                pmDayRes.FPR(a)       = FP / (FP + TN);
-            end
-    
-            pmDayRes.PRAUC  = 100 * trapz(pmDayRes.Recall, pmDayRes.Precision);
-            pmDayRes.ROCAUC = 100 * trapz(pmDayRes.FPR   , pmDayRes.TPR);
-            pmDayRes.Accuracy = 100 * (1 - sum(abs(pmDayRes.PredSort - pmDayRes.LabelSort)) / ntrcvexamples);
-            pmDayRes.PosAcc   = 100 * (sum(pmDayRes.PredSort(pmDayRes.LabelSort)) ...
-                                      / size(pmDayRes.LabelSort(pmDayRes.LabelSort), 1));
-            pmDayRes.NegAcc   = 100* (sum(1 - pmDayRes.PredSort(~pmDayRes.LabelSort)) ...
-                                      / size(pmDayRes.LabelSort(~pmDayRes.LabelSort), 1));
-            fprintf('PR AUC = %.3f%%, ROC AUC = %.3f%%, Accuracy = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
-                pmDayRes.PRAUC, pmDayRes.ROCAUC, pmDayRes.Accuracy, pmDayRes.PosAcc, pmDayRes.NegAcc);
+            fprintf('\n');
+            fprintf('Real Data Quality Scores:           ');
+            pmDayRes = calcModelQualityScores(pmDayRes, trcvlabels, ntrcvexamples);
             fprintf('\n');
             
+            % create quality metrics for bootstrapping samples
+            for s = 1:nbssamples
+                rng(s);
+                sampleidx = generateResampledIdx(ntrcvexamples, ntrcvexamples);
+                tempRes = pmDayRes;
+                tempRes.Pred = tempRes.Pred(sampleidx);
+                templabels = trcvlabels(sampleidx);
+                
+                fprintf('Bootstrap sample %2d Quality Scores: ', s);
+                tempRes = calcModelQualityScores(tempRes, templabels, ntrcvexamples);
+                pmDayRes.bsPRAUC(s)    = tempRes.PRAUC;
+                pmDayRes.bsROCAUC(s)   = tempRes.ROCAUC;
+                pmDayRes.bsAccuracy(s) = tempRes.Accuracy;
+                pmDayRes.bsPosAcc(s)   = tempRes.PosAcc;
+                pmDayRes.bsNegAcc(s)   = tempRes.NegAcc;   
+            end
+            
+            fprintf('\n');
+            
+            %[pmDayRes.PredSort, sortidx] = sort(pmDayRes.Pred, 'descend');
+            %pmDayRes.LabelSort = trcvlabels(sortidx);
+
+            %for a = 1:ntrcvexamples
+            %    TP        = sum(pmDayRes.LabelSort(1:a) == 1);
+            %    FP        = sum(pmDayRes.LabelSort(1:a) == 0);
+            %    TN        = sum(pmDayRes.LabelSort(a+1:ntrcvexamples) == 0);
+            %    FN        = sum(pmDayRes.LabelSort(a+1:ntrcvexamples) == 1);
+            %    pmDayRes.Precision(a) = TP / (TP + FP);
+            %    pmDayRes.Recall(a)    = TP / (TP + FN); 
+            %    pmDayRes.TPR(a)       = pmDayRes.Recall(a);
+            %    pmDayRes.FPR(a)       = FP / (FP + TN);
+            %end
+    
+            %pmDayRes.PRAUC  = 100 * trapz(pmDayRes.Recall, pmDayRes.Precision);
+            %pmDayRes.ROCAUC = 100 * trapz(pmDayRes.FPR   , pmDayRes.TPR);
+            %pmDayRes.Accuracy = 100 * (1 - sum(abs(pmDayRes.PredSort - pmDayRes.LabelSort)) / ntrcvexamples);
+            %pmDayRes.PosAcc   = 100 * (sum(pmDayRes.PredSort(pmDayRes.LabelSort)) ...
+            %                          / size(pmDayRes.LabelSort(pmDayRes.LabelSort), 1));
+            %pmDayRes.NegAcc   = 100* (sum(1 - pmDayRes.PredSort(~pmDayRes.LabelSort)) ...
+            %                          / size(pmDayRes.LabelSort(~pmDayRes.LabelSort), 1));
+            %fprintf('PR AUC = %.3f%%, ROC AUC = %.3f%%, Accuracy = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
+            %    pmDayRes.PRAUC, pmDayRes.ROCAUC, pmDayRes.Accuracy, pmDayRes.PosAcc, pmDayRes.NegAcc);
+            %fprintf('\n');
+            
             pmModelRes.pmNDayRes(n) = pmDayRes;
+            
+            pmDayRes.Model     = [];
+            pmDayRes.Pred      = [];
+            pmDayRes.PredSort  = [];
+            pmDayRes.LabelSort = [];
+            pmDayRes.Precision = [];
+            pmDayRes.Recall    = [];
+            pmDayRes.TPR       = [];
+            pmDayRes.FPR       = [];
+            
+            ModelRuns(mp).NDayQS(n) = pmDayRes;
             
         end
         
@@ -209,7 +260,20 @@ for fs = 1:nfeatureparamsets
         toc
         fprintf('\n');
     end
+    
+    pmBSAllQS(fs).ModelRuns = ModelRuns;
+    
 end
+
+tic
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+outputfilename = sprintf('Bootstrap Qual Scores-%s-%s.mat', basefeatureparamfile, basemodelparamfile );
+fprintf('Saving output variables to file %s\n', outputfilename);
+save(fullfile(basedir, subfolder, outputfilename), ...
+     'pmBSAllQS', 'basefeatureparamfile', 'basemodelparamfile');
+toc
+fprintf('\n');
 
 beep on;
 beep;

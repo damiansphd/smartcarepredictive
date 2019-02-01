@@ -11,11 +11,12 @@ fprintf('1: Change in measures - By Patient\n');
 fprintf('2: Change in measures - Upper vs Lower 50%%\n');
 fprintf('3: Change in measures - Ntiles\n');
 fprintf('4: Raw measures - Ntiles\n');
-fprintf('4: Raw measures - By Patient\n');
+fprintf('5: Raw measures - By Patient\n');
+fprintf('6: Dynamic Range vs Best FEV1\n');
 fprintf('\n');
 runtype = input('Choose plots to run for: ');
 
-if runtype > 4
+if runtype > 6
     fprintf('Invalid choice\n');
     return;
 end
@@ -26,7 +27,7 @@ end
 fprintf('\n');
 
 ntiles = input('Choose number of ntiles (1-5): ');
-if runtype > 5 || runtype < 1
+if ntiles > 5 || ntiles < 1
     fprintf('Invalid choice\n');
     return;
 end
@@ -63,6 +64,7 @@ mkdir(fullfile(basedir, plotsubfolder));
 mfev1idx  = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 mo2satidx = measures.Index(ismember(measures.DisplayName, 'O2Saturation'));
 
+% change this to be robust max
 fev1max  = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mfev1idx, {'PatientNbr', 'Max'});
 o2satmax = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mo2satidx,{'PatientNbr', 'Max'});
 
@@ -205,7 +207,7 @@ elseif runtype == 3
     
 elseif runtype == 4 || runtype == 5
     
-    % plot data and regression lines for each ntile
+    % plot raw data for each ntile
     plotsacross = 2;
     plotsdown   = ceil(ntiles/plotsacross);
     if plotsdown == 1
@@ -217,7 +219,6 @@ elseif runtype == 4 || runtype == 5
     baseplotname = sprintf('%s - Raw FEV1 vs O2Sat - by %s', studydisplayname, ntiletext);
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = gobjects(ntiles,1);
-    hold on;
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
     for i = 1:ntiles
         rawfev1data  = nan(npatients * maxdays, 1);
@@ -281,6 +282,94 @@ elseif runtype == 4 || runtype == 5
         hold off;
         
     end
+    basedir = setBaseDir();
+    savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+    close(f);
+    
+elseif runtype == 6
+    
+    nplots = 4;
+    plotsacross = 1;
+    plotsdown   = nplots;
+    
+    fev1dynamic  = min(pmRawDatacube(:,:,mfev1idx), [],2) - max(pmRawDatacube(:,:,mfev1idx), [], 2);
+    o2satdynamic = min(pmRawDatacube(:,:,mo2satidx), [],2) - max(pmRawDatacube(:,:,mo2satidx), [], 2);
+    
+    patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
+    qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
+    
+    baseplotname = sprintf('%s - Dynamic Range Plots', studydisplayname);
+    [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    ax1 = gobjects(nplots,1);
+    
+    ax1(1) = subplot(plotsdown, plotsacross, 1, 'Parent', p);
+    plottitle = sprintf('%s - Max FEV1 vs Dynamic Range FEV1', studydisplayname);
+    xl = [min(fev1max.Max) * 0.95, max(fev1max.Max) * 1.05];
+    hold on;
+    for i = 1:ntiles
+        ntileidx = patientgradients.NTile == i;
+        scatter(ax1(1), fev1max.Max(ntileidx), fev1dynamic(ntileidx), ...
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1);
+    end
+    xlim(ax1(1), xl);
+    yl = [min(fev1dynamic) * 0.95, max(fev1dynamic) * 1.05];
+    ylim(ax1(1), yl);
+    xlabel(ax1(1), 'Max FEV1');
+    ylabel(ax1(1), 'Dynamic Range FEV1');
+    title(ax1(1), plottitle);
+    hold off;
+    
+    ax1(2) = subplot(plotsdown, plotsacross, 2, 'Parent', p);
+    plottitle = sprintf('%s - Max O2 Sat vs Dynamic Range O2 Sat', studydisplayname);
+    xl = [min(o2satmax.Max) * 0.98, max(o2satmax.Max) * 1.02];
+    hold on;
+    for i = 1:ntiles
+        ntileidx = patientgradients.NTile == i;
+        scatter(ax1(2), o2satmax.Max(ntileidx) - 0.45 + (0.15 * i), o2satdynamic(ntileidx), ...
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1);
+    end
+    xlim(ax1(2), xl);
+    yl = [min(o2satdynamic) * 0.98, max(o2satdynamic) * 1.02];
+    ylim(ax1(2), yl);
+    xlabel(ax1(2), 'Max O2 Sat');
+    ylabel(ax1(2), 'Dynamic Range O2 Sat');
+    title(ax1(2), plottitle);
+    hold off;
+    
+    ax1(3) = subplot(plotsdown, plotsacross, 3, 'Parent', p);
+    plottitle = sprintf('%s - Max FEV1 vs Dynamic Range O2 Sat', studydisplayname);
+    xl = [min(fev1max.Max) * 0.98, max(fev1max.Max) * 1.02];
+    hold on;
+    for i = 1:ntiles
+        ntileidx = patientgradients.NTile == i;
+        scatter(ax1(3), fev1max.Max(ntileidx), o2satdynamic(ntileidx), ...
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1);
+    end
+    xlim(ax1(3), xl);
+    yl = [min(o2satdynamic) * 0.98, max(o2satdynamic) * 1.02];
+    ylim(ax1(3), yl);
+    xlabel(ax1(3), 'Max FEV1');
+    ylabel(ax1(3), 'Dynamic Range O2 Sat');
+    title(ax1(3), plottitle);
+    hold off;
+    
+    ax1(4) = subplot(plotsdown, plotsacross, 4, 'Parent', p);
+    plottitle = sprintf('%s - Dynamic Range FEV1 vs O2 Sat', studydisplayname);
+    xl = [min(fev1dynamic) * 0.98, max(fev1dynamic) * 1.02];
+    hold on;
+    for i = 1:ntiles
+        ntileidx = patientgradients.NTile == i;
+        scatter(ax1(4), fev1dynamic(ntileidx), o2satdynamic(ntileidx), ...
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1);
+    end
+    xlim(ax1(4), xl);
+    yl = [min(o2satdynamic) * 0.98, max(o2satdynamic) * 1.02];
+    ylim(ax1(4), yl);
+    xlabel(ax1(4), 'Dynamic Range FEV1');
+    ylabel(ax1(4), 'Dynamic Range O2 Sat');
+    title(ax1(4), plottitle);
+    hold off;
+    
     basedir = setBaseDir();
     savePlotInDir(f, baseplotname, basedir, plotsubfolder);
     close(f);
