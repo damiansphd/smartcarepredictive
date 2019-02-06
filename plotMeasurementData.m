@@ -1,7 +1,7 @@
 function [xl, yl] = plotMeasurementData(ax, days, mdata, xl, yl, measurename, measuremask, colour, linestyle, linewidth, marker, markersize, markerec, markerfc)
 
-% plotMeasurementDataAndMean - plots the measurement data along with the mean and
-% treatment start line
+% plotMeasurementData - plots the measurement data for a given measurement
+% type
 
 % plot measurement data
 line(ax, days, mdata, ...

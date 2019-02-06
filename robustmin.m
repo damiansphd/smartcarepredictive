@@ -1,0 +1,11 @@
+function y = robustmin(x)
+
+% robustmin - returns the robust min of data set (2% from min)
+
+x = sort(x, 'ascend');
+percentile2 = round(size(x,1) * .02) + 1;
+
+y = x(percentile2);
+
+end
+

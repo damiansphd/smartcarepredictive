@@ -13,10 +13,9 @@ fprintf('3: Change in measures - Ntiles\n');
 fprintf('4: Raw measures - Ntiles\n');
 fprintf('5: Raw measures - By Patient\n');
 fprintf('6: Dynamic Range vs Best FEV1\n');
-fprintf('\n');
+fprintf('7: Avg FEV1 vs Avg O2 Saturation (by patient over study period)\n');
 runtype = input('Choose plots to run for: ');
-
-if runtype > 6
+if runtype > 7
     fprintf('Invalid choice\n');
     return;
 end
@@ -46,6 +45,53 @@ else
     ntiletext = 'Unknwn Division';
 end
 
+fprintf('Type of min/max to use\n');
+fprintf('-------------------\n');
+fprintf('1: True Min/Max\n');
+fprintf('2: Robust Min/Max\n');
+maxtype = input('Choose type of max (1-2): ');
+if maxtype > 2 || maxtype < 1
+    fprintf('Invalid choice\n');
+    return;
+end
+fprintf('\n');
+
+fprintf('Smoothing Window Type\n');
+fprintf('---------------------\n');
+fprintf('1: Raw\n');
+fprintf('2: Centered window\n');
+fprintf('3: Trailing window\n');
+fevsmtype = input('Choose type of smoothing (1-3): ');
+if fevsmtype > 3 || fevsmtype < 1
+    fprintf('Invalid choice\n');
+    return;
+end
+fprintf('\n');
+if fevsmtype == 1
+    fevsmww = 1;
+    fevsmfn = 0;
+    fevsmwdth = 1;
+else
+    fprintf('Smoothing Function\n');
+    fprintf('------------------\n');
+    fprintf('1: Mean\n');
+    fprintf('2: Median\n');
+    fprintf('3: Max\n');
+    fevsmfn = input('Choose smoothing function(1-3): ');
+    if fevsmfn > 3 || fevsmfn < 1
+        fprintf('Invalid choice\n');
+        return;
+    end
+    fprintf('\n');
+    
+    fevsmwdth = input('Choose smoothing width (1-5): ');
+    if fevsmwdth > 5 || fevsmwdth < 1
+        fprintf('Invalid choice\n');
+        return;
+    end
+    fprintf('\n');
+end
+
 % load predictive model inputs for chosen study
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
@@ -64,9 +110,17 @@ mkdir(fullfile(basedir, plotsubfolder));
 mfev1idx  = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 mo2satidx = measures.Index(ismember(measures.DisplayName, 'O2Saturation'));
 
-% change this to be robust max
-fev1max  = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mfev1idx, {'PatientNbr', 'Max'});
-o2satmax = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mo2satidx,{'PatientNbr', 'Max'});
+if maxtype == 1
+    fev1max  = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mfev1idx, {'PatientNbr', 'Max'});
+    o2satmax = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mo2satidx,{'PatientNbr', 'Max'});
+    maxtext = 'Max';
+else
+    fev1max  = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mfev1idx, {'PatientNbr', 'RobustMax'});
+    o2satmax = pmPatientMeasStats(pmPatientMeasStats.MeasureIndex == mo2satidx,{'PatientNbr', 'RobustMax'});
+    fev1max.Properties.VariableNames({'RobustMax'}) = {'Max'};
+    o2satmax.Properties.VariableNames({'RobustMax'}) = {'Max'};
+    maxtext = 'RMax';
+end
 
 patientgradients = sortrows(fev1max, {'Max'}, 'ascend');
 patientgradients.NTile(:) = 0;
@@ -121,7 +175,7 @@ if runtype == 1 || runtype == 2
         end
     
         if runtype == 1
-            baseplotname = sprintf('%s - FEV1 vs O2Sat - Patient %d, %s %d', studydisplayname, n, ntiletext, pntile);
+            baseplotname = sprintf('%s - FEV1 vs O2Sat -Q-%s - Patient %d, %s %d', studydisplayname, maxtext, n, ntiletext, pntile);
             [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
             ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
             hold on;
@@ -138,7 +192,7 @@ if runtype == 1 || runtype == 2
     end
     
     % plot FEV1 50:50 split results and observe any correlations
-    baseplotname = sprintf('%s - FEV1 vs O2Sat', studydisplayname);
+    baseplotname = sprintf('%s - FEV1 vs O2Sat - Q-%s', studydisplayname, maxtext);
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
     hold on;
@@ -160,7 +214,7 @@ elseif runtype == 3
         plotsdown = 2;
     end
     qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
-    baseplotname = sprintf('%s - FEV1 vs O2Sat - by %s', studydisplayname, ntiletext);
+    baseplotname = sprintf('%s - FEV1 vs O2Sat - Q-%s - by %s', studydisplayname, maxtext, ntiletext);
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = gobjects(ntiles,1);
     hold on;
@@ -216,7 +270,7 @@ elseif runtype == 4 || runtype == 5
     xl = [min(min(pmRawDatacube(:,:,3))) * 0.95, max(max(pmRawDatacube(:,:,3))) * 1.05];
     yl = [min(min(pmRawDatacube(:,:,4))) * 0.95, max(max(pmRawDatacube(:,:,4))) * 1.05];
     qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
-    baseplotname = sprintf('%s - Raw FEV1 vs O2Sat - by %s', studydisplayname, ntiletext);
+    baseplotname = sprintf('%s - Raw FEV1 vs O2Sat - Q-%s - by %s', studydisplayname, maxtext, ntiletext);
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = gobjects(ntiles,1);
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
@@ -238,7 +292,7 @@ elseif runtype == 4 || runtype == 5
                 if runtype == 5
                     plotsacross2 = 1;
                     plotsdown2   = 1;
-                    baseplotname2 = sprintf('%s - Raw FEV1 vs O2Sat - Patient %d, %s %d', studydisplayname, n, ntiletext, pntile);
+                    baseplotname2 = sprintf('%s - Raw FEV1 vs O2Sat - Q-%s - Patient %d, %s %d', studydisplayname, maxtext, n, ntiletext, pntile);
                     [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
                     ax2 = subplot(plotsdown2, plotsacross2, 1, 'Parent', p2);
                     hold on;
@@ -298,7 +352,7 @@ elseif runtype == 6
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
     qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
     
-    baseplotname = sprintf('%s - Dynamic Range Plots', studydisplayname);
+    baseplotname = sprintf('%s - Dynamic Range Plots = Q-%s', studydisplayname, maxtext);
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = gobjects(nplots,1);
     
@@ -373,29 +427,43 @@ elseif runtype == 6
     basedir = setBaseDir();
     savePlotInDir(f, baseplotname, basedir, plotsubfolder);
     close(f);
+    
+elseif runtype == 7
+    
+    plotsacross = 1;
+    plotsdown   = 1;
+    
+    avgfev1  = mean(pmRawDatacube(:,:,mfev1idx), 2, 'omitnan');
+    avgo2sat = mean(pmRawDatacube(:,:,mo2satidx), 2, 'omitnan');
+    
+    patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
+    qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
+    
+    baseplotname = sprintf('%s - Study Average FEV1 vs Average O2Sat by Patient - Q-%s', studydisplayname, maxtext);
+    [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    
+    ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
+    plottitle = sprintf('%s - Study Average FEV1 vs Average O2Sat by Patient - Q-%s', studydisplayname, maxtext);
+    xl = [min(avgfev1) * 0.95, max(avgfev1) * 1.05];
+    hold on;
+    for i = 1:ntiles
+        ntileidx = patientgradients.NTile == i;
+        scatter(ax1, avgfev1(ntileidx), avgo2sat(ntileidx), ...
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1);
+    end
+    xlim(ax1, xl);
+    yl = [min(avgo2sat) * 0.95, max(avgo2sat) * 1.05];
+    ylim(ax1, yl);
+    xlabel(ax1, 'Avg FEV1');
+    ylabel(ax1, 'Avg O2 Saturation');
+    title(ax1, plottitle);
+    hold off;
+    
+    basedir = setBaseDir();
+    savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+    close(f);
+    
 end
     
-%    for n = 1:ntiles
-%        qgrad = patientgradients(patientgradients.NTile == n, :);
-%        nqlines = size(qgrad,1);
-%        ax1(n) = subplot(plotsdown, plotsacross, n, 'Parent', p);
-%        yreg = zeros(nqlines, 2);
-%        hold on;
-%        for i = 1:nqlines
-%            yreg(i,1) = xl(1) * qgrad.Gradient(i);
-%            plot(ax1(n), xl, yreg(i,:), 'Color', qcolor{qgrad.NTile(i)}, 'Linestyle', ':');
-%            xlim(ax1(n), xl);
-%            ylim(ax1(n), yl);
-%        end
-%        yregavg = [xl(1) * mean(qgrad.Gradient), 0];
-%        plot(ax1(n), xl, yregavg, 'Color', qcolor{qgrad.NTile(i)}, 'Linestyle', '-', 'LineWidth', 1);
-%        hold off;
-%        title(ax1(n), sprintf('Quintile %d (Avg Max Fev1 %.0f%%): Avg Gradient %.2f', n, mean(qgrad.Max), mean(qgrad.Gradient)), 'FontSize', 6);
-%    end
-%    basedir = setBaseDir();
-%    savePlotInDir(f, baseplotname, basedir, plotsubfolder);
-%    close(f);
-%end
 
-%patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
     
