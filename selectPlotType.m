@@ -12,12 +12,13 @@ fprintf('5. Measures and Predictions for all Patients\n');
 fprintf('6. Measures and Predictions for a single Patient\n');
 fprintf('7. Volatility Measures for all Patients\n');
 fprintf('8. Volatility Measures for a single Patient\n');
+fprintf('9. Best and Worst Predictions\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
 plottype = str2double(splottype);
 
-if (isnan(plottype) || plottype < 1 || plottype > 8)
+if (isnan(plottype) || plottype < 1 || plottype > 9)
     fprintf('Invalid choice\n');
     validresponse = false;
     plottype = 0;

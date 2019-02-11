@@ -14,7 +14,7 @@ o2satdata = o2satdata(idx);
 
 % plot results and observe any correlations
     
-scatter(ax1, fev1data, o2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor',dcolor, 'MarkerFaceAlpha', 0.3);
+scatter(ax1, fev1data, o2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor',dcolor, 'MarkerFaceAlpha', 0.3, 'SizeData', 18);
 pu = polyfitZero(fev1data, o2satdata,1);
 yu_ls = polyval(pu, xl);
 plot(ax1, xl, yu_ls, dcolor);
