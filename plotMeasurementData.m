@@ -23,7 +23,7 @@ if measuremask == 1
 else
     title(measurename,'FontSize', 6);
 end
-xlabel('Days Prior', 'FontSize', 6);
+xlabel('Days', 'FontSize', 6);
 ylabel('Measure', 'FontSize', 6);
     
 end

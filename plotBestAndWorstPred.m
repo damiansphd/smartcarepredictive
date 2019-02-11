@@ -31,23 +31,24 @@ end
 pmampred(pmampred.MeanPred == -1,:) = [];
 
 patperpage  = 3;
-plotsperpat  = 12;
+npred       = 1;
+plotsperpat = nmeasures + npred;
 plotsacross = 4;
-plotsdown   = ceil((plotsperpat * patperpage) / plotsacross);
+plotsdown   = ceil(plotsperpat / plotsacross);
 npat        = ceil(size(pmampred,1) * 0.2);
 %npat        = 4;
 npages      = ceil(npat/patperpage);
-cplot       = 1;
 cpage       = 1;
+cpat        = 1;
+bcolors     = [0.88, 0.88, 0.88; 0.95, 0.95, 0.95; 0.88, 0.88, 0.88];
 
 % 1) best results where there should be a prediction
 baseplotname = sprintf('%s - Best Predictions - Page %d of %d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
-ax1 = gobjects(plotsdown * plotsacross,1);
 
 pmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
 
-for i = 1:npat
+for i = 1:npat      
     pnbr      = pmampred.PatientNbr(i);
     pmaxdays  = pmPatients.LastMeasdn(pmPatients.PatientNbr == pnbr) - pmPatients.FirstMeasdn(pmPatients.PatientNbr == pnbr) + 1;
     pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:);
@@ -68,6 +69,15 @@ for i = 1:npat
     end
     days      = (dfrom:dto);
     
+    uipypos = 1 - cpat/patperpage;
+    uipysz  = 1/patperpage;
+    uiptitle = sprintf('Patient %d', pnbr);
+    sp(cpat) = uipanel('Parent', p, ...
+                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
+                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
+                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
+    ax1 = gobjects(plotsdown * plotsacross,1);
+    
     for m = 1:nmeasures
         
         mrawdata  = pmRawDatacube(pnbr, dfrom:dto, m);
@@ -87,25 +97,24 @@ for i = 1:npat
                     (pmeasstats.Mean(pmeasstats.MeasureIndex == m) + pmeasstats.StdDev(pmeasstats.MeasureIndex == m))];
         end
         
-        ax1(cplot) = subplot(plotsdown, plotsacross, cplot, 'Parent', p);
+        ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent', sp(cpat));
         
-        [xl, yl] = plotMeasurementData(ax1(cplot), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-        [xl, yl] = plotMeasurementData(ax1(cplot), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-        [xl, yl] = plotMeasurementData(ax1(cplot), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
+        [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+        [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+        [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
         
         hold on;
-        [xl, yl] = plotVerticalLine(ax1(cplot), pmampred.Pred(i), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax1(cplot), pmampred.RelLB1(i), pmampred.RelUB1(i), yl(1), yl(2), 'blue', 0.1, 'none');
+        [xl, yl] = plotVerticalLine(ax1(m), pmampred.Pred(i), xl, yl, 'blue', '-', 1.0);
+        plotFillArea(ax1(m), pmampred.RelLB1(i), pmampred.RelUB1(i), yl(1), yl(2), 'blue', 0.1, 'none');
         if pmampred.RelLB2(i) ~= -1
-            plotFillArea(ax1(cplot), pmampred.RelLB2(i), pmampred.RelUB2(i), yl(1), yl(2), 'blue', 0.1, 'none');
+            plotFillArea(ax1(m), pmampred.RelLB2(i), pmampred.RelUB2(i), yl(1), yl(2), 'blue', 0.1, 'none');
         end
         for ab = 1:size(poralabsdates,1)
-            plotFillArea(ax1(cplot), poralabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'yellow', 0.1, 'none');
+            plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'yellow', 0.1, 'none');
         end
         for ab = 1:size(pivabsdates,1)
-            plotFillArea(ax1(cplot), pivabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'red', 0.1, 'none');
+            plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'red', 0.1, 'none');
         end
-        cplot = cplot + 1;
     end
     
     % add prediction plots
@@ -123,29 +132,30 @@ for i = 1:npat
     ppreddata = ppreddata(dfrom:dto);
     plabeldata = plabeldata(dfrom:dto);
 
-    ax1(cplot) = subplot(plotsdown, plotsacross, cplot, 'Parent', p);
+    m = m + 1;
+    ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent', sp(cpat));
     xlim(xl);
     yl = [0 1];
     ylim(yl);
-    plottitle = sprintf('Prediction for %s Labels', labelidx, lbdisplayname);
-    [xl, yl] = plotMeasurementData(ax1(cplot), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(cplot), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+    plottitle = sprintf('Prediction for %s Labels', lbdisplayname);
+    [xl, yl] = plotMeasurementData(ax1(m), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
 
-    cplot = cplot + 3;
+    cpat = cpat + 1;
     
     if (i == npat)
         basedir = setBaseDir();
         savePlotInDir(f, baseplotname, basedir, plotsubfolder);
         close(f); 
-    elseif ((cplot - 1) == patperpage * plotsperpat) 
+    elseif ((cpat - 1) == patperpage) 
         basedir = setBaseDir();
         savePlotInDir(f, baseplotname, basedir, plotsubfolder);
         close(f);
         cpage = cpage + 1;
-        cplot = 1;
+        cpat = 1;
         baseplotname = sprintf('%s - Best Predictions - Page %d of %d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
-        ax1 = gobjects(plotsdown * plotsacross,1);
+        
     end
     
 end
