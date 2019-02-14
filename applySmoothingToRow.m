@@ -1,7 +1,8 @@
 function [outputrow] = applySmoothingToRow(rawdatarow, interpdatarow, smtype, smfn, smwdth)
 
 % applySmoothingToRow - apply appropriate smoothing to given measurement
-% row
+% row - only keeping points with underlying raw data points. For use in
+% FEV1 vs O2 saturation analysis
 
 if smtype == 1
     outputrow = rawdatarow;

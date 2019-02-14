@@ -40,7 +40,7 @@ for rp = 1:size(pmFeatureParams,1)
     tic
     fprintf('Normalising data\n');
     [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmPatients, pmOverallStats, pmPatientMeasStats, ...
-        npatients, maxdays, nmeasures, pmFeatureParams.normmethod(rp), pmFeatureParams.smoothingmethod(rp)); 
+        npatients, maxdays, measures, nmeasures, pmFeatureParams.normmethod(rp), pmFeatureParams.smoothingmethod(rp)); 
     toc
     fprintf('\n');
     
@@ -60,7 +60,7 @@ for rp = 1:size(pmFeatureParams,1)
     toc
     fprintf('\n');
     
-    if pmFeatureParams.smoothingmethod(rp) == 2
+    if pmFeatureParams.smoothingmethod(rp) > 1
         pmInterpNormcube = pmSmoothInterpNormcube;
     end
     

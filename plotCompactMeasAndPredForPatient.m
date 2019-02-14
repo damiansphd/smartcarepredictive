@@ -1,7 +1,7 @@
 function plotCompactMeasAndPredForPatient(pmpatientrow, pabs, pmampredrow, pmRawDatacube, pmInterpDatacube, ...
                 pmTrCVFeatureIndex, trcvlabels, pmModelRes, pmOverallStats, pmeasstats, ...
                 measures, nmeasures, npred, plotsacross, dbfab, dafab, sp, labelidx, ...
-                lbdisplayname, lgtype)
+                lbdisplayname, lgtype, featureduration)
             
 % plotCompactMeasAndPredForPatient- compact plots of measures and
 % prediction for a patient
@@ -14,8 +14,7 @@ pmaxdays  = pmpatientrow.LastMeasdn - pmpatientrow.FirstMeasdn + 1;
     
 exstart   = pmampredrow.Pred;
 ivstart   = pmampredrow.IVScaledDateNum;
-pivabsdates = pabs(ismember(pabs.Route, 'IV') & pabs.RelStartdn == ivstart,{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
-poralabsdates = pabs(ismember(pabs.Route, 'Oral') & pabs.RelStartdn == ivstart,{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
+
 
 dfrom     = ivstart - dbfab;
 if dfrom < 1
@@ -26,6 +25,18 @@ if dto > pmaxdays
     dto = pmaxdays;
 end
 days      = (dfrom:dto);
+
+%pivabsdates = pabs(ismember(pabs.Route, 'IV') & pabs.RelStartdn == ivstart,{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
+%poralabsdates = pabs(ismember(pabs.Route, 'Oral') & pabs.RelStartdn == ivstart,{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
+
+pivabsdates = pabs(ismember(pabs.Route, 'IV') & ...
+    ((pabs.RelStartdn <= dfrom & pabs.RelStopdn >= dfrom) | ...
+     (pabs.RelStartdn >= dfrom & pabs.RelStopdn <= dto)   | ...
+     (pabs.RelStartdn <= dto   & pabs.RelStopdn >= dto)), {'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
+poralabsdates = pabs(ismember(pabs.Route, 'Oral') & ...
+    ((pabs.RelStartdn <= dfrom & pabs.RelStopdn >= dfrom) | ...
+     (pabs.RelStartdn >= dfrom & pabs.RelStopdn <= dto)   | ...
+     (pabs.RelStartdn <= dto   & pabs.RelStopdn >= dto)), {'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
 
 ax1 = gobjects(plotsdown * plotsacross,1);
     
@@ -63,10 +74,13 @@ for m = 1:nmeasures
         end
     end
     for ab = 1:size(poralabsdates,1)
-        plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'yellow', 0.1, 'none');
+        plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
     end
     for ab = 1:size(pivabsdates,1)
-        plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'red', 0.1, 'none');
+        plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
+    end
+    if dfrom < featureduration
+        plotFillArea(ax1(m), dfrom, featureduration, yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
     end
     hold off;
 end
@@ -94,6 +108,25 @@ ylim(yl);
 plottitle = sprintf('Prediction for %s Labels', lbdisplayname);
 [xl, yl] = plotMeasurementData(ax1(m), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
 [xl, yl] = plotMeasurementData(ax1(m), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+
+hold on;
+if ismember(lgtype, {'TP', 'FN'})
+    [xl, yl] = plotVerticalLine(ax1(m), pmampredrow.Pred, xl, yl, 'blue', '-', 1.0);
+    plotFillArea(ax1(m), pmampredrow.RelLB1, pmampredrow.RelUB1, yl(1), yl(2), 'blue', 0.1, 'none');
+    if pmampredrow.RelLB2 ~= -1
+        plotFillArea(ax1(m), pmampredrow.RelLB2, pmampredrow.RelUB2, yl(1), yl(2), 'blue', 0.1, 'none');
+    end
+end
+for ab = 1:size(poralabsdates,1)
+    plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
+end
+for ab = 1:size(pivabsdates,1)
+    plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
+end
+if dfrom < featureduration
+    plotFillArea(ax1(m), dfrom, featureduration, yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
+end
+hold off;
 
 end
 
