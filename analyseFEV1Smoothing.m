@@ -17,13 +17,13 @@ mkdir(fullfile(basedir, plotsubfolder));
 rawcolor = [0.13, 0.55, 0.13];
 wcolors = [{'black'}; {'blue'}; {'red'}; {'black'}; {'blue'}; {'red'}];
 
-npages = 10;
+npages = 15;
 plotsacross = 1;
 plotsdown   = 6;
 fevidx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 
 rng(2);
-expatients = randperm(npatients);
+expatients = [29, 36, 40, 44, 71, 73, 78, randperm(npatients)]; % hardcode to include patient who did duplicate/triplicate lung measures
 
 for n = 1:npages
 %for n = 1:2

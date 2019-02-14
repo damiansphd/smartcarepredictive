@@ -1,5 +1,7 @@
 clear; close all; clc;
 
+pointsize = 36;
+
 % choose study
 [~, studydisplayname, ~] = selectStudy();
 
@@ -182,7 +184,7 @@ if runtype == 1 || runtype == 2
             [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
             ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
             hold on;
-            patientgradients.Gradient(n) = plotFEV1vsO2Sat(ax1, pfev1data, po2satdata, dcolor, xl, yl, 'FEV1 vs O2 Saturation');
+            patientgradients.Gradient(n) = plotFEV1vsO2Sat(ax1, pfev1data, po2satdata, dcolor, xl, yl, 'FEV1 vs O2 Saturation', pointsize);
     
             legend(ax1, {'FEV1 data', sprintf('Regression Line - Grad %.2f', patientgradients.Gradient(n))}, ...
                 'Location', 'best', 'FontSize', 6);
@@ -199,8 +201,8 @@ if runtype == 1 || runtype == 2
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
     hold on;
-    ugrad = plotFEV1vsO2Sat(ax1, ufev1data, uo2satdata, 'blue', xl, yl, 'FEV1 vs O2 Saturation');
-    lgrad = plotFEV1vsO2Sat(ax1, lfev1data, lo2satdata, 'red', xl, yl, 'FEV1 vs O2 Saturation');
+    ugrad = plotFEV1vsO2Sat(ax1, ufev1data, uo2satdata, 'blue', xl, yl, 'FEV1 vs O2 Saturation', pointsize);
+    lgrad = plotFEV1vsO2Sat(ax1, lfev1data, lo2satdata, 'red', xl, yl, 'FEV1 vs O2 Saturation', pointsize);
     legend(ax1, {'U50% FEV1 data', sprintf('U50%% Regression Line - Grad %.2f', ugrad), 'L50% FEV1 Data', sprintf('L50%% Regression Line - Grad %.2f', lgrad)}, ...
         'Location', 'best', 'FontSize', 6);
     hold off;
@@ -252,7 +254,7 @@ elseif runtype == 3
         % plot FEV1 50:50 split results and observe any correlations
         ax1(i) = subplot(plotsdown, plotsacross, i, 'Parent', p);
         hold on;
-        grad = plotFEV1vsO2Sat(ax1(i), fev1data, o2satdata, qcolor{i}, xl, yl, plottitle);
+        grad = plotFEV1vsO2Sat(ax1(i), fev1data, o2satdata, qcolor{i}, xl, yl, plottitle, pointsize);
         legend(ax1(i), {'FEV1 data', sprintf('Regression Line - Grad %.2f', grad)}, ...
         'Location', 'best', 'FontSize', 6);
         hold off;
@@ -301,7 +303,7 @@ elseif runtype == 4 || runtype == 5
                     [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
                     ax2 = subplot(plotsdown2, plotsacross2, 1, 'Parent', p2);
                     hold on;
-                    scatter(ax2, prawfev1data, prawo2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 0.3, 'SizeData', 18);
+                    scatter(ax2, prawfev1data, prawo2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 0.3, 'SizeData', pointsize);
                     xlim(ax2, xl);
                     ylim(ax2, yl);
                     xlabel(ax2, 'Raw FEV1');
@@ -331,7 +333,7 @@ elseif runtype == 4 || runtype == 5
 
         % plot results and observe any correlations
     
-        scatter(ax1(i), nnrawfev1data, nnrawo2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 0.3, 'SizeData', 18);
+        scatter(ax1(i), nnrawfev1data, nnrawo2satdata, 'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 0.3, 'SizeData', pointsize);
         xlim(ax1(i), xl);
         ylim(ax1(i), yl);
         xlabel(ax1(i), 'Raw FEV1');
@@ -351,7 +353,9 @@ elseif runtype == 6
     plotsacross = 1;
     plotsdown   = nplots;
     
-    fev1dynamic  = min(pmRawDatacube(:,:,mfev1idx), [],2) - max(pmRawDatacube(:,:,mfev1idx), [], 2);
+    %fev1dynamic  = min(pmRawDatacube(:,:,mfev1idx), [],2) - max(pmRawDatacube(:,:,mfev1idx), [], 2);
+    smfev1data = applySmoothingToMatrix(pmRawDatacube(:,:,mfev1idx), pmInterpDatacube(:,:,mfev1idx), fevsmtype, fevsmfn, fevsmwdth, 2);
+    fev1dynamic = min(smfev1data, [], 2) - max(smfev1data, [], 2);
     o2satdynamic = min(pmRawDatacube(:,:,mo2satidx), [],2) - max(pmRawDatacube(:,:,mo2satidx), [], 2);
     
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
@@ -368,7 +372,7 @@ elseif runtype == 6
     for i = 1:ntiles
         ntileidx = patientgradients.NTile == i;
         scatter(ax1(1), fev1max.Max(ntileidx), fev1dynamic(ntileidx), ...
-            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', 18);
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', pointsize);
     end
     xlim(ax1(1), xl);
     yl = [min(fev1dynamic) * 0.95, max(fev1dynamic) * 1.05];
@@ -385,7 +389,7 @@ elseif runtype == 6
     for i = 1:ntiles
         ntileidx = patientgradients.NTile == i;
         scatter(ax1(2), o2satmax.Max(ntileidx) - 0.45 + (0.15 * i), o2satdynamic(ntileidx), ...
-            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', 18);
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', pointsize);
     end
     xlim(ax1(2), xl);
     yl = [min(o2satdynamic) * 0.98, max(o2satdynamic) * 1.02];
@@ -402,7 +406,7 @@ elseif runtype == 6
     for i = 1:ntiles
         ntileidx = patientgradients.NTile == i;
         scatter(ax1(3), fev1max.Max(ntileidx), o2satdynamic(ntileidx), ...
-            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', 18);
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', pointsize);
     end
     xlim(ax1(3), xl);
     yl = [min(o2satdynamic) * 0.98, max(o2satdynamic) * 1.02];
@@ -419,7 +423,7 @@ elseif runtype == 6
     for i = 1:ntiles
         ntileidx = patientgradients.NTile == i;
         scatter(ax1(4), fev1dynamic(ntileidx), o2satdynamic(ntileidx), ...
-            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', 18);
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', pointsize);
     end
     xlim(ax1(4), xl);
     yl = [min(o2satdynamic) * 0.98, max(o2satdynamic) * 1.02];
@@ -454,7 +458,7 @@ elseif runtype == 7
     for i = 1:ntiles
         ntileidx = patientgradients.NTile == i;
         scatter(ax1, avgfev1(ntileidx), avgo2sat(ntileidx), ...
-            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1);
+            'MarkerEdgeColor', 'none', 'MarkerFaceColor', qcolor{i}, 'MarkerFaceAlpha', 1, 'SizeData', pointsize);
     end
     xlim(ax1, xl);
     yl = [min(avgo2sat) * 0.95, max(avgo2sat) * 1.05];

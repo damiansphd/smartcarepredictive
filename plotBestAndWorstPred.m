@@ -30,116 +30,51 @@ end
 
 pmampred(pmampred.MeanPred == -1,:) = [];
 
-patperpage  = 3;
+patperpage  = 6;
+plotsacross = 5;
 npred       = 1;
-plotsperpat = nmeasures + npred;
-plotsacross = 4;
-plotsdown   = ceil(plotsperpat / plotsacross);
 npat        = ceil(size(pmampred,1) * 0.2);
 %npat        = 4;
 npages      = ceil(npat/patperpage);
 cpage       = 1;
 cpat        = 1;
-bcolors     = [0.88, 0.88, 0.88; 0.95, 0.95, 0.95; 0.88, 0.88, 0.88];
+dbfab       = 30; % number of days before ab start to plot
+dafab       = 2;  % number of days after ab start to plot
+bcolors     = [0.88, 0.88, 0.88; 
+               0.95, 0.95, 0.95;
+               0.88, 0.88, 0.88;
+               0.95, 0.95, 0.95;
+               0.88, 0.88, 0.88; 
+               0.95, 0.95, 0.95;
+               0.88, 0.88, 0.88;
+               0.95, 0.95, 0.95];
 
-% 1) best results where there should be a prediction
-baseplotname = sprintf('%s - Best Predictions - Page %d of %d', basefilename, cpage, npages);
+% 1) Highest True Positives
+baseplotname = sprintf('%s - Highest True Positives - Page %d of %d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 
+lgtype = 'TP';
 pmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
 
-for i = 1:npat      
+for i = 1:npat
     pnbr      = pmampred.PatientNbr(i);
-    pmaxdays  = pmPatients.LastMeasdn(pmPatients.PatientNbr == pnbr) - pmPatients.FirstMeasdn(pmPatients.PatientNbr == pnbr) + 1;
-    pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:);
-    
-    exstart   = pmampred.Pred(i);
-    ivstart   = pmampred.IVScaledDateNum(i);
-    pivabsdates = pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & ismember(pmAntibiotics.Route, 'IV') & pmAntibiotics.RelStartdn == ivstart,{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
-    poralabsdates = pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & ismember(pmAntibiotics.Route, 'Oral') & pmAntibiotics.RelStartdn == ivstart,{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
-    dbfab     = 28;
-    dafab     = 2;
-    dfrom     = ivstart - dbfab;
-    if dfrom < 1
-        dfrom = 1;
-    end
-    dto       = ivstart + dafab;
-    if dto > pmaxdays
-        dto = pmaxdays;
-    end
-    days      = (dfrom:dto);
-    
     uipypos = 1 - cpat/patperpage;
     uipysz  = 1/patperpage;
-    uiptitle = sprintf('Patient %d', pnbr);
+    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
+                pmFeatureParamsRow.StudyDisplayName{1}, pmampred.SplitNbr(i), ...
+                100 * pmampred.MaxPred(i), 100 * pmampred.MeanPred(i), 100 * pmampred.MedianPred(i));
     sp(cpat) = uipanel('Parent', p, ...
                   'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
                   'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
                   'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
-    ax1 = gobjects(plotsdown * plotsacross,1);
-    
-    for m = 1:nmeasures
-        
-        mrawdata  = pmRawDatacube(pnbr, dfrom:dto, m);
-        mdata     = pmInterpDatacube(pnbr, dfrom:dto, m);
-        interppts = mdata;
-        interppts(~isnan(mrawdata)) = nan;
-        [combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setPlotColorsAndText(measures(m, :));
-        xl = [dfrom dto];
-
-        % set min/max y display range to be mean +/- 1 stddev (using patient/
-        % measure level stats where they exist, otherwise overall study level
-        % stats
-        if size(pmeasstats.Mean(pmeasstats.MeasureIndex == m), 1) == 0
-            yl = [(pmOverallStats.Mean(m) - pmOverallStats.StdDev(m)) (pmOverallStats.Mean(m) + pmOverallStats.StdDev(m))];
-        else
-            yl = [(pmeasstats.Mean(pmeasstats.MeasureIndex == m) - pmeasstats.StdDev(pmeasstats.MeasureIndex == m)) ...
-                    (pmeasstats.Mean(pmeasstats.MeasureIndex == m) + pmeasstats.StdDev(pmeasstats.MeasureIndex == m))];
-        end
-        
-        ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent', sp(cpat));
-        
-        [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-        [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-        [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
-        
-        hold on;
-        [xl, yl] = plotVerticalLine(ax1(m), pmampred.Pred(i), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax1(m), pmampred.RelLB1(i), pmampred.RelUB1(i), yl(1), yl(2), 'blue', 0.1, 'none');
-        if pmampred.RelLB2(i) ~= -1
-            plotFillArea(ax1(m), pmampred.RelLB2(i), pmampred.RelUB2(i), yl(1), yl(2), 'blue', 0.1, 'none');
-        end
-        for ab = 1:size(poralabsdates,1)
-            plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'yellow', 0.1, 'none');
-        end
-        for ab = 1:size(pivabsdates,1)
-            plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), dto, yl(1), yl(2), 'red', 0.1, 'none');
-        end
-    end
-    
-    % add prediction plots
-    fidx = (pmTrCVFeatureIndex.PatientNbr == pnbr);
-    pfeatindex = pmTrCVFeatureIndex(fidx,:);
-    ppred  = pmModelRes.pmNDayRes(labelidx).Pred(fidx);
-    plabel = trcvlabels(fidx,labelidx);
-
-    ppreddata = nan(1, pmaxdays);
-    plabeldata = nan(1, pmaxdays);
-    for d = 1:size(ppred,1)
-        ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
-        plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
-    end
-    ppreddata = ppreddata(dfrom:dto);
-    plabeldata = plabeldata(dfrom:dto);
-
-    m = m + 1;
-    ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent', sp(cpat));
-    xlim(xl);
-    yl = [0 1];
-    ylim(yl);
-    plottitle = sprintf('Prediction for %s Labels', lbdisplayname);
-    [xl, yl] = plotMeasurementData(ax1(m), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+              
+    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
+        pmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
+        lbdisplayname, lgtype)
 
     cpat = cpat + 1;
     
@@ -153,20 +88,164 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Best Predictions - Page %d of %d', basefilename, cpage, npages);
-        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
-        
+        baseplotname = sprintf('%s - Highest True Positives - Page %d of %d', basefilename, cpage, npages);
+        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
-    
 end
 
-
-
-
 % 2) worst results where there should be a prediction
+
+cpage       = 1;
+cpat        = 1;
+
+baseplotname = sprintf('%s - Lowest False Negatives - Page %d of %d', basefilename, cpage, npages);
+[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+lgtype = 'FN';
+pmampred = sortrows(pmampred, {'MaxPred'}, 'ascend');
+
+for i = 1:npat
+    pnbr      = pmampred.PatientNbr(i);
+    uipypos = 1 - cpat/patperpage;
+    uipysz  = 1/patperpage;
+    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
+                pmFeatureParamsRow.StudyDisplayName{1}, pmampred.SplitNbr(i), ...
+                100 * pmampred.MaxPred(i), 100 * pmampred.MeanPred(i), 100 * pmampred.MedianPred(i));
+    sp(cpat) = uipanel('Parent', p, ...
+                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
+                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
+                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
+              
+    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
+        pmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
+        lbdisplayname, lgtype)
+
+    cpat = cpat + 1;
+    
+    if (i == npat)
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f); 
+    elseif ((cpat - 1) == patperpage) 
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f);
+        cpage = cpage + 1;
+        cpat = 1;
+        baseplotname = sprintf('%s - Lowest False Negatives - Page %d of %d', basefilename, cpage, npages);
+        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
+    end
+end
 
 % 3) (worst) results - highest predictions where there should not be a
 % prediction
 
+flidx = trcvlabels(:,labelidx)==false;
+flfeatind = pmTrCVFeatureIndex(flidx,:);
+[fppred, worstsortidx] = sort(pmModelRes.pmNDayRes(labelidx).Pred(flidx), 'descend');
+fpfeatind = flfeatind(worstsortidx,:);
+fpfeatind.LBound(:)  = 0;
+fpfeatind.UBound(:)  = 0;
+fpfeatind.MaxPred(:) = 0;
+
+example = 1;
+npat = 15;
+fpexamples = fpfeatind(1,:);
+fpexamples(1,:) = [];
+row = 1;
+while example <= npat
+    pnbr = fpfeatind.PatientNbr(row);
+    if (~ismember(pnbr, fpexamples.PatientNbr) | ...
+        (fpfeatind.CalcDatedn(row) < fpexamples.CalcDatedn(fpexamples.PatientNbr == pnbr) - 30 | ...
+        fpfeatind.CalcDatedn(row) > fpexamples.CalcDatedn(fpexamples.PatientNbr == pnbr) + 30))
+    
+        fpexamples(example, :)      = fpfeatind(row,:); 
+        fpexamples.LBound(example)  = fpexamples.CalcDatedn(example);
+        fpexamples.UBound(example)  = fpexamples.CalcDatedn(example);
+        fpexamples.MaxPred(example) = fppred(row);
+        example = example + 1;
+    end
+    row = row + 1;
 end
 
+threshold = 0.5;
+wthreshidx = fppred > threshold;
+for row = 1:size(fppred(wthreshidx),1)
+    pnbr = fpfeatind.PatientNbr(row);
+    if (fpfeatind.CalcDatedn(row) > fpexamples.CalcDatedn(fpexamples.PatientNbr == pnbr) - 30) & ...
+        fpfeatind.CalcDatedn(row) < fpexamples.LBound(fpexamples.PatientNbr == pnbr)
+        fpexamples.LBound(fpexamples.PatientNbr == pnbr) = fpfeatind.CalcDatedn(row);
+    end
+    if (fpfeatind.CalcDatedn(row) < fpexamples.CalcDatedn(fpexamples.PatientNbr == pnbr) + 30) & ...
+            fpfeatind.CalcDatedn(row) > fpexamples.UBound(fpexamples.PatientNbr == pnbr)
+        fpexamples.UBound(fpexamples.PatientNbr == pnbr) = fpfeatind.CalcDatedn(row);
+    end
+end
+
+% fake Pred and IVScaledDateNum columns to mirror pmAMPred columns
+fpexamples.Pred            = fpexamples.LBound;
+fpexamples.IVScaledDateNum = fpexamples.UBound;
+
+cpage       = 1;
+cpat        = 1;
+npages      = ceil(npat/patperpage);
+
+baseplotname = sprintf('%s - Highest False Positives - Page %d of %d', basefilename, cpage, npages);
+[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+lgtype = 'FP';
+
+for i = 1:npat
+    pnbr = fpexamples.PatientNbr(i);
+    lb   = fpexamples.Pred(i);
+    ub   = fpexamples.IVScaledDateNum(i);
+    
+    if (ub - lb) > 30
+        dbfab = ub - lb + 5; % number of days before ab start to plot
+    else
+        dbfab = 30; % number of days before ab start to plot
+    end
+    dafab = 10; % number of days after ab start to plot
+    
+    uipypos = 1 - cpat/patperpage;
+    uipysz  = 1/patperpage;
+    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%%', pnbr, ...
+                pmFeatureParamsRow.StudyDisplayName{1}, ...
+                pmTrCVPatientSplit.SplitNbr(pmTrCVPatientSplit.PatientNbr==pnbr), ...
+                100 * fpexamples.MaxPred(i));
+    sp(cpat) = uipanel('Parent', p, ...
+                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
+                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
+                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
+              
+    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
+        fpexamples(i,:), pmRawDatacube, pmInterpDatacube, ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
+        lbdisplayname, lgtype)
+
+    cpat = cpat + 1;
+    
+    if (i == npat)
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f); 
+    elseif ((cpat - 1) == patperpage) 
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f);
+        cpage = cpage + 1;
+        cpat = 1;
+        baseplotname = sprintf('%s - Highest False Positives - Page %d of %d', basefilename, cpage, npages);
+        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
+    end
+end
+    
+    
+end
+    
+    
