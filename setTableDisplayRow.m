@@ -41,7 +41,7 @@ if pmFeatureParamsRow.smoothingmethod == 1
 elseif pmFeatureParamsRow.smoothingmethod == 2
     resultrow.Smoothing = {'2:CW5DMean'};
 elseif pmFeatureParamsRow.smoothingmethod == 3
-    resultrow.Smoothing = {'2:CW3DMax'}; 
+    resultrow.Smoothing = {'3:CW3DMax'}; 
 end
 
 if sum(measures.RawMeas) == 0
