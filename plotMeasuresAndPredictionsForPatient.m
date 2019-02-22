@@ -10,6 +10,8 @@ function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata
 patientnbr = patientrow.PatientNbr;
 pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 
+mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
+
 plotsacross = 1;
 if nmeasures < 6
     plotsdown = 8;
@@ -95,8 +97,8 @@ for m = 1:nmeasures
     yyaxis(ax1(m),'left');
     
     [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    
+    %[xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata,pmFeatureParamsRow.smoothingmethod, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
     [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
     
     for ab = 1:size(poralabsdates,1)

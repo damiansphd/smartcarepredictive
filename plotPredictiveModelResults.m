@@ -129,6 +129,21 @@ elseif plottype == 9
         pmOverallStats, pmPatientMeasStats, ...
         measures, nmeasures, labelidx, pmFeatureParamsRow, ...
         lbdisplayname, plotsubfolder, basemodelresultsfile);
+elseif plottype == 10
+    % analyse the model prediction components
+    [pnbr, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
+    if ~validresponse
+        return;
+    end
+    [calcdatedn, validresponse] = selectCalcDate(min(pmTrCVFeatureIndex.CalcDatedn(pmTrCVFeatureIndex.PatientNbr == pnbr)), ...
+                                                 max(pmTrCVFeatureIndex.CalcDatedn(pmTrCVFeatureIndex.PatientNbr == pnbr)));
+    if ~validresponse
+        return;
+    end
+    analyseModelPrediction(pmPatients(pnbr,:), calcdatedn, ...
+        pmTrCVFeatureIndex, pmTrCVNormFeatures, trcvlabels, pmModelRes, ...
+        measures, nmeasures, labelidx, pmFeatureParamsRow, lbdisplayname, ...
+        plotsubfolder, basemodelresultsfile);
 end
 
 

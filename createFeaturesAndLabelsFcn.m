@@ -23,52 +23,12 @@ for p = 1:npatients
 end
 
 % set various variables
-featureduration    = featureparamsrow.featureduration;
-predictionduration = featureparamsrow.predictionduration;
-monthfeat          = featureparamsrow.monthfeat;
-demofeat           = featureparamsrow.demofeat;
-
-nbuckets           = featureparamsrow.nbuckets;
-navgseg            = featureparamsrow.navgseg;
-nvolseg            = featureparamsrow.nvolseg;
-
-nrawmeasures       = sum(measures.RawMeas);
-nbucketmeasures    = sum(measures.BucketMeas);
-nrangemeasures     = sum(measures.Range);
-nvolmeasures       = sum(measures.Volatility);
-navgsegmeasures    = sum(measures.AvgSeg);
-nvolsegmeasures    = sum(measures.VolSeg);
-ncchangemeasures   = sum(measures.CChange);
-
-nrawfeatures       = nrawmeasures * featureduration;
-nbucketfeatures    = nbucketmeasures * nbuckets * featureduration;
-nrangefeatures     = nrangemeasures;
-nvolfeatures       = nvolmeasures * (featureduration - 1);
-%nvolfeatures      = nvolmeasures;
-navgsegfeatures    = navgsegmeasures * navgseg;
-nvolsegfeatures    = nvolsegmeasures * nvolseg;
-ncchangefeatures   = ncchangemeasures;
-%ncchangefeatures   = ncchangemeasures * 2;
-
-if monthfeat == 0
-    ndatefeatures = 0;
-elseif monthfeat == 1
-    ndatefeatures = 2;
-else
-    ndatefeatures = monthfeat - 1;
-end
-if demofeat == 1
-    ndemofeatures = 0;
-elseif demofeat == 2
-    ndemofeatures = 5;
-else
-    ndemofeatures = 1;
-end
-
-nfeatures       = nmeasures * featureduration;
-nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures + ...
-                    navgsegfeatures + nvolsegfeatures + ncchangefeatures + ...
-                    ndatefeatures + ndemofeatures;
+[featureduration, predictionduration, monthfeat, demofeat, ...
+ nbuckets, navgseg, nvolseg, nrawmeasures, nbucketmeasures, nrangemeasures, ...
+ nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+ nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
+ nvolsegfeatures, ncchangefeatures, ndatefeatures, ndemofeatures, ...
+ nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
 
 example = 1;
 
@@ -142,7 +102,6 @@ for p = 1:npatients
             
             % 4) Volatility features
             volfeatrow = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, logical(measures.Volatility)), [1, nvolfeatures]);
-            %volfeatrow = reshape(pmInterpVolcube(p, d, logical(measures.Volatility)), [1, nvolfeatures]);
             normfeaturerow(nextfeat: (nextfeat - 1) + nvolfeatures) = volfeatrow;
             nextfeat = nextfeat + nvolfeatures;
             
@@ -163,19 +122,15 @@ for p = 1:npatients
             for m = 1:nmeasures
                 if measures.CChange(m) == 1
                     cchange = 0;
-                    %seg = 0;
                     for i = 2:navgseg
                         if (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, i)) > (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, (i - 1)))
                             cchange = cchange +  (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, i)) - (measures.Factor(m) * pmInterpSegAvgcube(p, d, m, (i - 1)));
-                            %seg = i - 1;
                         else
                             break;
                         end
                     end
                     normfeaturerow(nextfeat + nextm) = cchange;
                     nextm = nextm + 1;
-                    %normfeaturerow(nextfeat + nextm + 1) = seg;
-                    %nextm = nextm + 2;
                 end
             end
             nextfeat = nextfeat + ncchangefeatures;
@@ -183,7 +138,6 @@ for p = 1:npatients
             % 8) Date feature
             if monthfeat ~= 0
                 datefeat = createCyclicDateFeatures(featureindexrow.CalcDate, ndatefeatures, monthfeat);
-                %datefeat = month(featureindexrow.CalcDate) / 12;
                 normfeaturerow(nextfeat: (nextfeat - 1) + ndatefeatures) = datefeat;
                 nextfeat = nextfeat + ndatefeatures;
             end

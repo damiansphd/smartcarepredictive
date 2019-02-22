@@ -1,10 +1,13 @@
 function plotCompactMeasAndPredForPatient(pmpatientrow, pabs, pmampredrow, pmRawDatacube, pmInterpDatacube, ...
                 pmTrCVFeatureIndex, trcvlabels, pmModelRes, pmOverallStats, pmeasstats, ...
                 measures, nmeasures, npred, plotsacross, dbfab, dafab, sp, labelidx, ...
-                lbdisplayname, lgtype, featureduration)
+                lbdisplayname, lgtype, featureparamsrow)
             
 % plotCompactMeasAndPredForPatient- compact plots of measures and
 % prediction for a patient
+
+featureduration = featureparamsrow.featureduration;
+smoothingmethod = featureparamsrow.smoothingmethod;
 
 plotsperpat = nmeasures + npred;
 plotsdown   = ceil(plotsperpat / plotsacross);
@@ -38,6 +41,8 @@ poralabsdates = pabs(ismember(pabs.Route, 'Oral') & ...
      (pabs.RelStartdn >= dfrom & pabs.RelStopdn <= dto)   | ...
      (pabs.RelStartdn <= dto   & pabs.RelStopdn >= dto)), {'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
 
+mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
+
 ax1 = gobjects(plotsdown * plotsacross,1);
     
 for m = 1:nmeasures
@@ -62,7 +67,8 @@ for m = 1:nmeasures
     ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent', sp);
         
     [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    %[xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata, smoothingmethod, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
     [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
         
     hold on;
