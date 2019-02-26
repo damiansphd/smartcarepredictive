@@ -7,6 +7,10 @@ function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata
 % with the predictions from the predictive classification model and the 
 % true labels.
 
+smfn = pmFeatureParamsRow.smfunction;
+smwin = pmFeatureParamsRow.smwindow;
+smln = pmFeatureParamsRow.smlength;
+
 patientnbr = patientrow.PatientNbr;
 pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 
@@ -98,7 +102,7 @@ for m = 1:nmeasures
     
     [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
     %[xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata,pmFeatureParamsRow.smoothingmethod, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
     [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
     
     for ab = 1:size(poralabsdates,1)

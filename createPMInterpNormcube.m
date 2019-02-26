@@ -1,5 +1,5 @@
 function [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmPatients, pmOverallStats, ...
-    pmPatientMeasStats, npatients, maxdays, measures, nmeasures, normmethod, smoothingmethod)
+    pmPatientMeasStats, npatients, maxdays, measures, nmeasures, normmethod, smfunction, smwindow, smlength)
 
 % createPMInterpNormcube - creates the normalised data cube
 
@@ -31,13 +31,14 @@ end
 
 mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 
-if smoothingmethod > 1
-    fprintf('Smoothing normalised cube\n');
+if smfunction > 0
+    fprintf('Smoothing normalised cube - Function %d, Window %d, Length %d\n', smfunction, smwindow, smlength);
+    
     for p = 1:npatients
         pmaxdays = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
         for m = 1:nmeasures
             %pmSmoothInterpNormcube(p,1:pmaxdays,m) = smooth(pmInterpNormcube(p,1:pmaxdays,m),5);
-            pmSmoothInterpNormcube(p,1:pmaxdays,m) = applySmoothMethodToInterpRow(pmInterpNormcube(p,1:pmaxdays,m), smoothingmethod, m, mfev1idx);
+            pmSmoothInterpNormcube(p,1:pmaxdays,m) = applySmoothMethodToInterpRow(pmInterpNormcube(p,1:pmaxdays,m), smfunction, smwindow, smlength, m, mfev1idx);
         end
     end
 end

@@ -7,7 +7,9 @@ function plotCompactMeasAndPredForPatient(pmpatientrow, pabs, pmampredrow, pmRaw
 % prediction for a patient
 
 featureduration = featureparamsrow.featureduration;
-smoothingmethod = featureparamsrow.smoothingmethod;
+smfn = featureparamsrow.smfunction;
+smwin = featureparamsrow.smwindow;
+smln = featureparamsrow.smlength;
 
 plotsperpat = nmeasures + npred;
 plotsdown   = ceil(plotsperpat / plotsacross);
@@ -68,7 +70,7 @@ for m = 1:nmeasures
         
     [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
     %[xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata, smoothingmethod, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
     [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
         
     hold on;

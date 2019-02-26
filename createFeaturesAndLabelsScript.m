@@ -39,8 +39,9 @@ for rp = 1:size(pmFeatureParams,1)
     % create normalised data cube
     tic
     fprintf('Normalising data\n');
-    [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, pmPatients, pmOverallStats, pmPatientMeasStats, ...
-        npatients, maxdays, measures, nmeasures, pmFeatureParams.normmethod(rp), pmFeatureParams.smoothingmethod(rp)); 
+    [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, ...
+        pmPatients, pmOverallStats, pmPatientMeasStats, npatients, maxdays, measures, nmeasures, ...
+        pmFeatureParams.normmethod(rp), pmFeatureParams.smfunction(rp), pmFeatureParams.smwindow(rp), pmFeatureParams.smlength(rp)); 
     toc
     fprintf('\n');
     
@@ -60,7 +61,7 @@ for rp = 1:size(pmFeatureParams,1)
     toc
     fprintf('\n');
     
-    if pmFeatureParams.smoothingmethod(rp) > 1
+    if pmFeatureParams.smfunction(rp) > 0
         pmInterpNormcube = pmSmoothInterpNormcube;
     end
     
