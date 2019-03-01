@@ -14,9 +14,9 @@ normfeaturerow = pmTrCVNormFeatures(pmTrCVFeatureIndex.PatientNbr == pnbr & pmTr
 
 [featureduration, predictionduration, monthfeat, demofeat, ...
           nbuckets, navgseg, nvolseg, nrawmeasures, nbucketmeasures, nrangemeasures, ...
-          nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+          nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, npmeasmeasures, ...
           nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
-          nvolsegfeatures, ncchangefeatures, ndatefeatures, ndemofeatures, ...
+          nvolsegfeatures, ncchangefeatures, npmeasfeatures, ndatefeatures, ndemofeatures, ...
           nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
 
 featureweights = pmModelRes.pmNDayRes(labelidx).Model.Coefficients.Estimate(2:end);
@@ -132,6 +132,19 @@ for i = 1:ncchangemeasures
     nextfeat = nextfeat + nmfeat;
 end
 
+tempmeas = measures(measures.PatMeas==1,:);
+if npmeasmeasures == 0
+    nmfeat = 0;
+else
+    nmfeat = npmeasfeatures/npmeasmeasures;
+end
+fprintf('\n');
+fprintf('Patient Mean & Std Dev (%2d features per measure)\n', nmfeat);
+fprintf('----------------------------------------------------\n');
+for i = 1:npmeasmeasures
+    printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
+    nextfeat = nextfeat + nmfeat;
+end
 
 tempmeas = measures(1,:);
 tempmeas.DisplayName{1} = 'Date';

@@ -9,9 +9,10 @@ masks = [featureparamsrow.rawmeasfeat;
          featureparamsrow.volfeat    ;
          featureparamsrow.avgsegfeat ;
          featureparamsrow.volsegfeat ;
-         featureparamsrow.cchangefeat];
+         featureparamsrow.cchangefeat;
+         featureparamsrow.pmeasfeat];
      
-colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'};
+colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'; 'PatMeas'};
 
 for a = 1:size(masks,1)
     fprintf('Setting %s mask : ', colnames{a});

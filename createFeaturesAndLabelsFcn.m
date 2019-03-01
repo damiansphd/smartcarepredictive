@@ -1,8 +1,9 @@
 function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels] = ...
-    createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, pmInterpDatacube, ...
-    pmInterpNormcube, pmInterpVolcube, pmInterpSegVolcube, pmInterpRangecube, ...
-    pmInterpSegAvgcube, pmBucketedcube, ...
-    measures, nmeasures, npatients, maxdays, maxfeatureduration, featureparamsrow)
+    createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, ...
+        pmInterpDatacube, pmInterpNormcube, pmInterpVolcube, pmInterpSegVolcube, ...
+        pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ...
+        pmPatientMeasStats, pmOverallStats, measures, nmeasures, npatients, ...
+        maxdays, maxfeatureduration, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -25,9 +26,9 @@ end
 % set various variables
 [featureduration, predictionduration, monthfeat, demofeat, ...
  nbuckets, navgseg, nvolseg, nrawmeasures, nbucketmeasures, nrangemeasures, ...
- nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+ nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, npmeasmeasures, ...
  nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
- nvolsegfeatures, ncchangefeatures, ndatefeatures, ndemofeatures, ...
+ nvolsegfeatures, ncchangefeatures, npmeasfeatures, ndatefeatures, ndemofeatures, ...
  nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
 
 example = 1;
@@ -50,6 +51,7 @@ for p = 1:npatients
 %for p = 1:2    
     %pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'), :);
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p, :);
+    pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p, :);
     
     if ndemofeatures ~= 0
         age      = pmPatients.Age(p)      / max(pmPatients.Age);
@@ -135,14 +137,31 @@ for p = 1:npatients
             end
             nextfeat = nextfeat + ncchangefeatures;
             
-            % 8) Date feature
+            % 8) patient measures (mean/std dev) features
+            nextm = 0;
+            for m = 1:nmeasures
+                if measures.PatMeas(m) == 1
+                    pmeas = pmeasstats(pmeasstats.MeasureIndex == m, :);
+                    if size(pmeas,1) == 0 || pmeas.StdDev == 0
+                        normfeaturerow(nextfeat + nextm)     = pmOverallStats.Mean(pmOverallStats.MeasureIndex == m);
+                        normfeaturerow(nextfeat + nextm + 1) = pmOverallStats.StdDev(pmOverallStats.MeasureIndex == m);
+                    else
+                        normfeaturerow(nextfeat + nextm)     = pmeasstats.Mean(pmeasstats.MeasureIndex == m);
+                        normfeaturerow(nextfeat + nextm + 1) = pmeasstats.StdDev(pmeasstats.MeasureIndex == m);
+                    end
+                    nextm = nextm + 2;
+                end
+            end
+            nextfeat = nextfeat + npmeasfeatures;
+            
+            % 9) Date feature
             if monthfeat ~= 0
                 datefeat = createCyclicDateFeatures(featureindexrow.CalcDate, ndatefeatures, monthfeat);
                 normfeaturerow(nextfeat: (nextfeat - 1) + ndatefeatures) = datefeat;
                 nextfeat = nextfeat + ndatefeatures;
             end
             
-            % 9) Patient demographic features (Age, Height, Weight, Sex,
+            % 10) Patient demographic features (Age, Height, Weight, Sex,
             % PredFEV1
             if demofeat == 2
                 normfeaturerow(nextfeat)     = age;

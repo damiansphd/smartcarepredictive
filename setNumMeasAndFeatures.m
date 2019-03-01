@@ -1,8 +1,8 @@
 function [featureduration, predictionduration, monthfeat, demofeat, ...
           nbuckets, navgseg, nvolseg, nrawmeasures, nbucketmeasures, nrangemeasures, ...
-          nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+          nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, npmeasmeasures, ...
           nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
-          nvolsegfeatures, ncchangefeatures, ndatefeatures, ndemofeatures, ...
+          nvolsegfeatures, ncchangefeatures, npmeasfeatures, ndatefeatures, ndemofeatures, ...
           nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures)
 
 % setNumMeasAndFeatures - sets the number of measures and features for a
@@ -24,6 +24,7 @@ nvolmeasures       = sum(measures.Volatility);
 navgsegmeasures    = sum(measures.AvgSeg);
 nvolsegmeasures    = sum(measures.VolSeg);
 ncchangemeasures   = sum(measures.CChange);
+npmeasmeasures     = sum(measures.PatMeas);
 
 nrawfeatures       = nrawmeasures * featureduration;
 nbucketfeatures    = nbucketmeasures * nbuckets * featureduration;
@@ -32,6 +33,7 @@ nvolfeatures       = nvolmeasures * (featureduration - 1);
 navgsegfeatures    = navgsegmeasures * navgseg;
 nvolsegfeatures    = nvolsegmeasures * nvolseg;
 ncchangefeatures   = ncchangemeasures;
+npmeasfeatures     = npmeasmeasures * 2;
 
 if monthfeat == 0
     ndatefeatures = 0;
@@ -51,6 +53,6 @@ end
 nfeatures       = nmeasures * featureduration;
 nnormfeatures   = nrawfeatures + nbucketfeatures + nrangefeatures + nvolfeatures + ...
                     navgsegfeatures + nvolsegfeatures + ncchangefeatures + ...
-                    ndatefeatures + ndemofeatures;
+                    npmeasfeatures + ndatefeatures + ndemofeatures;
 end
 
