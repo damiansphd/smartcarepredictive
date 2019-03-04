@@ -2,8 +2,8 @@ function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pm
     createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, ...
         pmInterpDatacube, pmInterpNormcube, pmInterpVolcube, pmInterpSegVolcube, ...
         pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ...
-        pmPatientMeasStats, pmOverallStats, measures, nmeasures, npatients, ...
-        maxdays, maxfeatureduration, featureparamsrow)
+        pmPatientMeasStats, pmOverallStats, measures, nmeasures, npatients, maxdays, ...
+        maxfeatureduration, maxnormwindow, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
 % labels for each example in the overall data set.
@@ -65,7 +65,7 @@ for p = 1:npatients
         end
     end
     
-    for d = maxfeatureduration:maxdays
+    for d = (maxfeatureduration + maxnormwindow + 1):maxdays
         % only include this run day for the period between first and last measurement for
         % patient for days when the patient wasn't on antibiotics.
         % potentially add a check on completeness of raw data in this

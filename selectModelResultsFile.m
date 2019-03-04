@@ -5,7 +5,7 @@ function [modelrpfile] = selectModelResultsFile(lb1)
 
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-matchstring = sprintf('pm*_lm%d*ModelResults.mat', lb1);
+matchstring = sprintf('pm*lm%d*ModelResults.mat', lb1);
 modelresultslisting = dir(fullfile(basedir, subfolder, matchstring));
 
 modelresultsfiles = cell(size(modelresultslisting,1),1);
