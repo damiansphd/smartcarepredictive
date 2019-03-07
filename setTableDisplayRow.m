@@ -3,12 +3,13 @@ function [resultrow] = setTableDisplayRow(pmFeatureParamsRow, pmModelParamsRow, 
 % setTableDisplayRow - creates the tabular results row for a given model
 % results file (with less cryptic values for parameters)
 
-resultrow = table('Size',[1 43], ...
+resultrow = table('Size',[1 47], ...
     'VariableTypes', {'cell', 'cell', 'double', 'cell', 'double', ...
                       'cell', 'double', 'cell', 'cell', 'double', ...
                       'cell', 'cell', 'double', 'cell', 'cell', ...
                       'cell', 'double', 'cell', 'double', ...
-                      'cell', 'cell', 'cell', 'cell', ...
+                      'cell', 'cell', 'cell', 'cell', 'cell', ...
+                      'double', 'cell', 'cell', ...
                       'double', 'double', 'double', 'double', 'double', ...
                       'double', 'double', 'double', ...
                       'double', 'double', 'double', ...
@@ -19,7 +20,8 @@ resultrow = table('Size',[1 43], ...
                       'NormMethod', 'NormWindow', 'SmFunction', 'SmWindow', 'SmLength', ...
                       'RawMeas', 'BucketMeas', 'NumBuckets', 'Range', 'Volatility', ...
                       'AvgSeg', 'NumAvgSeg', 'VolSeg', 'NumVolSeg', ...
-                      'CChange', 'PatMeas', 'DateFeat', 'DemoFeat', ...
+                      'CChange', 'PMean', 'PStd', 'BuckPMean', 'BuckPStd', ...
+                      'NBuckPMeas', 'DateFeat', 'DemoFeat', ...
                       'PRAUC', 'ROCAUC', 'Acc', 'PosAcc', 'NegAcc', ...
                       'PRAUC_AvR', 'PRAUCBestR', 'PRAUCWorstR', ...
                       'ROCAUC_AvR', 'ROCAUCBestR', 'ROCAUCWorstR', ...
@@ -142,14 +144,43 @@ else
 end
 resultrow.CChange = {sprintf('%d:%s', pmFeatureParamsRow.cchangefeat, cchangetext)};
 
-if sum(measures.PatMeas) == 0
-    pmeastext = 'None';
-elseif sum(measures.PatMeas) == nmeasures    
-    pmeastext= 'All';
+if sum(measures.PMean) == 0
+    pmeantext = 'None';
+elseif sum(measures.PMean) == nmeasures    
+    pmeantext= 'All';
 else
-    pmeastext= strcat(measures.ShortName{logical(measures.PatMeas)});
+    pmeantext= strcat(measures.ShortName{logical(measures.PMean)});
 end
-resultrow.PatMeas = {sprintf('%d:%s', pmFeatureParamsRow.pmeasfeat, pmeastext)};
+resultrow.PMean = {sprintf('%d:%s', pmFeatureParamsRow.pmeanfeat, pmeantext)};
+
+if sum(measures.PStd) == 0
+    pstdtext = 'None';
+elseif sum(measures.PStd) == nmeasures    
+    pstdtext= 'All';
+else
+    pstdtext= strcat(measures.ShortName{logical(measures.PStd)});
+end
+resultrow.PStd = {sprintf('%d:%s', pmFeatureParamsRow.pstdfeat, pstdtext)};
+
+if sum(measures.BuckPMean) == 0
+    buckpmeantext = 'None';
+elseif sum(measures.BuckPMean) == nmeasures    
+    buckpmeantext= 'All';
+else
+    buckpmeantext= strcat(measures.ShortName{logical(measures.BuckPMean)});
+end
+resultrow.BuckPMean = {sprintf('%d:%s', pmFeatureParamsRow.pstdfeat, buckpmeantext)};
+
+if sum(measures.BuckPStd) == 0
+    buckpstdtext = 'None';
+elseif sum(measures.BuckPStd) == nmeasures    
+    buckpstdtext= 'All';
+else
+    buckpstdtext= strcat(measures.ShortName{logical(measures.BuckPStd)});
+end
+resultrow.BuckPStd = {sprintf('%d:%s', pmFeatureParamsRow.pstdfeat, buckpstdtext)};
+
+resultrow.NBuckPMeas = pmFeatureParamsRow.nbuckpmeas;
 
 if pmFeatureParamsRow.monthfeat == 0
     datetext = 'None';

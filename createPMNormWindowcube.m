@@ -1,13 +1,16 @@
-function [pmMuNormcube, pmSigmaNormcube] = createPMNormWindowcube(pmPatients, pmInterpDatacube, ...
-    pmOverallStats, pmPatientMeasStats, normmethod, normwindow, ...
-    npatients, maxdays, measures, nmeasures)
+function [pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
+    muntilepoints, sigmantilepoints] = createPMNormWindowcube(pmPatients, pmInterpDatacube, ...
+                    pmOverallStats, pmPatientMeasStats, normmethod, normwindow, nbuckpmeas, ...
+                    npatients, maxdays, measures, nmeasures)
 
 % createPMNormWindowcube - creates the normalisation window cube (10 day
 % upper quartile mean prior to feature window) - for use with normalisation
 % method 3
 
-pmMuNormcube = NaN(npatients, maxdays, nmeasures);
-pmSigmaNormcube = NaN(npatients, maxdays, nmeasures);
+pmMuNormcube        = NaN(npatients, maxdays, nmeasures);
+pmSigmaNormcube     = NaN(npatients, maxdays, nmeasures);
+pmBuckMuNormcube    = zeros(npatients, maxdays, nmeasures, nbuckpmeas + 1);
+pmBuckSigmaNormcube = zeros(npatients, maxdays, nmeasures, nbuckpmeas + 1);
 
 if normmethod == 1
     for m = 1:nmeasures
@@ -67,6 +70,72 @@ elseif normmethod == 3
 else
     fprintf('Unknown normalisation method\n');
 end
+
+muntilepoints = zeros(nmeasures, nbuckpmeas + 1);
+for m = 1:nmeasures
+    malldata = reshape(pmMuNormcube(:,:,m), [1, npatients * maxdays]);
+    malldata = sort(malldata(~isnan(malldata)), 'ascend');    
+    muntilepoints(m,1) = malldata(1);
+    for n = 1:nbuckpmeas
+        muntilepoints(m,n + 1) = malldata(ceil((size(malldata,2) * n)/nbuckpmeas));
+    end
+end
+
+sigmantilepoints = zeros(nmeasures, nbuckpmeas + 1);
+for m = 1:nmeasures
+    malldata = reshape(pmSigmaNormcube(:,:,m), [1, npatients * maxdays]);
+    malldata = sort(malldata(~isnan(malldata)), 'ascend');    
+    sigmantilepoints(m,1) = malldata(1);
+    for n = 1:nbuckpmeas
+        sigmantilepoints(m,n + 1) = malldata(ceil((size(malldata,2) * n)/nbuckpmeas));
+    end
+end
+
+for p = 1:npatients
+    for m = 1:nmeasures
+        for d = 1:maxdays
+            if ~isnan(pmMuNormcube(p, d, m))
+                mudatapoint = pmMuNormcube(p, d, m);
+                mulowerq = find(muntilepoints(m,:) <= mudatapoint, 1, 'last');
+                muupperq = find(muntilepoints(m,:) >= mudatapoint, 1);
+                if mulowerq == muupperq
+                    % datapoint is exactly on one of the ntile boundaries
+                    pmBuckMuNormcube(p, d, m, mulowerq) = 1;
+                elseif mulowerq > muupperq
+                    % multiple ntile points have the same value
+                    % assign full weight to lowest edge
+                    pmBuckMuNormcube(p, d, m, muupperq) = 1;
+                else
+                    % regular case - datapoint is between two boundaries
+                    pmBuckMuNormcube(p, d, m, mulowerq) = abs(muntilepoints(m, muupperq) - mudatapoint) / abs(muntilepoints(m, muupperq) - muntilepoints(m, mulowerq));
+                    pmBuckMuNormcube(p, d, m, muupperq) = abs(muntilepoints(m, mulowerq) - mudatapoint) / abs(muntilepoints(m, muupperq) - muntilepoints(m, mulowerq));
+                end
+            end
+            if ~isnan(pmSigmaNormcube(p, d, m))
+                sigmadatapoint = pmSigmaNormcube(p, d, m);
+                sigmalowerq = find(sigmantilepoints(m,:) <= sigmadatapoint, 1, 'last');
+                sigmaupperq = find(sigmantilepoints(m,:) >= sigmadatapoint, 1);
+                if sigmalowerq == sigmaupperq
+                    % datapoint is exactly on one of the ntile boundaries
+                    pmBuckSigmaNormcube(p, d, m, sigmalowerq) = 1;
+                elseif sigmalowerq > sigmaupperq
+                    % multiple ntile points have the same value
+                    % assign full weight to lowest edge
+                    pmBuckSigmaNormcube(p, d, m, sigmaupperq) = 1;
+                else
+                    % regular case - datapoint is between two boundaries
+                    pmBuckSigmaNormcube(p, d, m, sigmalowerq) = abs(sigmantilepoints(m, sigmaupperq) - sigmadatapoint) / abs(sigmantilepoints(m, sigmaupperq) - sigmantilepoints(m, sigmalowerq));
+                    pmBuckSigmaNormcube(p, d, m, sigmaupperq) = abs(sigmantilepoints(m, sigmalowerq) - sigmadatapoint) / abs(sigmantilepoints(m, sigmaupperq) - sigmantilepoints(m, sigmalowerq));
+                end
+            end
+        end
+    end
+end
+
+% remove last edge to avoid rank deficiency
+pmBuckMuNormcube(:, :, :, nbuckpmeas + 1) = [];
+pmBuckSigmaNormcube(:, :, :, nbuckpmeas + 1) = [];
+
 
 end
 

@@ -2,7 +2,8 @@ function [pmFeatureIndex, pmFeatures, pmNormFeatures, pmIVLabels, pmABLabels, pm
     createFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, ...
         pmInterpDatacube, pmInterpNormcube, pmInterpVolcube, pmInterpSegVolcube, ...
         pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ...
-        pmPatientMeasStats, pmOverallStats, measures, nmeasures, npatients, maxdays, ...
+        pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
+        measures, nmeasures, npatients, maxdays, ...
         maxfeatureduration, maxnormwindow, featureparamsrow)
  
 % createFeaturesAndLabels - function to create the set of features and
@@ -25,10 +26,12 @@ end
 
 % set various variables
 [featureduration, predictionduration, monthfeat, demofeat, ...
- nbuckets, navgseg, nvolseg, nrawmeasures, nbucketmeasures, nrangemeasures, ...
- nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, npmeasmeasures, ...
+ nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nbucketmeasures, nrangemeasures, ...
+ nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+ npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
  nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
- nvolsegfeatures, ncchangefeatures, npmeasfeatures, ndatefeatures, ndemofeatures, ...
+ nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
+ nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures, ...
  nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
 
 example = 1;
@@ -51,7 +54,7 @@ for p = 1:npatients
 %for p = 1:2    
     %pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'), :);
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p, :);
-    pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p, :);
+    %pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p, :);
     
     if ndemofeatures ~= 0
         age      = pmPatients.Age(p)      / max(pmPatients.Age);
@@ -65,7 +68,8 @@ for p = 1:npatients
         end
     end
     
-    for d = (maxfeatureduration + maxnormwindow + 1):maxdays
+    %for d = (maxfeatureduration + maxnormwindow + 1):maxdays
+    for d = (maxfeatureduration + maxnormwindow):maxdays
         % only include this run day for the period between first and last measurement for
         % patient for days when the patient wasn't on antibiotics.
         % potentially add a check on completeness of raw data in this
@@ -137,31 +141,52 @@ for p = 1:npatients
             end
             nextfeat = nextfeat + ncchangefeatures;
             
-            % 8) patient measures (mean/std dev) features
-            nextm = 0;
-            for m = 1:nmeasures
-                if measures.PatMeas(m) == 1
-                    pmeas = pmeasstats(pmeasstats.MeasureIndex == m, :);
-                    if size(pmeas,1) == 0 || pmeas.StdDev == 0
-                        normfeaturerow(nextfeat + nextm)     = pmOverallStats.Mean(pmOverallStats.MeasureIndex == m);
-                        normfeaturerow(nextfeat + nextm + 1) = pmOverallStats.StdDev(pmOverallStats.MeasureIndex == m);
-                    else
-                        normfeaturerow(nextfeat + nextm)     = pmeasstats.Mean(pmeasstats.MeasureIndex == m);
-                        normfeaturerow(nextfeat + nextm + 1) = pmeasstats.StdDev(pmeasstats.MeasureIndex == m);
-                    end
-                    nextm = nextm + 2;
-                end
-            end
-            nextfeat = nextfeat + npmeasfeatures;
+            % 8) patient mean features
+            pmeanfeatrow = reshape(pmMuNormcube(p, d, logical(measures.PMean)), [1, npmeanfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + npmeanfeatures) = pmeanfeatrow;
+            nextfeat = nextfeat + npmeanfeatures;
             
-            % 9) Date feature
+            %nextm = 0;
+            %for m = 1:nmeasures
+            %    if measures.PMean(m) == 1
+            %        pmean = pmeasstats(pmeasstats.MeasureIndex == m, :);
+            %        if size(pmean,1) == 0 || pmean.StdDev == 0
+            %            normfeaturerow(nextfeat + nextm)     = pmOverallStats.Mean(pmOverallStats.MeasureIndex == m);
+            %            normfeaturerow(nextfeat + nextm + 1) = pmOverallStats.StdDev(pmOverallStats.MeasureIndex == m);
+            %        else
+            %            normfeaturerow(nextfeat + nextm)     = pmeasstats.Mean(pmeasstats.MeasureIndex == m);
+            %            normfeaturerow(nextfeat + nextm + 1) = pmeasstats.StdDev(pmeasstats.MeasureIndex == m);
+            %        end
+            %        nextm = nextm + 2;
+            %    end
+            %end
+            %nextfeat = nextfeat + npmeasfeatures;
+            
+            % 9) patient std features
+            pstdfeatrow = reshape(pmSigmaNormcube(p, d, logical(measures.PStd)), [1, npstdfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + npstdfeatures) = pstdfeatrow;
+            nextfeat = nextfeat + npstdfeatures;
+            
+            % 10) bucketed patient mean features
+            buckpmeanfeatrow = reshape(reshape(pmBuckMuNormcube(p, d, logical(measures.BuckPMean), :), [nbuckpmeanmeasures, nbuckpmeas])', ...
+                    [1, nbuckpmeanfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + nbuckpmeanfeatures) = buckpmeanfeatrow;
+            nextfeat = nextfeat + nbuckpmeanfeatures;
+            
+            % 11) bucketed patient std features
+            buckpstdfeatrow = reshape(reshape(pmBuckSigmaNormcube(p, d, logical(measures.BuckPStd), :), [nbuckpstdmeasures, nbuckpmeas])', ...
+                    [1, nbuckpstdfeatures]);
+            normfeaturerow(nextfeat: (nextfeat - 1) + nbuckpstdfeatures) = buckpstdfeatrow;
+            nextfeat = nextfeat + nbuckpstdfeatures;
+            
+            % 12) Date feature
             if monthfeat ~= 0
                 datefeat = createCyclicDateFeatures(featureindexrow.CalcDate, ndatefeatures, monthfeat);
                 normfeaturerow(nextfeat: (nextfeat - 1) + ndatefeatures) = datefeat;
                 nextfeat = nextfeat + ndatefeatures;
             end
             
-            % 10) Patient demographic features (Age, Height, Weight, Sex,
+            % 13) Patient demographic features (Age, Height, Weight, Sex,
             % PredFEV1
             if demofeat == 2
                 normfeaturerow(nextfeat)     = age;

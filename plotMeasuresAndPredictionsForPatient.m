@@ -7,9 +7,10 @@ function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata
 % with the predictions from the predictive classification model and the 
 % true labels.
 
-smfn = pmFeatureParamsRow.smfunction;
-smwin = pmFeatureParamsRow.smwindow;
-smln = pmFeatureParamsRow.smlength;
+smfn       = pmFeatureParamsRow.smfunction;
+smwin      = pmFeatureParamsRow.smwindow;
+smln       = pmFeatureParamsRow.smlength;
+normwindow = pmFeatureParamsRow.normwindow;
 
 patientnbr = patientrow.PatientNbr;
 pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
@@ -129,9 +130,9 @@ for m = 1:nmeasures
     yl2 = [0 mvolstats(m, 6)];
     yyaxis(ax1(m),'right');
     
-    [xl, yl2] = plotMeasurementData(ax1(m), days, vdata, xl, yl2, plottext, combinedmask, right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl2] = plotMeasurementData(ax1(m), days, smooth(vdata,5), xl, yl2, plottext, combinedmask, right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl2] = plotMeasurementData(ax1(m), days, intervppts, xl, yl2, plottext, combinedmask, right_color, 'none', 1.0, 'o', 1.0, rint_color, rint_color);
+    [xl, yl2] = plotMeasurementData(ax1(m), days(normwindow+2:end), vdata(normwindow+2:end), xl, yl2, plottext, combinedmask, right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(m), days(normwindow+2:end), smooth(vdata(normwindow+2:end),5), xl, yl2, plottext, combinedmask, right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(m), days(normwindow+2:end), intervppts(normwindow+2:end), xl, yl2, plottext, combinedmask, right_color, 'none', 1.0, 'o', 1.0, rint_color, rint_color);
 end
 
 % Predictions for Labels

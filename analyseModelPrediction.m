@@ -1,5 +1,5 @@
 function analyseModelPrediction(patientrow, calcdatedn, ...
-    pmTrCVFeatureIndex, pmTrCVNormFeatures, trcvlabels, pmModelRes, ...
+    pmTrCVFeatureIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, pmModelRes, ...
     measures, nmeasures, labelidx, featureparamsrow, lbdisplayname, ...
     plotsubfolder, basemodelresultsfile)
     
@@ -9,26 +9,29 @@ function analyseModelPrediction(patientrow, calcdatedn, ...
 % *** change to use normfeatures rather than underlying cubes ***
 
 pnbr = patientrow.PatientNbr;
+fold = pmTrCVPatientSplit.SplitNbr(pmTrCVPatientSplit.PatientNbr == pnbr);
 normfeaturerow = pmTrCVNormFeatures(pmTrCVFeatureIndex.PatientNbr == pnbr & pmTrCVFeatureIndex.CalcDatedn == calcdatedn, :);
 
-
 [featureduration, predictionduration, monthfeat, demofeat, ...
-          nbuckets, navgseg, nvolseg, nrawmeasures, nbucketmeasures, nrangemeasures, ...
-          nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, npmeasmeasures, ...
-          nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
-          nvolsegfeatures, ncchangefeatures, npmeasfeatures, ndatefeatures, ndemofeatures, ...
-          nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
+ nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nbucketmeasures, nrangemeasures, ...
+ nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+ npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
+ nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
+ nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
+ nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures, ...
+ nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
 
-featureweights = pmModelRes.pmNDayRes(labelidx).Model.Coefficients.Estimate(2:end);
+featureweights = pmModelRes.pmNDayRes(labelidx).Folds(fold).Model.Coefficients.Estimate(2:end);
+bias = pmModelRes.pmNDayRes(labelidx).Folds(fold).Model.Coefficients.Estimate(1);
 nextfeat = 1;
 
 fprintf('\n');
-fprintf('Prediction Analysis for Patient %d, Calc Date %d\n', pnbr, calcdatedn);
+fprintf('Prediction Analysis for Patient %d, Calc Date %d (Fold %d)\n', pnbr, calcdatedn, fold);
 fprintf('------------------------------------------------\n');
 fprintf('\n');
 fprintf('Total Features * Weights: %+.2f\n', normfeaturerow * featureweights);
-fprintf('Bias                    : %+.2f\n', pmModelRes.pmNDayRes(labelidx).Model.Coefficients.Estimate(1));
-fprintf('Prediction              : %5.2f%%\n', 100 * sigmoid((normfeaturerow * featureweights) + pmModelRes.pmNDayRes(labelidx).Model.Coefficients.Estimate(1)));
+fprintf('Bias                    : %+.2f\n', bias);
+fprintf('Prediction              : %5.2f%%\n', 100 * sigmoid((normfeaturerow * featureweights) + bias));
 
 tempmeas = measures(measures.RawMeas==1,:);
 if nrawmeasures == 0
@@ -44,7 +47,6 @@ for i = 1:nrawmeasures
     nextfeat = nextfeat + nmfeat;
 end
 
-% nb - bucketed cube needs work due to extra dimension
 tempmeas = measures(measures.BucketMeas==1,:);
 if nbucketmeasures == 0
     nmfeat = 0;
@@ -55,7 +57,6 @@ fprintf('\n');
 fprintf('Bucketed Measures (%2d features per measure)\n', nmfeat);
 fprintf('-------------------------------------------\n');
 for i = 1:nbucketmeasures
-    
     printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
     nextfeat = nextfeat + nmfeat;
 end
@@ -70,7 +71,6 @@ fprintf('\n');
 fprintf('Range Measures (%2d features per measure)\n', nmfeat);
 fprintf('----------------------------------------\n');
 for i = 1:nrangemeasures
-    
     printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
     nextfeat = nextfeat + nmfeat;
 end
@@ -85,7 +85,6 @@ fprintf('\n');
 fprintf('Volatility Measures (%2d features per measure)\n', nmfeat);
 fprintf('---------------------------------------------\n');
 for i = 1:nvolmeasures
-    
     printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
     nextfeat = nextfeat + nmfeat;
 end
@@ -132,16 +131,58 @@ for i = 1:ncchangemeasures
     nextfeat = nextfeat + nmfeat;
 end
 
-tempmeas = measures(measures.PatMeas==1,:);
-if npmeasmeasures == 0
+tempmeas = measures(measures.PMean==1,:);
+if npmeanmeasures == 0
     nmfeat = 0;
 else
-    nmfeat = npmeasfeatures/npmeasmeasures;
+    nmfeat = npmeanfeatures/npmeanmeasures;
 end
 fprintf('\n');
-fprintf('Patient Mean & Std Dev (%2d features per measure)\n', nmfeat);
-fprintf('----------------------------------------------------\n');
-for i = 1:npmeasmeasures
+fprintf('Patient Mean (%2d features per measure)\n', nmfeat);
+fprintf('--------------------------------------\n');
+for i = 1:npmeanmeasures
+    printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
+    nextfeat = nextfeat + nmfeat;
+end
+
+tempmeas = measures(measures.PStd==1,:);
+if npstdmeasures == 0
+    nmfeat = 0;
+else
+    nmfeat = npstdfeatures/npstdmeasures;
+end
+fprintf('\n');
+fprintf('Patient Std (%2d features per measure)\n', nmfeat);
+fprintf('-------------------------------------\n');
+for i = 1:npstdmeasures
+    printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
+    nextfeat = nextfeat + nmfeat;
+end
+
+tempmeas = measures(measures.NuckPMean==1,:);
+if nbuckpmeanmeasures == 0
+    nmfeat = 0;
+else
+    nmfeat = nbuckpmeanfeatures/nbuckpmeanmeasures;
+end
+fprintf('\n');
+fprintf('Bucketed Patient Mean (%2d features per measure)\n', nmfeat);
+fprintf('-----------------------------------------------\n');
+for i = 1:nbuckpmeanmeasures
+    printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
+    nextfeat = nextfeat + nmfeat;
+end
+
+tempmeas = measures(measures.BuckPStd==1,:);
+if nbuckpstdmeasures == 0
+    nmfeat = 0;
+else
+    nmfeat = nbuckpstdfeatures/nbuckpstdmeasures;
+end
+fprintf('\n');
+fprintf('Bucketed Patient Std (%2d features per measure)\n', nmfeat);
+fprintf('----------------------------------------------\n');
+for i = 1:nbuckpstdmeasures
     printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
     nextfeat = nextfeat + nmfeat;
 end

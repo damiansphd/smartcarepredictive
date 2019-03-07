@@ -10,9 +10,12 @@ masks = [featureparamsrow.rawmeasfeat;
          featureparamsrow.avgsegfeat ;
          featureparamsrow.volsegfeat ;
          featureparamsrow.cchangefeat;
-         featureparamsrow.pmeasfeat];
+         featureparamsrow.pmeanfeat;
+         featureparamsrow.pstdfeat;
+         featureparamsrow.buckpmean;
+         featureparamsrow.buckpstd];
      
-colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'; 'PatMeas'};
+colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'; 'PMean'; 'PStd'; 'BuckPMean'; 'BuckPStd'};
 
 for a = 1:size(masks,1)
     fprintf('Setting %s mask : ', colnames{a});
@@ -116,6 +119,14 @@ for m = 1:nmeasures
     if measures.RawMeas(m) && measures.BucketMeas(m)
         fprintf('Both raw and bucketed features selected for %s - keep only bucketed\n', measures.DisplayName{m});
         measures.RawMeas(m) = 0;
+    end
+    if measures.PMean(m) && measures.BuckPMean(m)
+        fprintf('Both raw and bucketed patient mean selected for %s - keep only bucketed\n', measures.DisplayName{m});
+        measures.PMean(m) = 0;
+    end
+    if measures.PStd(m) && measures.BuckPStd(m)
+        fprintf('Both raw and bucketed patient std selected for %s - keep only bucketed\n', measures.DisplayName{m});
+        measures.PStd(m) = 0;
     end
 end
 

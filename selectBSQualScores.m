@@ -5,7 +5,7 @@ function [bsqsfile] = selectBSQualScores(studydisplayname, labelstring)
 
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-bsqsinputslisting = dir(fullfile(basedir, subfolder, sprintf('Bootstrap Qual Scores*%s*%s*.mat', studydisplayname, labelstring)));
+bsqsinputslisting = dir(fullfile(basedir, subfolder, sprintf('BSQ*%s*%s*.mat', studydisplayname, labelstring)));
 bsqsinputs = cell(size(bsqsinputslisting,1),1);
 for a = 1:size(bsqsinputs,1)
     bsqsinputs{a} = bsqsinputslisting(a).name;

@@ -3,7 +3,7 @@ function [pmBucketedcube, ntilepoints] = createPMBucketedcube(pmInterpNormcube, 
 % createPMBucketedcube - creates the bucketed features cube
 
 
-% create quintile points for each measure
+% create ntile points for each measure
 ntilepoints = zeros(nmeasures, nbuckets + 1);
 for m = 1:nmeasures
     malldata = reshape(pmInterpNormcube(:,:,m), [1, npatients * maxdays]);

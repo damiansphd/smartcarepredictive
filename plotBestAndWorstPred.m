@@ -33,11 +33,6 @@ pmampred(pmampred.MeanPred == -1,:) = [];
 patperpage  = 6;
 plotsacross = 5;
 npred       = 1;
-npat        = ceil(size(pmampred,1) * 0.2);
-%npat        = 4;
-npages      = ceil(npat/patperpage);
-cpage       = 1;
-cpat        = 1;
 dbfab       = 30; % number of days before ab start to plot
 dafab       = 2;  % number of days after ab start to plot
 bcolors     = [0.88, 0.88, 0.88; 
@@ -50,66 +45,25 @@ bcolors     = [0.88, 0.88, 0.88;
                0.95, 0.95, 0.95];
 
 % 1) Highest True Positives
-baseplotname = sprintf('%s - Highest True Positives - Page %d of %d', basefilename, cpage, npages);
-[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
-
 lgtype = 'TP';
-pmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
-
-for i = 1:npat
-    pnbr      = pmampred.PatientNbr(i);
-    uipypos = 1 - cpat/patperpage;
-    uipysz  = 1/patperpage;
-    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
-                pmFeatureParamsRow.StudyDisplayName{1}, pmampred.SplitNbr(i), ...
-                100 * pmampred.MaxPred(i), 100 * pmampred.MeanPred(i), 100 * pmampred.MedianPred(i));
-    sp(cpat) = uipanel('Parent', p, ...
-                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
-                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
-                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
-              
-    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
-        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
-        pmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
-        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
-        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
-        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
-        lbdisplayname, lgtype, pmFeatureParamsRow)
-
-    cpat = cpat + 1;
-    
-    if (i == npat)
-        basedir = setBaseDir();
-        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
-        close(f); 
-    elseif ((cpat - 1) == patperpage) 
-        basedir = setBaseDir();
-        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
-        close(f);
-        cpage = cpage + 1;
-        cpat = 1;
-        baseplotname = sprintf('%s - Highest True Positives - Page %d of %d', basefilename, cpage, npages);
-        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
-    end
-end
-
-% 2) worst results where there should be a prediction
-
+temppmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
+temppmampred = temppmampred(temppmampred.MaxPred >= 0.5,:);
+npat = size(temppmampred,1);
+npages = ceil(npat/patperpage);
 cpage       = 1;
 cpat        = 1;
 
-baseplotname = sprintf('%s - Lowest False Negatives - Page %d of %d', basefilename, cpage, npages);
+baseplotname = sprintf('%s - High True Positives - Pg%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
-lgtype = 'FN';
-pmampred = sortrows(pmampred, {'MaxPred'}, 'ascend');
+fprintf('High True Positives   : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
 
 for i = 1:npat
-    pnbr      = pmampred.PatientNbr(i);
+    pnbr      = temppmampred.PatientNbr(i);
     uipypos = 1 - cpat/patperpage;
     uipysz  = 1/patperpage;
     uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
-                pmFeatureParamsRow.StudyDisplayName{1}, pmampred.SplitNbr(i), ...
-                100 * pmampred.MaxPred(i), 100 * pmampred.MeanPred(i), 100 * pmampred.MedianPred(i));
+                pmFeatureParamsRow.StudyDisplayName{1}, temppmampred.SplitNbr(i), ...
+                100 * temppmampred.MaxPred(i), 100 * temppmampred.MeanPred(i), 100 * temppmampred.MedianPred(i));
     sp(cpat) = uipanel('Parent', p, ...
                   'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
                   'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
@@ -117,7 +71,7 @@ for i = 1:npat
               
     plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
         pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
-        pmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
+        temppmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
         pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
         pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
         measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
@@ -135,14 +89,113 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Lowest False Negatives - Page %d of %d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s - High True Positives - Pg%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end
 
-% 3) (worst) results - highest predictions where there should not be a
-% prediction
+% 2) Medium True Positives
+lgtype = 'TP';
+temppmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
+temppmampred = temppmampred(temppmampred.MaxPred >= 0.15 & temppmampred.MaxPred < 0.5, :);
+npat = size(temppmampred,1);
+npages = ceil(npat/patperpage);
+cpage       = 1;
+cpat        = 1;
 
+baseplotname = sprintf('%s - Medium True Positives - Pg%dof%d', basefilename, cpage, npages);
+[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+fprintf('Medium True Positives : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
+
+for i = 1:npat
+    pnbr      = temppmampred.PatientNbr(i);
+    uipypos = 1 - cpat/patperpage;
+    uipysz  = 1/patperpage;
+    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
+                pmFeatureParamsRow.StudyDisplayName{1}, temppmampred.SplitNbr(i), ...
+                100 * temppmampred.MaxPred(i), 100 * temppmampred.MeanPred(i), 100 * temppmampred.MedianPred(i));
+    sp(cpat) = uipanel('Parent', p, ...
+                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
+                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
+                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
+              
+    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
+        temppmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
+        lbdisplayname, lgtype, pmFeatureParamsRow)
+
+    cpat = cpat + 1;
+    
+    if (i == npat)
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f); 
+    elseif ((cpat - 1) == patperpage) 
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f);
+        cpage = cpage + 1;
+        cpat = 1;
+        baseplotname = sprintf('%s - Medium True Positives - Pg%dof%d', basefilename, cpage, npages);
+        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
+    end
+end
+
+% 3) worst results where there should be a prediction
+lgtype = 'FN';
+temppmampred = sortrows(pmampred, {'MaxPred'}, 'ascend');
+temppmampred = temppmampred(temppmampred.MaxPred < 0.15,:);
+npat = size(temppmampred,1);
+npages = ceil(npat/patperpage);
+cpage       = 1;
+cpat        = 1;
+
+baseplotname = sprintf('%s - Low False Negatives - Pg%dof%d', basefilename, cpage, npages);
+[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+fprintf('Low True Positives    : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
+
+for i = 1:npat
+    pnbr      = temppmampred.PatientNbr(i);
+    uipypos = 1 - cpat/patperpage;
+    uipysz  = 1/patperpage;
+    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
+                pmFeatureParamsRow.StudyDisplayName{1}, temppmampred.SplitNbr(i), ...
+                100 * temppmampred.MaxPred(i), 100 * temppmampred.MeanPred(i), 100 * temppmampred.MedianPred(i));
+    sp(cpat) = uipanel('Parent', p, ...
+                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
+                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
+                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
+              
+    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
+        temppmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
+        lbdisplayname, lgtype, pmFeatureParamsRow)
+
+    cpat = cpat + 1;
+    
+    if (i == npat)
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f); 
+    elseif ((cpat - 1) == patperpage) 
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f);
+        cpage = cpage + 1;
+        cpat = 1;
+        baseplotname = sprintf('%s - Low False Negatives - Pg%dof%d', basefilename, cpage, npages);
+        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
+    end
+end
+
+% 4) (worst) results - highest false positives where there should not be a
+% prediction
 flidx = trcvlabels(:,labelidx)==false;
 flfeatind = pmTrCVFeatureIndex(flidx,:);
 [fppred, worstsortidx] = sort(pmModelRes.pmNDayRes(labelidx).Pred(flidx), 'descend');
@@ -193,7 +246,7 @@ cpage       = 1;
 cpat        = 1;
 npages      = ceil(npat/patperpage);
 
-baseplotname = sprintf('%s - Highest False Positives - Page %d of %d', basefilename, cpage, npages);
+baseplotname = sprintf('%s - Highest False Positives - Pg%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 lgtype = 'FP';
 
@@ -240,7 +293,7 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Highest False Positives - Page %d of %d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s - Highest False Positives - Pg%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end

@@ -1,63 +1,173 @@
-function plotModelWeights(pmModelRes, measures, nmeasures, ...
-    pmFeatureParamsRow, pmModelParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile)
+function plotModelWeights(pmModelRes, measures, nmeasures, pmTrCVPatientSplit, ...
+    featureparamsrow, pmModelParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile)
 
 % plotModelWeights - plots the model weights for all prediction labels
 % for both given labels 
 
-featureduration  = pmFeatureParamsRow.featureduration;
-predictionduration = size(pmModelRes.pmNDayRes, 2);
 
-xl1 = [1 featureduration];
+[featureduration, ~, monthfeat, demofeat, ...
+ nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nbucketmeasures, nrangemeasures, ...
+ nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
+ npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
+ nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
+ nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
+ nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures, ...
+ nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
 
-tempmeasures  = measures(measures.RawMeas == 1,:);
-tempnmeasures = size(tempmeasures,1);
-
-if tempnmeasures <= 4
-    plotsacross = 1;
-    plotsdown = tempnmeasures;
-else
-    plotsacross = 2;
-    plotsdown = round(tempnmeasures/plotsacross);
-end
+predictionduration = size(pmModelRes.pmNDayRes,2);
 
 for n = 1:predictionduration
     
-    if isequal(pmModelParamsRow.Version{1}, 'vPM1')
-        %ivintercept      = pmIVModelRes.pmNDayRes(n).Model.Coefficients.Estimate(1);
-        featureweights = pmModelRes.pmNDayRes(n).Model.Coefficients.Estimate(2 : (featureduration * tempnmeasures) + 1);
-    elseif isequal(pmModelParamsRow.Version{1}, 'vPM2')
-        featureweights = pmModelRes.pmNDayRes(n).Model.w(1:(featureduration * tempnmeasures));
-    else
-        fprintf('Unknown model version\n');
-        return;
-    end
-    
-    minval = 0; maxval = 0;
-    minval = min(minval, min(featureweights));
-    maxval = max(maxval, max(featureweights));
-    yl1 = [minval maxval];
+    nfolds = size(pmModelRes.pmNDayRes(n).Folds,2);
 
+    plotsacross = 1;
+    plotsdown = nfolds;
+    
     name1 = sprintf('%s Feature Weights - %s Labels %d Day Prediction', basemodelresultsfile, lbdisplayname, n);
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
-    ax1 = gobjects(tempnmeasures,1);
-    
-    for m = 1:tempnmeasures
+    ax1 = gobjects(nfolds,1);
         
-        ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
+    for fold = 1:nfolds
+        if ismember(pmModelParamsRow.Version(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
+            intercept      = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate(1);
+            featureweights = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate(2 : end);
+        elseif ismember(pmModelParamsRow.Version(1), {'vPM2'})
+            featureweights = pmModelRes.pmNDayRes(n).Folds(fold).Model.w;
+        else
+            fprintf('Unsupported model version\n');
+            return;
+        end
+            
+        ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
         % plot feature weights for a given prediction day (labelidx)
-        line(ax1(m), (1:featureduration), featureweights(((m-1)*featureduration) + 1:(m * featureduration)), ...
-            'Color', 'blue', 'LineStyle', ':', 'LineWidth', 0.5);
-        line(ax1(m), (1:featureduration), smooth(featureweights(((m-1)*featureduration) + 1:(m * featureduration)),5), ...
-            'Color', 'blue', 'LineStyle', '-', 'LineWidth', 0.5);
-        xlim(ax1(m), xl1);
-        ylim(ax1(m), yl1);
+        bar(ax1(fold), (1:nnormfeatures), featureweights, 'FaceColor', 'blue');
+        
+        xl1 = [0 nnormfeatures];
+        minval = 0; maxval = 0;
+        minval = min(minval, min(featureweights));
+        maxval = max(maxval, max(featureweights));
+        yl1 = [minval maxval];
+        ylim(ax1(fold), yl1);
+        
+        hold on;
+        nextfeat = 0.5;
+        [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        if nrawmeasures > 0
+            mf =  nrawfeatures/nrawmeasures;
+            for i = 1:nrawmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if nbucketmeasures > 0
+            mf =  nbucketfeatures/nbucketmeasures;
+            for i = 1:nbucketmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if nrangemeasures > 0
+            mf =  nrangefeatures/nrangemeasures;
+            for i = 1:nrangemeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if nvolmeasures > 0
+            mf =  nvolfeatures/nvolmeasures;
+            for i = 1:nvolmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if navgsegmeasures > 0
+            mf =  navgsegfeatures/navgsegmeasures;
+            for i = 1:navgsegmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if nvolsegmeasures > 0
+            mf =  nvolsegfeatures/nvolsegmeasures;
+            for i = 1:nvolsegmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if ncchangemeasures > 0
+            mf =  ncchangefeatures/ncchangemeasures;
+            for i = 1:ncchangemeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if npmeanmeasures > 0
+            mf =  npmeanfeatures/npmeanmeasures;
+            for i = 1:npmeanmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if npstdmeasures > 0
+            mf =  npstdfeatures/npstdmeasures;
+            for i = 1:npstdmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if nbuckpmeanmeasures > 0
+            mf =  nbuckpmeanfeatures/nbuckpmeanmeasures;
+            for i = 1:nbuckpmeanmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if nbuckpstdmeasures > 0
+            mf =  nbuckpstdfeatures/nbuckpstdmeasures;
+            for i = 1:nbuckpstdmeasures - 1
+                nextfeat = nextfeat + mf;
+                [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], ':', 1);
+            end
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if monthfeat > 0
+            mf =  ndatefeatures;
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        if demofeat > 1
+            mf =  ndemofeatures;
+            nextfeat = nextfeat + mf;
+            [xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, [0.8, 0.8, 0.8], '-', 1);
+        end
+        
+        hold off;
+        
         set(gca,'fontsize',6);
-        title(ax1(m), tempmeasures.DisplayName{m},'FontSize', 6);
+        title(ax1(fold), sprintf('Fold %d (Intercept %.2f)', fold, intercept),'FontSize', 6);
         xlabel('Feature Window', 'FontSize', 6);
         ylabel('Feature Weights', 'FontSize', 6);
-        lgd = legend(ax1(m), {'Raw', 'Smooth'}, 'Location', 'southwest');
-        lgd.NumColumns = 2;
-        lgd.FontSize = 4;
         
     end
 

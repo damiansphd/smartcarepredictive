@@ -10,6 +10,7 @@ featureduration = featureparamsrow.featureduration;
 smfn = featureparamsrow.smfunction;
 smwin = featureparamsrow.smwindow;
 smln = featureparamsrow.smlength;
+normwindow = featureparamsrow.normwindow;
 
 plotsperpat = nmeasures + npred;
 plotsdown   = ceil(plotsperpat / plotsacross);
@@ -87,8 +88,8 @@ for m = 1:nmeasures
     for ab = 1:size(pivabsdates,1)
         plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
     end
-    if dfrom < featureduration
-        plotFillArea(ax1(m), dfrom, featureduration, yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
+    if dfrom < (featureduration + normwindow)
+        plotFillArea(ax1(m), dfrom, (featureduration + normwindow), yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
     end
     hold off;
 end
@@ -131,8 +132,8 @@ end
 for ab = 1:size(pivabsdates,1)
     plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
 end
-if dfrom < featureduration
-    plotFillArea(ax1(m), dfrom, featureduration, yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
+if dfrom < (featureduration + normwindow)
+    plotFillArea(ax1(m), dfrom, (featureduration + normwindow), yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
 end
 hold off;
 

@@ -9,6 +9,7 @@ function [outputrow] = applySmoothMethodToInterpRow(interpdatarow, smfunction, s
 %       1           Mean for all measures
 %       2           Median for all measures
 %       3           Max for FEV1, mean for all others
+%       4           Max for FEV1, none for all others
 %
 % smwindow          Description
 % ---------------   -----------

@@ -1,5 +1,5 @@
 function [pmInterpRangecube, pmInterpSegAvgcube] = createPMInterpRangecube(pmPatients, pmInterpNormcube, ...
-    npatients, maxdays, nmeasures, featureduration, nsegments)
+    npatients, maxdays, nmeasures, featureduration, nsegments, normwindow)
 
 % createPMInterpRangecube - creates measures range cube and segmented range
 % cube
@@ -12,7 +12,7 @@ pmInterpSegAvgcube = nan(npatients, maxdays, nmeasures, nsegments);
 for p = 1:npatients
     pduration = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
     for m = 1:nmeasures
-        for d = featureduration:pduration
+        for d = (featureduration + normwindow):pduration
             pmInterpRangecube(p, d, m) =   max(pmInterpNormcube(p, (d - featureduration + 1): d, m)) ...
                                          - min(pmInterpNormcube(p, (d - featureduration + 1): d, m));
             for i = 1:nsegments
