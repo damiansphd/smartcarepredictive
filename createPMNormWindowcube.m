@@ -1,4 +1,4 @@
-function [pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
+function [pmMucube, pmSigmacube, pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
     muntilepoints, sigmantilepoints] = createPMNormWindowcube(pmPatients, pmInterpDatacube, ...
                     pmOverallStats, pmPatientMeasStats, normmethod, normwindow, nbuckpmeas, ...
                     npatients, maxdays, measures, nmeasures)
@@ -7,6 +7,8 @@ function [pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, 
 % upper quartile mean prior to feature window) - for use with normalisation
 % method 3
 
+pmMucube            = NaN(npatients, maxdays, nmeasures);
+pmSigmacube         = NaN(npatients, maxdays, nmeasures);
 pmMuNormcube        = NaN(npatients, maxdays, nmeasures);
 pmSigmaNormcube     = NaN(npatients, maxdays, nmeasures);
 pmBuckMuNormcube    = zeros(npatients, maxdays, nmeasures, nbuckpmeas + 1);
@@ -14,8 +16,8 @@ pmBuckSigmaNormcube = zeros(npatients, maxdays, nmeasures, nbuckpmeas + 1);
 
 if normmethod == 1
     for m = 1:nmeasures
-        pmMuNormcube(:, :, m)    = pmOverallStats.Mean(m);
-        pmSigmaNormcube(:, :, m) = pmOverallStats.StdDev(m);
+        pmMucube(:, :, m)    = pmOverallStats.Mean(m);
+        pmSigmacube(:, :, m) = pmOverallStats.StdDev(m);
     end
 elseif normmethod == 2
     for p = 1:npatients
@@ -30,8 +32,8 @@ elseif normmethod == 2
                 pmean = pmeas.Mean;
                 pstd  = pmeas.StdDev;
             end
-            pmMuNormcube(p, 1:pmaxdays, m)    = pmean;
-            pmSigmaNormcube(p, 1:pmaxdays, m) = pstd;
+            pmMucube(p, 1:pmaxdays, m)    = pmean;
+            pmSigmacube(p, 1:pmaxdays, m) = pstd;
         end
     end
 elseif normmethod == 3
@@ -47,7 +49,7 @@ elseif normmethod == 3
                 pmean = pmeas.Mean;
                 pstd  = pmeas.StdDev;
             end
-            pmSigmaNormcube(p, 1:pmaxdays, m) = pstd;
+            pmSigmacube(p, 1:pmaxdays, m) = pstd;
             for d = (normwindow + 1):pmaxdays
                 pmuwind = pmInterpDatacube(p, (d - normwindow):(d - 1), m);
                 if ~isequal(measures.DisplayName(m), cellstr('PulseRate'))
@@ -59,10 +61,10 @@ elseif normmethod == 3
                 % necessary - but keeping it in for robustness
                 if size(pmuwind,2) >= 3
                     percentile25 = round(size(pmuwind,2) * .25) + 1;
-                    pmMuNormcube(p, d, m) = mean(pmuwind(percentile25:end));
+                    pmMucube(p, d, m) = mean(pmuwind(percentile25:end));
                 else
                     fprintf('Using Patient study mean for patient %d, measure %d (%s), day %d\n', p, m, measures.DisplayName{m}, d);
-                    pmMuNormcube(p, d, m) = pmean;
+                    pmMucube(p, d, m) = pmean;
                 end
             end
         end
@@ -71,9 +73,26 @@ else
     fprintf('Unknown normalisation method\n');
 end
 
+% create normalised Mu and Sigma cubes (for use as features)
+munorm     = zeros(nmeasures, 2);
+sigmanorm  = zeros(nmeasures,2);
+for m = 1:nmeasures    
+    meandata = reshape(pmMucube(:, :, m), [1 (npatients * maxdays)]);
+    meandata = meandata(~isnan(meandata));
+    stddata = reshape(pmSigmacube(:, :, m), [1 (npatients * maxdays)]);
+    stddata = stddata(~isnan(stddata));
+    munorm(m, 1)     = mean(meandata);
+    munorm(m, 2)     = std(meandata);
+    sigmanorm(m, 1)  = mean(stddata);
+    sigmanorm(m, 2)  = std(stddata);
+    pmMuNormcube(:, :, m)    = (pmMucube(:, :, m)    - munorm(m, 1))    ./ munorm(m, 2);
+    pmSigmaNormcube(:, :, m) = (pmSigmacube(:, :, m) - sigmanorm(m, 1)) ./ sigmanorm(m, 2);
+end
+
+% create bucketed Mu and Sigma cubes
 muntilepoints = zeros(nmeasures, nbuckpmeas + 1);
 for m = 1:nmeasures
-    malldata = reshape(pmMuNormcube(:,:,m), [1, npatients * maxdays]);
+    malldata = reshape(pmMucube(:,:,m), [1, npatients * maxdays]);
     malldata = sort(malldata(~isnan(malldata)), 'ascend');    
     muntilepoints(m,1) = malldata(1);
     for n = 1:nbuckpmeas
@@ -83,7 +102,7 @@ end
 
 sigmantilepoints = zeros(nmeasures, nbuckpmeas + 1);
 for m = 1:nmeasures
-    malldata = reshape(pmSigmaNormcube(:,:,m), [1, npatients * maxdays]);
+    malldata = reshape(pmSigmacube(:,:,m), [1, npatients * maxdays]);
     malldata = sort(malldata(~isnan(malldata)), 'ascend');    
     sigmantilepoints(m,1) = malldata(1);
     for n = 1:nbuckpmeas
@@ -94,8 +113,8 @@ end
 for p = 1:npatients
     for m = 1:nmeasures
         for d = 1:maxdays
-            if ~isnan(pmMuNormcube(p, d, m))
-                mudatapoint = pmMuNormcube(p, d, m);
+            if ~isnan(pmMucube(p, d, m))
+                mudatapoint = pmMucube(p, d, m);
                 mulowerq = find(muntilepoints(m,:) <= mudatapoint, 1, 'last');
                 muupperq = find(muntilepoints(m,:) >= mudatapoint, 1);
                 if mulowerq == muupperq
@@ -111,8 +130,8 @@ for p = 1:npatients
                     pmBuckMuNormcube(p, d, m, muupperq) = abs(muntilepoints(m, mulowerq) - mudatapoint) / abs(muntilepoints(m, muupperq) - muntilepoints(m, mulowerq));
                 end
             end
-            if ~isnan(pmSigmaNormcube(p, d, m))
-                sigmadatapoint = pmSigmaNormcube(p, d, m);
+            if ~isnan(pmSigmacube(p, d, m))
+                sigmadatapoint = pmSigmacube(p, d, m);
                 sigmalowerq = find(sigmantilepoints(m,:) <= sigmadatapoint, 1, 'last');
                 sigmaupperq = find(sigmantilepoints(m,:) >= sigmadatapoint, 1);
                 if sigmalowerq == sigmaupperq
