@@ -1,4 +1,4 @@
-clear; close all; clc;
+ clear; close all; clc;
 
 basedir = setBaseDir();
 subfolder = 'DataFiles';
@@ -14,6 +14,7 @@ nfeatureparamsets = size(pmThisFeatureParams,1);
 nmodelparamsets   = size(pmModelParams,1);
 ncombinations     = nfeatureparamsets * nmodelparamsets;
 
+nrndruns   = 20; % temporary hardcoding - replace with model parameter when have more time
 nbssamples = 50; % temporary hardcoding - replace with model parameter when have more time
 
 pmBSAllQS = struct('FeatureParams', [], 'ModelParams', []);
@@ -91,18 +92,22 @@ for fs = 1:nfeatureparamsets
             
             fprintf('Running %s model for Label %d\n', modeltype, n);
             
-            %pmDayRes = struct('Model'     , [], 'LLH', 0.0        , 'Pred'     , zeros(ntrcvexamples,1), ...
-            pmDayRes = struct('Folds'     , [], 'LLH', 0.0        , 'Pred'     , zeros(ntrcvexamples,1), ...
-                              'PredSort'  , zeros(ntrcvexamples,1), 'LabelSort', zeros(ntrcvexamples,1), ...
-                              'Precision' , zeros(ntrcvexamples,1), 'Recall'   , zeros(ntrcvexamples,1), ...
-                              'TPR'       , zeros(ntrcvexamples,1), 'FPR'      , zeros(ntrcvexamples,1), ...
-                              'PRAUC'     , 0.0                   , 'ROCAUC'   , 0.0, ...
-                              'Acc'       , 0.0                   , 'PosAcc'   , 0.0, ...
-                              'NegAcc'    , 0.0, ...
-                              'bsPRAUC'   , zeros(nbssamples,1)    , 'bsROCAUC' , zeros(nbssamples,1), ...
-                              'bsAcc'     , zeros(nbssamples,1)    , 'bsPosAcc' , zeros(nbssamples,1), ...
+            pmDayRes = struct('Folds'     , [], 'LLH', 0.0        , 'Pred'      , zeros(ntrcvexamples,1), ...
+                              'PredSort'  , zeros(ntrcvexamples,1), 'LabelSort' , zeros(ntrcvexamples,1), ...
+                              'Precision' , zeros(ntrcvexamples,1), 'Recall'    , zeros(ntrcvexamples,1), ...
+                              'TPR'       , zeros(ntrcvexamples,1), 'FPR'       , zeros(ntrcvexamples,1), ...
+                              'PRAUC'     , 0.0                   , 'ROCAUC'    , 0.0, ...
+                              'Acc'       , 0.0                   , 'PosAcc'    , 0.0, ...
+                              'NegAcc'    , 0.0                   , ...
+                              'HighP'     , 0.0                   , 'MedP'      , 0.0, ....
+                              'LowP'      , 0.0                   , 'ElecHighP' , 0.0, ...
+                              'ElecMedP'  , 0.0                   , 'ElecLowP'  , 0.0, ...
+                              'PScore'    , 0.0                   , 'ElecPScore', 0.0, ...
+                              'bsPRAUC'   , zeros(nbssamples,1)   , 'bsROCAUC'  , zeros(nbssamples,1), ...
+                              'bsAcc'     , zeros(nbssamples,1)   , 'bsPosAcc'  , zeros(nbssamples,1), ...
                               'bsNegAcc'  , zeros(nbssamples,1));
-            
+                              
+             
             [labels] = setLabelsForLabelMethod(pmModelParams.labelmethod(mp), pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels);
             trcvlabels = labels(:,n);
                 
@@ -181,8 +186,11 @@ for fs = 1:nfeatureparamsets
             end
             
             fprintf('\n');
-            fprintf('Real Data Quality Scores:           ');
+            fprintf('Real Data Qual Scores:    ');
+            [pmDayRes, pmAMPredUpd] = calcPredQualityScore(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmTrCVPatientSplit);
             pmDayRes = calcModelQualityScores(pmDayRes, trcvlabels, ntrcvexamples);
+            fprintf('\n');
+            
             fprintf('\n');
             
             % create quality metrics for bootstrapping samples
@@ -193,8 +201,10 @@ for fs = 1:nfeatureparamsets
                 tempRes.Pred = tempRes.Pred(sampleidx);
                 templabels = trcvlabels(sampleidx);
                 
-                fprintf('Bootstrap sample %2d Quality Scores: ', s);
+                
+                fprintf('BS Sample %2d Qual Scores: ', s);
                 tempRes = calcModelQualityScores(tempRes, templabels, ntrcvexamples);
+                fprintf('\n');
                 pmDayRes.bsPRAUC(s)    = tempRes.PRAUC;
                 pmDayRes.bsROCAUC(s)   = tempRes.ROCAUC;
                 pmDayRes.bsAcc(s)      = tempRes.Acc;
@@ -206,7 +216,6 @@ for fs = 1:nfeatureparamsets
             
             pmModelRes.pmNDayRes(n) = pmDayRes;
             
-            %pmDayRes.Model     = [];
             pmDayRes.Folds     = [];
             pmDayRes.Pred      = [];
             pmDayRes.PredSort  = [];
@@ -236,7 +245,7 @@ for fs = 1:nfeatureparamsets
             'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', ...
             'pmTrCVFeatureIndex', 'pmTrCVFeatures', 'pmTrCVNormFeatures', ...
             'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels',...
-            'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow');
+            'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmAMPredUpd');
         toc
         fprintf('\n');
     end

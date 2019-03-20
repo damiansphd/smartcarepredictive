@@ -35,11 +35,12 @@ else
     return;
 end
 
-pmStudyInfo = table('Size',[size(study,1), 6], 'VariableTypes', {'cell', 'cell', 'double', 'cell', 'cell', 'cell'}, ...
-    'VariableNames', {'Study', 'StudyName', 'Offset', 'MeasurementMatFile', 'ClinicalMatFile', 'AMPredMatFile'});
+pmStudyInfo = table('Size',[size(study,1), 7], 'VariableTypes', {'cell', 'cell', 'double', 'cell', 'cell', 'cell', 'cell'}, ...
+    'VariableNames', {'Study', 'StudyName', 'Offset', 'MeasurementMatFile', 'ClinicalMatFile', 'AMPredMatFile', 'ElectiveTrFile'});
 
 for a = 1:size(study,1)
-    pmStudyInfo.Study(a) = study(a);
+    pmStudyInfo.Study(a)                    = study(a);
+    pmStudyInfo.ElectiveTrFile{a}           = sprintf('%selectivetreatments.xlsx', study{a});
     if isequal(study(a), {'SC'})
         pmStudyInfo.StudyName{a}            = 'SmartCare';
         pmStudyInfo.MeasurementMatFile{a}   = 'smartcaredata.mat';

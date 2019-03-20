@@ -36,19 +36,26 @@ elseif normmethod == 2
             pmSigmacube(p, 1:pmaxdays, m) = pstd;
         end
     end
-elseif normmethod == 3
+elseif (normmethod == 3 || normmethod == 4)
     for p = 1:npatients
         pmaxdays = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
         for m = 1:nmeasures
-            pmeas = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p & pmPatientMeasStats.MeasureIndex == m, :);
-            if size(pmeas,1) == 0 || pmeas.StdDev == 0
-                fprintf('Using Overall study std for patient %d, measure %d (%s)\n', p, m, measures.DisplayName{m});
+            if normmethod == 3
+                pmeas = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == p & pmPatientMeasStats.MeasureIndex == m, :);
+                if size(pmeas,1) == 0 || pmeas.StdDev == 0
+                    fprintf('Using Overall study std for patient %d, measure %d (%s)\n', p, m, measures.DisplayName{m});
+                    pmean = pmOverallStats.Mean(m);
+                    pstd = pmOverallStats.StdDev(m);
+                else
+                    pmean = pmeas.Mean;
+                    pstd  = pmeas.StdDev;
+                end
+            elseif normmethod == 4
                 pmean = pmOverallStats.Mean(m);
                 pstd = pmOverallStats.StdDev(m);
             else
-                pmean = pmeas.Mean;
-                pstd  = pmeas.StdDev;
-            end
+                fprintf('Should not get here !\n');
+            end    
             pmSigmacube(p, 1:pmaxdays, m) = pstd;
             for d = (normwindow + 1):pmaxdays
                 pmuwind = pmInterpDatacube(p, (d - normwindow):(d - 1), m);

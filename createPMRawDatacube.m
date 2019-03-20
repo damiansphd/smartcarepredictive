@@ -12,6 +12,8 @@ for a = 1:nstudies
     load(fullfile(basedir, subfolder, pmStudyInfo.MeasurementMatFile{a}));
     fprintf('Loading alignment model prediction results\n');
     load(fullfile(basedir, subfolder, pmStudyInfo.AMPredMatFile{a}), 'amInterventions', 'ex_start');
+    fprintf('Loading elective treatments\n');
+    pmElectiveTreatments = readtable(fullfile(basedir, 'DataFiles', pmStudyInfo.ElectiveTrFile{a}));
 
     if isequal(pmStudyInfo.Study(a), {'TM'})
         physdata = tmphysdata;
@@ -25,7 +27,7 @@ for a = 1:nstudies
     
     % create datacube - 3D array of patients/days/measures for model
     fprintf('Creating patient, antibiotics, prediction, and 3D datacube arrays\n');
-    [temp_pmPatients, temp_pmAntibiotics, temp_pmAMPred, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMRawDatacubeForOneStudy(physdata, cdPatient, cdAntibiotics, amInterventions, ex_start, pmStudyInfo(a, :), measures, nmeasures);
+    [temp_pmPatients, temp_pmAntibiotics, temp_pmAMPred, temp_pmDatacube, temp_npatients, temp_maxdays] = createPMRawDatacubeForOneStudy(physdata, cdPatient, cdAntibiotics, amInterventions, pmElectiveTreatments, ex_start, pmStudyInfo(a, :), measures, nmeasures);
     
     % combine results into one array
     if a == 1

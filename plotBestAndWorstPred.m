@@ -6,29 +6,7 @@ function [pmampred] = plotBestAndWorstPred(pmPatients, pmAntibiotics, pmampred, 
 % plotBestAndWorstPred - compact plots of measures and prediction for the
 % best and worst results
 
-ninterventions = size(pmampred,1);
-pmampred.SplitNbr(:) = -1.0;
-pmampred.IntrDuration(:) = -1.0;
-pmampred.MeanPred(:) = -1.0;
-pmampred.MedianPred(:) = -1.0;
-pmampred.MaxPred(:) = -1.0;
-pmampred.MaxPredDay(:) = -1.0;
-
-for i = 1:ninterventions
-    pnbr = pmampred.PatientNbr(i);
-    exstart = pmampred.Pred(i);
-    ivstart = pmampred.IVScaledDateNum(i);
-    intridx = pmTrCVFeatureIndex.PatientNbr == pnbr & pmTrCVFeatureIndex.CalcDatedn >= exstart & pmTrCVFeatureIndex.CalcDatedn < ivstart;
-    if sum(intridx) ~= 0
-        pmampred.SplitNbr(i) = pmTrCVPatientSplit.SplitNbr(pmTrCVPatientSplit.PatientNbr == pnbr);
-        pmampred.IntrDuration(i) = ivstart - exstart;
-        pmampred.MeanPred(i) = mean(pmModelRes.pmNDayRes(labelidx).Pred(intridx));
-        pmampred.MedianPred(i) = median(pmModelRes.pmNDayRes(labelidx).Pred(intridx));
-        [pmampred.MaxPred(i), pmampred.MaxPredDay(i)] = max(pmModelRes.pmNDayRes(labelidx).Pred(intridx));
-    end
-end
-
-pmampred(pmampred.MeanPred == -1,:) = [];
+[pmampred] = getPredictedIntr(pmampred, pmTrCVFeatureIndex, pmTrCVPatientSplit, pmModelRes.pmNDayRes(labelidx));
 
 patperpage  = 6;
 plotsacross = 5;
@@ -44,9 +22,12 @@ bcolors     = [0.88, 0.88, 0.88;
                0.88, 0.88, 0.88;
                0.95, 0.95, 0.95];
 
+% Regular Treatments
+regidx = pmampred.ElectiveTreatment ~= 'Y';
+
 % 1) Highest True Positives
 lgtype = 'TP';
-temppmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
+temppmampred = sortrows(pmampred(regidx, :), {'MaxPred'}, 'descend');
 temppmampred = temppmampred(temppmampred.MaxPred >= 0.5,:);
 npat = size(temppmampred,1);
 npages = ceil(npat/patperpage);
@@ -96,7 +77,7 @@ end
 
 % 2) Medium True Positives
 lgtype = 'TP';
-temppmampred = sortrows(pmampred, {'MaxPred'}, 'descend');
+temppmampred = sortrows(pmampred(regidx, :), {'MaxPred'}, 'descend');
 temppmampred = temppmampred(temppmampred.MaxPred >= 0.15 & temppmampred.MaxPred < 0.5, :);
 npat = size(temppmampred,1);
 npages = ceil(npat/patperpage);
@@ -146,7 +127,7 @@ end
 
 % 3) worst results where there should be a prediction
 lgtype = 'FN';
-temppmampred = sortrows(pmampred, {'MaxPred'}, 'ascend');
+temppmampred = sortrows(pmampred(regidx, :), {'MaxPred'}, 'ascend');
 temppmampred = temppmampred(temppmampred.MaxPred < 0.15,:);
 npat = size(temppmampred,1);
 npages = ceil(npat/patperpage);
@@ -194,7 +175,57 @@ for i = 1:npat
     end
 end
 
-% 4) (worst) results - highest false positives where there should not be a
+% 4) Results for Elective Treatments (all)
+elecidx = pmampred.ElectiveTreatment == 'Y';
+lgtype = 'FN';
+temppmampred = sortrows(pmampred(elecidx, :), {'MaxPred'}, 'descend');
+npat = size(temppmampred,1);
+npages = ceil(npat/patperpage);
+cpage       = 1;
+cpat        = 1;
+
+baseplotname = sprintf('%s - Elective Treatments - Pg%dof%d', basefilename, cpage, npages);
+[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+fprintf('Elective Treatments : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
+
+for i = 1:npat
+    pnbr      = temppmampred.PatientNbr(i);
+    uipypos = 1 - cpat/patperpage;
+    uipysz  = 1/patperpage;
+    uiptitle = sprintf('Patient %d (Study %s, CV Fold %d): Max %.2f%% Mean %.2f%% Median %.2f%%', pnbr, ...
+                pmFeatureParamsRow.StudyDisplayName{1}, temppmampred.SplitNbr(i), ...
+                100 * temppmampred.MaxPred(i), 100 * temppmampred.MeanPred(i), 100 * temppmampred.MedianPred(i));
+    sp(cpat) = uipanel('Parent', p, ...
+                  'BorderType', 'none', 'BackgroundColor', bcolors(cpat,:), ...
+                  'OuterPosition', [0.0,uipypos, 1.0, uipysz], ...
+                  'Title', uiptitle, 'TitlePosition', 'centertop', 'FontSize', 8);
+              
+    plotCompactMeasAndPredForPatient(pmPatients(pmPatients.PatientNbr == pnbr, :), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr, :), ...
+        temppmampred(i,:), pmRawDatacube, pmInterpDatacube, ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, npred, plotsacross, dbfab, dafab, sp(cpat), labelidx, ...
+        lbdisplayname, lgtype, pmFeatureParamsRow)
+
+    cpat = cpat + 1;
+    
+    if (i == npat)
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f); 
+    elseif ((cpat - 1) == patperpage) 
+        basedir = setBaseDir();
+        savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        close(f);
+        cpage = cpage + 1;
+        cpat = 1;
+        baseplotname = sprintf('%s - Elective Treatments - Pg%dof%d', basefilename, cpage, npages);
+        [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
+    end
+end
+
+% 5) (worst) results - highest false positives where there should not be a
 % prediction
 flidx = trcvlabels(:,labelidx)==false;
 flfeatind = pmTrCVFeatureIndex(flidx,:);

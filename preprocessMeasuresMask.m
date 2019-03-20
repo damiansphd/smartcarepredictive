@@ -107,6 +107,9 @@ for a = 1:size(masks,1)
     elseif masks(a) == 29
         fprintf('Set for Cough, O2 Saturation, Wellness\n');
         keepidx = ismember(measures.DisplayName,{'Cough', 'O2Saturation', 'Wellness'});
+    elseif masks(a) == 30
+        fprintf('Set for O2 Saturation, Weight, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'O2Saturation', 'Weight', 'Wellness'});
     end
     mask(keepidx) = 1;
     measures(:, colnames(a)) = array2table(mask);

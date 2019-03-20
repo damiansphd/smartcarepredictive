@@ -144,6 +144,9 @@ elseif plottype == 10
         pmTrCVFeatureIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, pmModelRes, ...
         measures, nmeasures, labelidx, pmFeatureParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile);
+elseif plottype == 11
+    plotExByMonth(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmTrCVPatientSplit, ...
+        pmModelRes, basemodelresultsfile, plotsubfolder, lbdisplayname)
 end
 
 

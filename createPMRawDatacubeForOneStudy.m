@@ -1,5 +1,5 @@
 function [pmPatients, pmAntibiotics, pmAMPred, pmDatacube, npatients, maxdays] = createPMRawDatacubeForOneStudy(physdata, ...
-    cdPatient, cdAntibiotics, amInterventions, ex_start, pmStudyInfoRow, measures, nmeasures)
+    cdPatient, cdAntibiotics, amInterventions, pmElectiveTreatments, ex_start, pmStudyInfoRow, measures, nmeasures)
 
 % createPMDataCube - populates a 3D array from the measurement data of
 % appropriate size
@@ -79,6 +79,9 @@ pmAMPred.RelUB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerB
         + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.UpperBound2(pmAMPred.LowerBound2 ~= -1) ...
         - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
 pmAMPred.FirstMeasdn = [];
+
+pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
+pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
 
 pmDatacube = NaN(npatients, maxdays, nmeasures);
 
