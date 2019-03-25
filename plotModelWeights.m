@@ -27,13 +27,30 @@ for n = 1:predictionduration
     name1 = sprintf('%s Feature Weights - %s Labels %d Day Prediction', basemodelresultsfile, lbdisplayname, n);
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
     ax1 = gobjects(plotsacross * plotsdown,1);
-        
+    
+    fwarray = zeros(nnormfeatures + 1, nfolds);
     for fold = 1:nfolds
         if ismember(pmModelParamsRow.Version(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
-            intercept      = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate(1);
-            featureweights = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate(2 : end);
+            fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate;
         elseif ismember(pmModelParamsRow.Version(1), {'vPM2'})
-            featureweights = pmModelRes.pmNDayRes(n).Folds(fold).Model.w;
+            fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.w;
+        else
+            fprintf('Unsupported model version\n');
+            return;
+        end    
+    end
+    minval = 0; maxval = 0;
+    minval = min(minval, min(min(fwarray(2:end, :))));
+    maxval = max(maxval, max(max(fwarray(2:end, :))));
+    yl1 = [minval maxval];
+    
+    for fold = 1:nfolds
+        if ismember(pmModelParamsRow.Version(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
+            intercept      = fwarray(1, fold);
+            featureweights = fwarray(2:end, fold);
+        elseif ismember(pmModelParamsRow.Version(1), {'vPM2'})
+            featureweights = fwarray(1:end - 1, fold);
+            intercept      = fwarray(end, fold);
         else
             fprintf('Unsupported model version\n');
             return;
@@ -45,10 +62,6 @@ for n = 1:predictionduration
         bar(ax1(fold), (1:nnormfeatures), featureweights, 0.75, 'FaceColor', 'blue', 'EdgeColor', 'black');
         
         xl1 = [0 nnormfeatures];
-        minval = 0; maxval = 0;
-        minval = min(minval, min(featureweights));
-        maxval = max(maxval, max(featureweights));
-        yl1 = [minval maxval];
         ylim(ax1(fold), yl1);
         
         hold on;
@@ -61,6 +74,8 @@ for n = 1:predictionduration
         xlabel('Features', 'FontSize', 6);
         ylabel('Feature Weights', 'FontSize', 6);  
     end
+    
+    % plot std deviation of features
     fold = fold + 1;
     featurestd = std(pmTrCVNormFeatures,1);
     ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
@@ -81,7 +96,7 @@ for n = 1:predictionduration
     xlabel('Features', 'FontSize', 6);
     ylabel('Feature Std Dev', 'FontSize', 6);  
     
-    
+    % plot mean of features
     fold = fold + 1;
     featuremean = mean(pmTrCVNormFeatures,1);
     ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);

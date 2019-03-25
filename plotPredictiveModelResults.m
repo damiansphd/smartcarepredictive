@@ -145,8 +145,11 @@ elseif plottype == 10
         measures, nmeasures, labelidx, pmFeatureParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile);
 elseif plottype == 11
-    plotExByMonth(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmTrCVPatientSplit, ...
-        pmModelRes, basemodelresultsfile, plotsubfolder, lbdisplayname)
+    plotExByMonth(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmTrCVPatientSplit, ...
+        pmModelRes, basemodelresultsfile, plotsubfolder, lbdisplayname);
+elseif plottype == 12
+    modelcalibration = calcModelCalibrationByFold(pmTrCVFeatureIndex, pmTrCVPatientSplit, trcvlabels(:, labelidx), ...
+        pmModelRes.pmNDayRes(labelidx), basemodelresultsfile, plotsubfolder, lbdisplayname, labelidx);
 end
 
 

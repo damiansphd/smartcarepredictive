@@ -14,7 +14,6 @@ nfeatureparamsets = size(pmThisFeatureParams,1);
 nmodelparamsets   = size(pmModelParams,1);
 ncombinations     = nfeatureparamsets * nmodelparamsets;
 
-nrndruns   = 20; % temporary hardcoding - replace with model parameter when have more time
 nbssamples = 50; % temporary hardcoding - replace with model parameter when have more time
 
 pmBSAllQS = struct('FeatureParams', [], 'ModelParams', []);
@@ -107,18 +106,17 @@ for fs = 1:nfeatureparamsets
                               'bsAcc'     , zeros(nbssamples,1)   , 'bsPosAcc'  , zeros(nbssamples,1), ...
                               'bsNegAcc'  , zeros(nbssamples,1));
                               
-             
             [labels] = setLabelsForLabelMethod(pmModelParams.labelmethod(mp), pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels);
             trcvlabels = labels(:,n);
-                
+            
             for fold = 1:nfolds
-                
+
                 fprintf('CV Fold %d\n', fold);
-                
+
                 [pmTrFeatureIndex, pmTrFeatures, pmTrNormFeatures, trlabels, ...
                  pmCVFeatureIndex, pmCVFeatures, pmCVNormFeatures, cvlabels, cvidx] ...
                     = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVFeatures, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
-                
+
                 if isequal(pmModelParams.Version{mp}, 'vPM1')
                     fprintf('Training...');
                     %pmDayRes.Model(fold) = compact(fitglm(pmTrNormFeatures, trlabels, ...
@@ -131,14 +129,14 @@ for fs = 1:nfeatureparamsets
                         'Link', 'logit'));
                     fprintf('Predicting on CV set...');
                     pmDayRes.Pred(cvidx) = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures);
-                    
+
                 elseif isequal(pmModelParams.Version{mp}, 'vPM2')
                     fprintf('Training...');
                     [pmDayRes.Folds(fold).Model, pmDayRes.LLH] = logitBin(pmTrNormFeatures', trlabels', 1.0);
                     fprintf('Predicting on CV set...');
                     [~, temppred] = logitBinPred(pmDayRes.Folds(fold).Model, pmCVNormFeatures');
                     pmDayRes.Pred(cvidx) = temppred';
-                    
+
                 elseif isequal(pmModelParams.Version{mp}, 'vPM3')
                     fprintf('Training...');
                     template = templateTree('MaxNumSplits', 40);
@@ -149,7 +147,7 @@ for fs = 1:nfeatureparamsets
                         'LearnRate', 0.1));
                     fprintf('Predicting on CV set...');
                     pmDayRes.Pred(cvidx) = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures);
-                    
+
                 elseif isequal(pmModelParams.Version{mp}, 'vPM4')
                     fprintf('Training...');
                     pmDayRes.Folds(fold).Model = compact(fitctree(pmTrNormFeatures, trlabels, ...
@@ -158,7 +156,7 @@ for fs = 1:nfeatureparamsets
                         'Surrogate', 'off'));
                     fprintf('Predicting on CV set...');
                     pmDayRes.Pred(cvidx) = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures);
-                    
+
                 elseif isequal(pmModelParams.Version{mp}, 'vPM5')
                     fprintf('Training...');
                     template = templateTree('MaxNumSplits', 40);
@@ -170,19 +168,19 @@ for fs = 1:nfeatureparamsets
                         'RatioToSmallest', 1));
                     fprintf('Predicting on CV set...');
                     pmDayRes.Pred(cvidx) = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures); 
-                
+
                 elseif isequal(pmModelParams.Version{mp}, 'vPM6')
                     fprintf('Predicting with manual rules...');
                     pmDayRes.Pred(cvidx) = manualPredModel(pmInterpNormcube, ...
                         pmCVNormFeatures, pmDayRes.Pred(cvidx), measures, nmeasures, ...
                         npatients, maxdays, featureduration);
-                    
+
                 else
                     fprintf('Unknown model version\n');
                     return
                 end
                 fprintf('Done\n');
-                
+
             end
             
             fprintf('\n');
