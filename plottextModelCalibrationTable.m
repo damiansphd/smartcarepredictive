@@ -1,4 +1,4 @@
-function plottextModelCalibrationTable(p1, ax, modelcalibration, fold, plotsacross)
+function axr = plottextModelCalibrationTable(p1, axl, modelcalibration, fold, plotsacross)
 
 % plottextModelCalibrationTable - writes the model calibration results to a
 % uicontrol on the figure
@@ -14,10 +14,10 @@ for a = 1:size(modelcalibration,1)
         modelcalibration.TrueLabels(a), modelcalibration.NbrInBin(a), modelcalibration.Calibration(a));
     tabletext = [tabletext ; rowstring];
 end
-posvector = ax.Position;
+posvector = axl.Position;
 posvector(1) = posvector(1) + (1/plotsacross);
 plotnbr = 2 * (fold + 1);
-ax = uicontrol('Parent', p1, ... 
+axr = uicontrol('Parent', p1, ... 
                 'Units', 'normalized', ...
                 'OuterPosition', posvector, ...
                 'Style', 'text', ...

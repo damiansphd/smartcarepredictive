@@ -30,7 +30,7 @@ plotnbr = (2 * fold) + 1;
 modelcalibration = calcModelCalibration(trcvlabels, modeldayres.Pred, binedges, nbins, fold);
 ax1(plotnbr) = subplot(plotsdown, plotsacross, plotnbr, 'Parent', p1);
 plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), [0.7, 0.7, 0.7], 'Blue', 'Overall');
-plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross);
+ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross);
 
 for fold = 1:nfolds
     plotnbr = (2 * fold) + 1;
@@ -39,7 +39,7 @@ for fold = 1:nfolds
     modelcalibration = [modelcalibration; tmpcalib];
     ax1(plotnbr) = subplot(plotsdown, plotsacross, plotnbr, 'Parent', p1);
     plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), [0.7, 0.7, 0.7], 'Blue', sprintf('Fold %d', fold));
-    plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross);
+    ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross);
 end
 
 basedir = setBaseDir();
