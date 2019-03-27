@@ -57,7 +57,7 @@ elseif (normmethod == 3 || normmethod == 4)
                 fprintf('Should not get here !\n');
             end    
             pmSigmacube(p, 1:pmaxdays, m) = pstd;
-            for d = (normwindow + 1):pmaxdays
+            for d = (normwindow +1):pmaxdays
                 pmuwind = pmInterpDatacube(p, (d - normwindow):(d - 1), m);
                 if ~isequal(measures.DisplayName(m), cellstr('PulseRate'))
                     pmuwind = sort(pmuwind(~isnan(pmuwind)), 'ascend');

@@ -1,5 +1,5 @@
 function [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmInterpDatacube, ...
-    pmMuNormcube, pmSigmaNormcube, pmPatients, npatients, maxdays, measures, nmeasures, ...
+    pmMucube, pmSigmacube, pmPatients, npatients, maxdays, measures, nmeasures, ...
     smfunction, smwindow, smlength)
 
 % createPMInterpNormcube - creates the normalised data cube
@@ -7,7 +7,7 @@ function [pmInterpNormcube, pmSmoothInterpNormcube] = createPMInterpNormcube(pmI
 pmInterpNormcube = nan(npatients, maxdays, nmeasures);
 pmSmoothInterpNormcube = nan(npatients, maxdays, nmeasures);
 
-pmInterpNormcube = (pmInterpDatacube - pmMuNormcube) ./ pmSigmaNormcube;
+pmInterpNormcube = (pmInterpDatacube - pmMucube) ./ pmSigmacube;
 
 mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 

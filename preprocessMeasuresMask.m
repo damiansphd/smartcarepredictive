@@ -110,6 +110,15 @@ for a = 1:size(masks,1)
     elseif masks(a) == 30
         fprintf('Set for O2 Saturation, Weight, Wellness\n');
         keepidx = ismember(measures.DisplayName,{'O2Saturation', 'Weight', 'Wellness'});
+    elseif masks(a) == 31
+        fprintf('Set for Cough, Wellness, Pulse Rate, LungFunction, Activity\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'LungFunction', 'PulseRate', 'Activity'});
+    elseif masks(a) == 32
+        fprintf('Set for O2 Saturation, Activity\n');
+        keepidx = ismember(measures.DisplayName,{'O2Saturation', 'Activity'});
+    elseif masks(a) == 33
+        fprintf('Set for Pulse Rate, Wellness, Activity\n');
+        keepidx = ismember(measures.DisplayName,{'PulseRate', 'Wellness', 'Activity'});
     end
     mask(keepidx) = 1;
     measures(:, colnames(a)) = array2table(mask);

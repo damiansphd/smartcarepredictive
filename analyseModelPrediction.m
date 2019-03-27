@@ -159,7 +159,7 @@ for i = 1:npstdmeasures
     nextfeat = nextfeat + nmfeat;
 end
 
-tempmeas = measures(measures.NuckPMean==1,:);
+tempmeas = measures(measures.BuckPMean==1,:);
 if nbuckpmeanmeasures == 0
     nmfeat = 0;
 else

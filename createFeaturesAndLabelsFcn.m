@@ -146,22 +146,6 @@ for p = 1:npatients
             normfeaturerow(nextfeat: (nextfeat - 1) + npmeanfeatures) = pmeanfeatrow;
             nextfeat = nextfeat + npmeanfeatures;
             
-            %nextm = 0;
-            %for m = 1:nmeasures
-            %    if measures.PMean(m) == 1
-            %        pmean = pmeasstats(pmeasstats.MeasureIndex == m, :);
-            %        if size(pmean,1) == 0 || pmean.StdDev == 0
-            %            normfeaturerow(nextfeat + nextm)     = pmOverallStats.Mean(pmOverallStats.MeasureIndex == m);
-            %            normfeaturerow(nextfeat + nextm + 1) = pmOverallStats.StdDev(pmOverallStats.MeasureIndex == m);
-            %        else
-            %            normfeaturerow(nextfeat + nextm)     = pmeasstats.Mean(pmeasstats.MeasureIndex == m);
-            %            normfeaturerow(nextfeat + nextm + 1) = pmeasstats.StdDev(pmeasstats.MeasureIndex == m);
-            %        end
-            %        nextm = nextm + 2;
-            %    end
-            %end
-            %nextfeat = nextfeat + npmeasfeatures;
-            
             % 9) patient std features
             pstdfeatrow = reshape(pmSigmaNormcube(p, d, logical(measures.PStd)), [1, npstdfeatures]);
             normfeaturerow(nextfeat: (nextfeat - 1) + npstdfeatures) = pstdfeatrow;
