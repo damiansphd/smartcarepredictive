@@ -1,4 +1,4 @@
-function [pmBucketedcube, ntilepoints] = createPMBucketedcube(pmInterpNormcube, nbuckets, npatients, maxdays, nmeasures)
+function [pmBucketedcube, ntilepoints] = createPMBucketedcube(pmInterpcube, nbuckets, npatients, maxdays, nmeasures)
 
 % createPMBucketedcube - creates the bucketed features cube
 
@@ -6,7 +6,7 @@ function [pmBucketedcube, ntilepoints] = createPMBucketedcube(pmInterpNormcube, 
 % create ntile points for each measure
 ntilepoints = zeros(nmeasures, nbuckets + 1);
 for m = 1:nmeasures
-    malldata = reshape(pmInterpNormcube(:,:,m), [1, npatients * maxdays]);
+    malldata = reshape(pmInterpcube(:,:,m), [1, npatients * maxdays]);
     malldata = sort(malldata(~isnan(malldata)), 'ascend');    
     ntilepoints(m,1) = malldata(1);
     for n = 1:nbuckets
@@ -19,8 +19,8 @@ pmBucketedcube = zeros(npatients, maxdays, nmeasures, nbuckets + 1);
 for p = 1:npatients
     for m = 1:nmeasures
         for d = 1:maxdays
-            if ~isnan(pmInterpNormcube(p, d, m))
-                datapoint = pmInterpNormcube(p, d, m);
+            if ~isnan(pmInterpcube(p, d, m))
+                datapoint = pmInterpcube(p, d, m);
                 lowerq = find(ntilepoints(m,:) <= datapoint, 1, 'last');
                 upperq = find(ntilepoints(m,:) >= datapoint, 1);
                 if lowerq == upperq

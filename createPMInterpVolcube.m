@@ -1,4 +1,4 @@
-function [pmInterpVolcube, mvolstats, pmInterpSegVolcube] = createPMInterpVolcube(pmPatients, pmInterpNormcube, ...
+function [pmInterpVolcube, mvolstats, pmInterpSegVolcube] = createPMInterpVolcube(pmPatients, pmInterpcube, ...
     npatients, maxdays, nmeasures, featureduration, nsegments, normwindow)
 
 % createPMInterpVolcube - creates volatility measures cube
@@ -12,11 +12,11 @@ for p = 1:npatients
     pduration = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
     for m = 1:nmeasures
         for d = normwindow + 2:pduration
-            pmInterpVolcube(p, d, m) = abs(pmInterpNormcube(p, d, m) - pmInterpNormcube(p, (d-1), m));
+            pmInterpVolcube(p, d, m) = abs(pmInterpcube(p, d, m) - pmInterpcube(p, (d-1), m));
             %pmInterpVolcube(p, d, m) = sum(abs(diff(pmInterpNormcube(p, (d - featureduration + 1):d, m)))) / (featureduration - 1);
             if d >= featureduration
                 for i = 1:nsegments
-                    pmInterpSegVolcube(p, d, m, i) = sum(abs(diff(pmInterpNormcube(p, (d - (i * navgsize) + 1):(d - ((i - 1) * navgsize)), m)))) / (navgsize - 1);
+                    pmInterpSegVolcube(p, d, m, i) = sum(abs(diff(pmInterpcube(p, (d - (i * navgsize) + 1):(d - ((i - 1) * navgsize)), m)))) / (navgsize - 1);
                 end
             end
         end

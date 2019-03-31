@@ -1,5 +1,5 @@
 function [pmMucube, pmSigmacube, pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
-    muntilepoints, sigmantilepoints] = createPMNormWindowcube(pmPatients, pmInterpDatacube, ...
+    muntilepoints, sigmantilepoints] = createPMNormWindowcube(pmPatients, pmInterpcube, ...
                     pmOverallStats, pmPatientMeasStats, normmethod, normwindow, nbuckpmeas, ...
                     npatients, maxdays, measures, nmeasures)
 
@@ -58,7 +58,7 @@ elseif (normmethod == 3 || normmethod == 4)
             end    
             pmSigmacube(p, 1:pmaxdays, m) = pstd;
             for d = (normwindow +1):pmaxdays
-                pmuwind = pmInterpDatacube(p, (d - normwindow):(d - 1), m);
+                pmuwind = pmInterpcube(p, (d - normwindow):(d - 1), m);
                 if ~isequal(measures.DisplayName(m), cellstr('PulseRate'))
                     pmuwind = sort(pmuwind(~isnan(pmuwind)), 'ascend');
                 else
@@ -83,17 +83,22 @@ end
 % create normalised Mu and Sigma cubes (for use as features)
 munorm     = zeros(nmeasures, 2);
 sigmanorm  = zeros(nmeasures,2);
-for m = 1:nmeasures    
-    meandata = reshape(pmMucube(:, :, m), [1 (npatients * maxdays)]);
-    meandata = meandata(~isnan(meandata));
-    stddata = reshape(pmSigmacube(:, :, m), [1 (npatients * maxdays)]);
-    stddata = stddata(~isnan(stddata));
-    munorm(m, 1)     = mean(meandata);
-    munorm(m, 2)     = std(meandata);
-    sigmanorm(m, 1)  = mean(stddata);
-    sigmanorm(m, 2)  = std(stddata);
-    pmMuNormcube(:, :, m)    = (pmMucube(:, :, m)    - munorm(m, 1))    ./ munorm(m, 2);
-    pmSigmaNormcube(:, :, m) = (pmSigmacube(:, :, m) - sigmanorm(m, 1)) ./ sigmanorm(m, 2);
+for m = 1:nmeasures
+    if normmethod == 1
+        pmMuNormcube(:, :, m) = 0;
+        pmSigmaNormcube(:, :, m) = 0;
+    else
+        meandata = reshape(pmMucube(:, :, m), [1 (npatients * maxdays)]);
+        meandata = meandata(~isnan(meandata));
+        stddata = reshape(pmSigmacube(:, :, m), [1 (npatients * maxdays)]);
+        stddata = stddata(~isnan(stddata));
+        munorm(m, 1)     = mean(meandata);
+        munorm(m, 2)     = std(meandata);
+        sigmanorm(m, 1)  = mean(stddata);
+        sigmanorm(m, 2)  = std(stddata);
+        pmMuNormcube(:, :, m)    = (pmMucube(:, :, m)    - munorm(m, 1))    ./ munorm(m, 2);
+        pmSigmaNormcube(:, :, m) = (pmSigmacube(:, :, m) - sigmanorm(m, 1)) ./ sigmanorm(m, 2);
+    end
 end
 
 % create bucketed Mu and Sigma cubes
