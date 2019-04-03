@@ -19,7 +19,7 @@ function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmBuckMeasFea
 nexamples = 0;
 for p = 1:npatients
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p, :);
-    for d = maxfeatureduration:maxdays
+    for d = (maxfeatureduration + maxnormwindow):maxdays
         if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
            (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
                  pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))

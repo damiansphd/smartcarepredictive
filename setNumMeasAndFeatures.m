@@ -1,4 +1,4 @@
-function [featureduration, predictionduration, monthfeat, demofeat, ...
+function [featureduration, predictionduration, datefeat, demofeat, ...
           nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nbucketmeasures, nrangemeasures, ...
           nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
           npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
@@ -12,7 +12,7 @@ function [featureduration, predictionduration, monthfeat, demofeat, ...
 
 featureduration    = featureparamsrow.featureduration;
 predictionduration = featureparamsrow.predictionduration;
-monthfeat          = featureparamsrow.monthfeat;
+datefeat          = featureparamsrow.datefeat;
 demofeat           = featureparamsrow.demofeat;
 
 nbuckets           = featureparamsrow.nbuckets;
@@ -45,12 +45,12 @@ nbuckpmeanfeatures = nbuckpmeanmeasures * nbuckpmeas;
 nbuckpstdfeatures  = nbuckpstdmeasures  * nbuckpmeas;
 
 
-if monthfeat == 0
+if datefeat == 0
     ndatefeatures = 0;
-elseif monthfeat == 1
+elseif datefeat == 1
     ndatefeatures = 2;
 else
-    ndatefeatures = monthfeat - 1;
+    ndatefeatures = datefeat - 1;
 end
 if demofeat == 1
     ndemofeatures = 0;

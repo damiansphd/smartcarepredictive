@@ -6,7 +6,7 @@ function plotModelWeights(pmModelRes, pmTrCVNormFeatures, measures, nmeasures, p
 
 lcolor = [0.8, 0.8, 0.8];
 
-[featureduration, ~, monthfeat, demofeat, ...
+[featureduration, ~, datefeat, demofeat, ...
  nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nbucketmeasures, nrangemeasures, ...
  nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
  npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
@@ -30,9 +30,9 @@ for n = 1:predictionduration
     
     fwarray = zeros(nnormfeatures + 1, nfolds);
     for fold = 1:nfolds
-        if ismember(pmModelParamsRow.Version(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
+        if ismember(pmModelParamsRow.ModelVer(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
             fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate;
-        elseif ismember(pmModelParamsRow.Version(1), {'vPM2'})
+        elseif ismember(pmModelParamsRow.ModelVer(1), {'vPM2'})
             fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.w;
         else
             fprintf('Unsupported model version\n');
@@ -45,10 +45,10 @@ for n = 1:predictionduration
     yl1 = [minval maxval];
     
     for fold = 1:nfolds
-        if ismember(pmModelParamsRow.Version(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
+        if ismember(pmModelParamsRow.ModelVer(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
             intercept      = fwarray(1, fold);
             featureweights = fwarray(2:end, fold);
-        elseif ismember(pmModelParamsRow.Version(1), {'vPM2'})
+        elseif ismember(pmModelParamsRow.ModelVer(1), {'vPM2'})
             featureweights = fwarray(1:end - 1, fold);
             intercept      = fwarray(end, fold);
         else
