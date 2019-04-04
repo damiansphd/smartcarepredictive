@@ -1,7 +1,7 @@
 function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmBuckMeasFeats, pmRangeFeats, pmVolFeats, ...
         pmAvgSegFeats, pmVolSegFeats, pmCChangeFeats, pmPMeanFeats, pmPStdFeats, ...
         pmBuckPMeanFeats, pmBuckPStdFeats, pmDateFeats, pmDemoFeats, ...
-        pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels] = ...
+        pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels] = ...
     createBaseFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, ...
             pmInterpDatacube, pmInterpVolcube, pmInterpSegVolcube, ...
             pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ...
@@ -56,11 +56,12 @@ pmBuckPStdFeats  = zeros(nexamples, nbuckpstdfeatures);
 pmDateFeats      = zeros(nexamples, ndatefeatures);
 pmDemoFeats      = zeros(nexamples, ndemofeatures);
 
-pmIVLabels      = false(nexamples, predictionduration);
-pmExLabels      = false(nexamples, predictionduration);
-pmABLabels      = false(nexamples, predictionduration);
-pmExLBLabels    = false(nexamples, predictionduration);
-pmExABLabels    = false(nexamples, 1);
+pmIVLabels         = false(nexamples, predictionduration);
+pmExLabels         = false(nexamples, predictionduration);
+pmABLabels         = false(nexamples, predictionduration);
+pmExLBLabels       = false(nexamples, predictionduration);
+pmExABLabels       = false(nexamples, 1);
+pmExABxElLabels    = false(nexamples, 1);
 
 fprintf('Processing data for patients\n');
 for p = 1:npatients
@@ -155,16 +156,16 @@ for p = 1:npatients
             pmDemoFeats(example, 4) = predfev1;
             pmDemoFeats(example, 5) = sex;
             
-            % for each patient/day, create row in IV label array
+            % Label 1: for each patient/day, create row in IV label array
             pmIVLabels(example, :) = checkABInTimeWindow(pmFeatureIndex(example, :), ...
                     pmAntibiotics(pmAntibiotics.PatientNbr == p & ismember(pmAntibiotics.Route, 'IV'), :), predictionduration);
             
-            % for each patient/day, create row in AB label array (Oral + IV
+            % Label 3: for each patient/day, create row in AB label array (Oral + IV
             % AB)
             pmABLabels(example, :) = checkABInTimeWindow(pmFeatureIndex(example, :), ...
                     pmAntibiotics(pmAntibiotics.PatientNbr == p, :), predictionduration);    
                 
-            % also create label arrays for Exacerbation having started in
+            % Labels 2 & 4: label arrays for Exacerbation having started in
             % the last n days. First uses Prediction day, second uses lower
             % bound as the ex start point
             pmExLabels(example, :) = checkExStartInTimeWindow(pmFeatureIndex(example, :), ...
@@ -173,11 +174,17 @@ for p = 1:npatients
             pmExLBLabels(example, :) = checkExStartInTimeWindow(pmFeatureIndex(example, :), ...
                     pmAMPred(pmAMPred.PatientNbr  == p, :), predictionduration, 'LB');    
                 
-            % add new ExAB labels here. First uses Prediction day, second uses lower
-            % bound as the ex start point
+            % Label 5: Labels for Exacerbation period (ie between predicted
+            % ex start and treatment date)
             pmExABLabels(example, :) = checkInExStartToTreatmentWindow(pmFeatureIndex(example, :), ...
                     pmAMPred(pmAMPred.PatientNbr  == p, :), ...
-                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :));
+                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :), 'All');
+                
+            % Label 6: Labels for Exacerbation period (ie between predicted
+            % ex start and treatment date) but exclude elective treatments
+            pmExABxElLabels(example, :) = checkInExStartToTreatmentWindow(pmFeatureIndex(example, :), ...
+                    pmAMPred(pmAMPred.PatientNbr  == p, :), ...
+                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :), 'xEl');
 
             example = example + 1;
         end

@@ -8,7 +8,7 @@ slb1 = input('Choose label method ? ', 's');
 
 lb1 = str2double(slb1);
 
-if (isnan(lb1) || lb1 < 1 || lb1 > 5)
+if (isnan(lb1) || lb1 < 1 || lb1 > 6)
     fprintf('Invalid choice\n');
     validresponse = false;
     lb1 = 0;
@@ -26,6 +26,8 @@ elseif lb1 == 4
     lb1displayname = 'ExLB';
 elseif lb1 == 5
     lb1displayname = 'ExAB';
+elseif lb1 == 6
+    lb1displayname = 'ExABxEl';
 end
 
 end

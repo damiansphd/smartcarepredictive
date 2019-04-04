@@ -1,4 +1,4 @@
-function axr = plottextModelCalibrationTable(p1, axl, modelcalibration, fold, plotsacross)
+function axr = plottextModelCalibrationTable(p1, axl, modelcalibration, fold, plotsacross, sdidx)
 
 % plottextModelCalibrationTable - writes the model calibration results to a
 % uicontrol on the figure
@@ -10,8 +10,13 @@ tabletitle = [  {sprintf('   BinRange    TrueLabels NbrInBin  Percentage')} ; ..
 
 tabletext = tabletitle;
 for a = 1:size(modelcalibration,1)
-    rowstring = sprintf('%13s    %4.0f      %4.0f      %5.1f%%', modelcalibration.BinRange{a}, ...
-        modelcalibration.TrueLabels(a), modelcalibration.NbrInBin(a), modelcalibration.Calibration(a));
+    if sdidx(a) == true
+        sdtext = '***';
+    else
+        sdtext = '';
+    end
+    rowstring = sprintf('%13s    %4.0f      %4.0f      %5.1f%%  %3s', modelcalibration.BinRange{a}, ...
+        modelcalibration.TrueLabels(a), modelcalibration.NbrInBin(a), modelcalibration.Calibration(a), sdtext);
     tabletext = [tabletext ; rowstring];
 end
 posvector = axl.Position;

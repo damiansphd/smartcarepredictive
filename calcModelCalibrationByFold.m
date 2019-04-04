@@ -6,6 +6,7 @@ function [modelcalibration] = calcModelCalibrationByFold(trcvfeatureindex, trcvp
 
 % set the number of bins to calibrate over
 nbins = 10;
+smalldatathresh = 30;
 
 % calculate bin edges & midpoints
 binedges = zeros(1, nbins + 1);
@@ -29,8 +30,9 @@ fold = 0;
 plotnbr = (2 * fold) + 1;
 modelcalibration = calcModelCalibration(trcvlabels, modeldayres.Pred, binedges, nbins, fold);
 ax1(plotnbr) = subplot(plotsdown, plotsacross, plotnbr, 'Parent', p1);
-plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), [0.7, 0.7, 0.7], 'Blue', 'Overall');
-ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross);
+sdidx = (modelcalibration.NbrInBin(modelcalibration.Fold == fold) <= smalldatathresh);
+plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), sdidx, [0.7, 0.7, 0.7], 'Blue', 'Red', 'Overall');
+ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross, sdidx);
 
 for fold = 1:nfolds
     plotnbr = (2 * fold) + 1;
@@ -38,8 +40,9 @@ for fold = 1:nfolds
     tmpcalib = calcModelCalibration(trcvlabels(cvidx), modeldayres.Pred(cvidx), binedges, nbins, fold);
     modelcalibration = [modelcalibration; tmpcalib];
     ax1(plotnbr) = subplot(plotsdown, plotsacross, plotnbr, 'Parent', p1);
-    plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), [0.7, 0.7, 0.7], 'Blue', sprintf('Fold %d', fold));
-    ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross);
+    sdidx = (modelcalibration.NbrInBin(modelcalibration.Fold == fold) <= smalldatathresh);
+    plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), sdidx, [0.7, 0.7, 0.7], 'Blue', 'Red', sprintf('Fold %d', fold));
+    ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross, sdidx);
 end
 
 basedir = setBaseDir();

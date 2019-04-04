@@ -1,11 +1,11 @@
-function [modelrpfile] = selectModelResultsFile(lb1)
+function [modelrpfile] = selectModelResultsFile(fv1, lb1, rm1)
 
 % selectModelResultsFile - select the matlab saved variable file for the model
-% results file
+% results file given a label type and a raw measure combinations
 
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-matchstring = sprintf('pm*lm%d*ModelResults.mat', lb1);
+matchstring = sprintf('pm%s*rm%d*lm%d*ModelResults.mat', fv1, rm1, lb1);
 modelresultslisting = dir(fullfile(basedir, subfolder, matchstring));
 
 modelresultsfiles = cell(size(modelresultslisting,1),1);

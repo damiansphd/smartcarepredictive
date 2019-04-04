@@ -1,11 +1,19 @@
 clear; close all; clc;
 
-% logic to load in results for a given  label method and model run
-[lb, lbdisplayname, validresponse] = selectLabelMethod();
+% logic to load in results for a given feature&label version, label method and raw measures combination
+[fv1, validresponse] = selectFeatVer();
 if validresponse == 0
     return;
 end
-[basemodelresultsfile] = selectModelResultsFile(lb);
+[lb1, lbdisplayname, validresponse] = selectLabelMethod();
+if validresponse == 0
+    return;
+end
+[rm1, validresponse] = selectRawMeasComb();
+if validresponse == 0
+    return;
+end
+[basemodelresultsfile] = selectModelResultsFile(fv1, lb1, rm1);
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
 basemodelresultsfile = strrep(basemodelresultsfile, ' ModelResults', '');
 
@@ -15,7 +23,7 @@ subfolder = 'MatlabSavedVariables';
 fprintf('Loading predictive model results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
-    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVPatientSplit');
+    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels','pmTrCVPatientSplit');
 
 featureparamsfile = generateFileNameFromFullFeatureParams(pmFeatureParamsRow);
 featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
@@ -42,7 +50,7 @@ if (plottype == 2 || plottype == 4)
     end
 end
 
-[trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels);
+[trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
 
 if plottype == 1
     % plot weights
