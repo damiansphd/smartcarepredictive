@@ -34,16 +34,16 @@ sdidx = (modelcalibration.NbrInBin(modelcalibration.Fold == fold) <= smalldatath
 plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), sdidx, [0.7, 0.7, 0.7], 'Blue', 'Red', 'Overall');
 ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross, sdidx);
 
-for fold = 1:nfolds
-    plotnbr = (2 * fold) + 1;
-    cvidx = ismember(trcvfeatureindex.PatientNbr, trcvpatientsplit.PatientNbr(trcvpatientsplit.SplitNbr == fold));
-    tmpcalib = calcModelCalibration(trcvlabels(cvidx), modeldayres.Pred(cvidx), binedges, nbins, fold);
-    modelcalibration = [modelcalibration; tmpcalib];
-    ax1(plotnbr) = subplot(plotsdown, plotsacross, plotnbr, 'Parent', p1);
-    sdidx = (modelcalibration.NbrInBin(modelcalibration.Fold == fold) <= smalldatathresh);
-    plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), sdidx, [0.7, 0.7, 0.7], 'Blue', 'Red', sprintf('Fold %d', fold));
-    ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross, sdidx);
-end
+%for fold = 1:nfolds
+%    plotnbr = (2 * fold) + 1;
+%    cvidx = ismember(trcvfeatureindex.PatientNbr, trcvpatientsplit.PatientNbr(trcvpatientsplit.SplitNbr == fold));
+%    tmpcalib = calcModelCalibration(trcvlabels(cvidx), modeldayres.Pred(cvidx), binedges, nbins, fold);
+%    modelcalibration = [modelcalibration; tmpcalib];
+%    ax1(plotnbr) = subplot(plotsdown, plotsacross, plotnbr, 'Parent', p1);
+%    sdidx = (modelcalibration.NbrInBin(modelcalibration.Fold == fold) <= smalldatathresh);
+%    plotModelCalibration(ax1(plotnbr), binmids, modelcalibration.Calibration(modelcalibration.Fold == fold), sdidx, [0.7, 0.7, 0.7], 'Blue', 'Red', sprintf('Fold %d', fold));
+%    ax1(plotnbr + 1) = plottextModelCalibrationTable(p1, ax1(plotnbr), modelcalibration(modelcalibration.Fold == fold, :), fold, plotsacross, sdidx);
+%end
 
 basedir = setBaseDir();
 savePlotInDir(f1, name1, basedir, plotsubfolder);

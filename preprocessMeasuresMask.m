@@ -124,7 +124,10 @@ for a = 1:size(masks,1)
         keepidx = ismember(measures.DisplayName,{'Cough', 'PulseRate'});
     elseif masks(a) == 35
         fprintf('Set for Pulse Rate, Weight\n');
-        keepidx = ismember(measures.DisplayName,{'PulseRate', 'Weight'});    
+        keepidx = ismember(measures.DisplayName,{'PulseRate', 'Weight'});
+    elseif masks(a) == 36
+        fprintf('Set for LungFunction, O2Saturation\n');
+        keepidx = ismember(measures.DisplayName,{'LungFunction', 'O2Saturation'}); 
     end
     mask(keepidx) = 1;
     measures(:, colnames(a)) = array2table(mask);
