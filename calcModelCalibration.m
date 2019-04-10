@@ -18,7 +18,7 @@ for n = 1:nbins
     modelcalibration.Fold(n) = fold;
     modelcalibration.Bin(n) = n;
     idx = (results(:, 3) == n);
-    modelcalibration.BinRange{n}    = sprintf('%5.1f - %5.1f%%', 100 * binedges(n), 100 * binedges(n+1));
+    modelcalibration.BinRange{n}    = sprintf('%3.0f - %3.0f%%', 100 * binedges(n), 100 * binedges(n+1));
     modelcalibration.TrueLabels(n)  = sum(results(idx, 2));
     modelcalibration.NbrInBin(n)    = size(results(idx, 2), 1);
     modelcalibration.Calibration(n) = 100 * modelcalibration.TrueLabels(n) / modelcalibration.NbrInBin(n);
