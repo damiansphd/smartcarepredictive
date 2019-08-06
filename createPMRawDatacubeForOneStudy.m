@@ -65,23 +65,25 @@ for p = 1:npatients
     pmAntibiotics = [pmAntibiotics; tempAntibiotics];  
 end
 
-pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys', {'SmartCareID'}, 'LeftVariables', {'PatientNbr', 'Study', 'ID', 'FirstMeasdn'});
-pmAMPred.Ex_Start(:) = ex_start;
-pmAMPred.Pred   = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.Offset      - (pmAMPred.FirstMeasdn - 1);
-pmAMPred.RelLB1 = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.LowerBound1 - (pmAMPred.FirstMeasdn - 1);
-pmAMPred.RelUB1 = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.UpperBound1 - (pmAMPred.FirstMeasdn - 1);
-pmAMPred.RelLB2(:) = -1;
-pmAMPred.RelUB2(:) = -1;
-pmAMPred.RelLB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerBound2 ~= -1) ...
-        + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.LowerBound2(pmAMPred.LowerBound2 ~= -1) ...
-        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
-pmAMPred.RelUB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerBound2 ~= -1) ...
-        + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.UpperBound2(pmAMPred.LowerBound2 ~= -1) ...
-        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
-pmAMPred.FirstMeasdn = [];
+pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys', {'SmartCareID'}, 'LeftVariables', {'PatientNbr', 'Study', 'ID'});
 
-pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
-pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
+%pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys', {'SmartCareID'}, 'LeftVariables', {'PatientNbr', 'Study', 'ID', 'FirstMeasdn'});
+%pmAMPred.Ex_Start(:) = ex_start;
+%pmAMPred.Pred   = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.Offset      - (pmAMPred.FirstMeasdn - 1);
+%pmAMPred.RelLB1 = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.LowerBound1 - (pmAMPred.FirstMeasdn - 1);
+%pmAMPred.RelUB1 = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.UpperBound1 - (pmAMPred.FirstMeasdn - 1);
+%pmAMPred.RelLB2(:) = -1;
+%pmAMPred.RelUB2(:) = -1;
+%pmAMPred.RelLB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerBound2 ~= -1) ...
+%        + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.LowerBound2(pmAMPred.LowerBound2 ~= -1) ...
+%        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
+%pmAMPred.RelUB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerBound2 ~= -1) ...
+%        + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.UpperBound2(pmAMPred.LowerBound2 ~= -1) ...
+%        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
+%pmAMPred.FirstMeasdn = [];
+%
+%pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
+%pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
 
 pmDatacube = NaN(npatients, maxdays, nmeasures);
 

@@ -15,6 +15,7 @@ for a = 1:nstudies
     fprintf('Loading elective treatments\n');
     pmElectiveTreatments = readtable(fullfile(basedir, 'DataFiles', pmStudyInfo.ElectiveTrFile{a}));
 
+    % update this to use Alignment model functions when expanding to project climb
     if isequal(pmStudyInfo.Study(a), {'TM'})
         physdata = tmphysdata;
         cdPatient = tmPatient;
