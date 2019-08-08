@@ -78,6 +78,7 @@ if runfunction == 6
         plotsubfolder, basemodelresultsfile, studydisplayname);
 elseif runfunction == 7
     % Quality Scores Results
+    plotPRAndROCCurvesForPaper(pmModelRes, pmFeatureParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile);
     
 elseif runfunction == 8
     % Comparison to Current Clinical Practice

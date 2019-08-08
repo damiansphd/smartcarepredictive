@@ -58,12 +58,12 @@ for fs = 1:nfeatureparamsets
         nexamples = size(pmNormFeatures,1);
         
         % separate out test data and keep aside
-        [pmTestFeatureIndex, pmTestNormFeatures, ...
+        [pmTestFeatureIndex, pmTestMuIndex, pmTestSigmaIndex, pmTestNormFeatures, ...
          pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels, ...
-         pmTrCVFeatureIndex, pmTrCVNormFeatures, ...
+         pmTrCVFeatureIndex, pmTrCVMuIndex, pmTrCVSigmaIndex, pmTrCVNormFeatures, ...
          pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels,...
          pmTrCVPatientSplit, nfolds] ...
-         = splitTestFeatures(pmFeatureIndex, pmNormFeatures, pmIVLabels, pmExLabels, ...
+         = splitTestFeatures(pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmNormFeatures, pmIVLabels, pmExLabels, ...
                              pmABLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels, pmPatientSplit, nsplits);
         
         ntrcvexamples = size(pmTrCVNormFeatures,1);
@@ -79,7 +79,9 @@ for fs = 1:nfeatureparamsets
         elseif isequal(pmModelParams.ModelVer{mp}, 'vPM5')
             modeltype = 'RUS Boost Tree Ensemble';
         elseif isequal(pmModelParams.ModelVer{mp}, 'vPM6')
-            modeltype = 'Manual Model';    
+            modeltype = 'Manual Model';
+        elseif ismember(pmModelParams.ModelVer{mp}, {'vPM7', 'vPM8', 'vPM9'})
+            modeltype = 'Clinical Fuchs Model';    
         end
         
         pmModelRes = struct('ModelType', modeltype, 'RunParams', mbasefilename);
@@ -110,9 +112,9 @@ for fs = 1:nfeatureparamsets
 
                 fprintf('CV Fold %d\n', fold);
 
-                [pmTrFeatureIndex, pmTrNormFeatures, trlabels, ...
-                 pmCVFeatureIndex, pmCVNormFeatures, cvlabels, cvidx] ...
-                    = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
+                [pmTrFeatureIndex, pmTrMuIndex, pmTrSigmaIndex, pmTrNormFeatures, trlabels, ...
+                 pmCVFeatureIndex, pmCVMuIndex, pmCVSigmaIndex, pmCVNormFeatures, cvlabels, cvidx] ...
+                    = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVMuIndex, pmTrCVSigmaIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
 
                 if isequal(pmModelParams.ModelVer{mp}, 'vPM1')
                     fprintf('Training...');
@@ -171,6 +173,24 @@ for fs = 1:nfeatureparamsets
                     pmDayRes.Pred(cvidx) = manualPredModel(pmInterpNormcube, ...
                         pmCVNormFeatures, pmDayRes.Pred(cvidx), measures, nmeasures, ...
                         npatients, maxdays, featureduration);
+                    
+                elseif ismember(pmModelParams.ModelVer{mp}, {'vPM7', 'vPM8', 'vPM9'})
+                    fprintf('Predicting with clinical fuchs criteria...');
+                    if isequal(pmModelParams.ModelVer{mp}, 'vPM7')
+                        coughthresh = 0.3;
+                        lfuncthresh = 0.1;
+                    elseif isequal(pmModelParams.ModelVer{mp}, 'vPM8')
+                        coughthresh = 0.2;
+                        lfuncthresh = 0.1;
+                    elseif isequal(pmModelParams.ModelVer{mp}, 'vPM9')
+                        coughthresh = 0.1;
+                        lfuncthresh = 0.1;
+                    else
+                        fprintf('**** Unknown Model Version ****\n');
+                        return
+                    end
+                    pmDayRes.Pred(cvidx) = clinicalFuchsPredModel(pmCVMuIndex, pmCVSigmaIndex, ...
+                        pmCVNormFeatures, pmDayRes.Pred(cvidx), measures, featureduration, coughthresh, lfuncthresh );
 
                 else
                     fprintf('Unknown model version\n');
@@ -236,9 +256,9 @@ for fs = 1:nfeatureparamsets
         outputfilename = sprintf('%s ModelResults.mat', mbasefilename);
         fprintf('Saving output variables to file %s\n', outputfilename);
         save(fullfile(basedir, subfolder, outputfilename), ...
-            'pmTestFeatureIndex', 'pmTestNormFeatures', ...
+            'pmTestFeatureIndex', 'pmTestMuIndex', 'pmTestSigmaIndex', 'pmTestNormFeatures', ...
             'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels', ...
-            'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
+            'pmTrCVFeatureIndex', 'pmTrCVMuIndex', 'pmTrCVSigmaIndex', 'pmTrCVNormFeatures', ...
             'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels',...
             'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmAMPredUpd');
         toc

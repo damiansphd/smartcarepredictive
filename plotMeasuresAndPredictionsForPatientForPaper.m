@@ -105,7 +105,7 @@ currplot = 1;
 for i = 1:(ntitles + nmeasures + npredictions + nlabels)
     type = typearray(i);
     if type == 1
-        % empty at the moment as no title areas on the plot
+        % labels for left and right axes
         currhght = currhght - typehght(type);
         sp(i) = uipanel('Parent', p, ...
                         'BorderType', 'none', ...
