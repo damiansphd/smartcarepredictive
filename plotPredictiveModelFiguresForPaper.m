@@ -82,6 +82,8 @@ elseif runfunction == 7
     
 elseif runfunction == 8
     % Comparison to Current Clinical Practice
+    epilen = 7;
+    plotModelQualityScoresForPaper(pmTrCVFeatureIndex, pmModelRes, pmTrCVExABLabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
 end
 
 
