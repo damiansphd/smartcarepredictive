@@ -223,7 +223,7 @@ for i = 1:(ntitles + nmeasures + npredictions + nlabels)
             ylim(ax, yl);
     
             %plotMeasurementDataForPaper(ax, days, mdata, rwcolour, '-', 1.5, 'none', 1.0);
-            plotMeasurementDataForPaper(ax, days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, m, mfev1idx), smcolour, '-', 1.5, 'none', 1.0);
+            plotMeasurementDataForPaper(ax, days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, measures.Index(m), mfev1idx), smcolour, '-', 1.5, 'none', 1.0);
             %plotMeasurementDataForPaper(ax, days, interppts, lint_color, 'none', 1.0, 'o', 1.0));
 
             for ab = 1:size(poralabsdates,1)

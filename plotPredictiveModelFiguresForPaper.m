@@ -49,11 +49,12 @@ fprintf('----------------------\n');
 fprintf('6: Paper Figure 6 - Example Measures And Prediction\n');
 fprintf('7: Paper Figure 7 - Quality Scores Results\n');
 fprintf('8: Paper Figure 8 - Comparison to Current Clinical Practice\n');
+fprintf('9: Paper Figure 6 Appendix - Example All Measures And Prediction\n');
 
-srunfunction = input('Choose function (6=8): ', 's');
+srunfunction = input('Choose function (6-9): ', 's');
 runfunction = str2double(srunfunction);
 
-if (isnan(runfunction) || runfunction < 6 || runfunction > 8)
+if (isnan(runfunction) || runfunction < 6 || runfunction > 9)
     fprintf('Invalid choice\n');
     runfunction = -1;
     return;
@@ -68,7 +69,7 @@ if runfunction == 6
         return;
     end
     fprintf('Plotting results for patient %d\n', pnbr);
-    plotMeasuresAndPredictionsForPatientForPaper(pmPatients(pnbr,:), ...
+    plotMeasuresAndPredictionsForPatientForPaper2(pmPatients(pnbr,:), ...
         pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr),:), ...
         pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
         pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmInterpVolcube(pnbr, :, :), ...
@@ -84,6 +85,22 @@ elseif runfunction == 8
     % Comparison to Current Clinical Practice
     epilen = 7;
     plotModelQualityScoresForPaper(pmTrCVFeatureIndex, pmModelRes, pmTrCVExABLabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
+elseif runfunction == 9
+    % plot measures and predictions for a single patient - version with all
+    % measures for appendix
+    [pnbr, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
+    if ~validresponse
+        return;
+    end
+    fprintf('Plotting results for patient %d\n', pnbr);
+    plotMeasuresAndPredictionsForPatientForPaper(pmPatients(pnbr,:), ...
+        pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr),:), ...
+        pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
+        pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmInterpVolcube(pnbr, :, :), ...
+        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
+        measures, nmeasures, mvolstats, labelidx, pmFeatureParamsRow, lbdisplayname, ...
+        plotsubfolder, basemodelresultsfile, studydisplayname);
 end
 
 

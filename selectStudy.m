@@ -48,8 +48,8 @@ for a = 1:size(study,1)
         %pmStudyInfo.AMPredMatFile{a}        = 'SCvEM4_sig4_mu4_ca2_sm2_rm4_ob1_im1_cm2_mm3_mo25_dw25_ex-28_obj1.40679241.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'SCvEMMC_sig4_mu4_ca2_sm2_rm4_im1_cm2_mm4_mo25_dw25_nl1_rs4_ds2_ct5_ni84_ex-28_obj1.37704476.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'SCvEMMC_gp10_lm2_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm4_mo20_dw25_nl3_rs36_ds1_ct3_scP_vs0_ni200_ex-21-28-26_obj1.35851972.mat';
-        %pmStudyInfo.AMPredMatFile{a}        = 'SCvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm4_mo25_dw25_nl1_rs4_ds1_ct5_scA_vs0_vm0.0_ni61_ex-30_obj1.39546370.mat';
-        pmStudyInfo.AMPredMatFile{a}        = 'SCvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm4_mo25_dw25_nl1_rs4_ds1_ct5_scA_vs1_vm0.3_ni200_ex-30_obj1.29439794.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'SCvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm4_mo25_dw25_nl1_rs4_ds1_ct5_scA_vs0_vm0.0_ni61_ex-30_obj1.39546370.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'SCvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm4_mo25_dw25_nl1_rs4_ds1_ct5_scA_vs1_vm0.3_ni200_ex-30_obj1.29439794.mat';
     elseif isequal(study(a), {'TM'})
         pmStudyInfo.StudyName{a}            = 'TeleMed';
         pmStudyInfo.MeasurementMatFile{a}   = 'telemeddata.mat';
