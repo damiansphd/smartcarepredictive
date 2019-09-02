@@ -1,15 +1,16 @@
-function [avgdelayreduction] = calcAvgDelayReduction(pmAMPred, featureindex, labels, pred)
+function [epiavgdelayreduction] = calcAvgDelayReduction(pmAMPred, featureindex, labels, pred, thresharray)
 
 % calcAvgDelayReduction - calculates the avgdelayreduction over the
 % threshold levels covering all the predictions from the model.
 
-[predsort, ~] = sort(pred, 'descend');
+[thresharraysort, ~] = sort(thresharray, 'descend');
 
-nexamples = size(predsort, 1);
-avgdelayreduction = zeros(nexamples, 1);
+nepisodes = size(thresharraysort, 1);
+epiavgdelayreduction = zeros(nepisodes, 1);
 
-for a = 1:nexamples
-    avgdelayreduction(a) = calcAvgDelayReductionForThresh(pmAMPred, featureindex, labels, pred, predsort(a));
+for a = 1:nepisodes
+    epiavgdelayreduction(a) = calcAvgDelayReductionForThresh(pmAMPred, featureindex, labels, pred, thresharraysort(a));
+    fprintf('For threshold %.4f, Reduction in Delay is %.3f\n', thresharraysort(a), epiavgdelayreduction(a));
 end
 
 end

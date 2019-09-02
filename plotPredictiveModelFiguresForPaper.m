@@ -84,7 +84,7 @@ elseif runfunction == 7
 elseif runfunction == 8
     % Comparison to Current Clinical Practice
     epilen = 7;
-    plotModelQualityScoresForPaper(pmTrCVFeatureIndex, pmModelRes, pmTrCVExABLabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
+    plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, pmTrCVExABLabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
 elseif runfunction == 9
     % plot measures and predictions for a single patient - version with all
     % measures for appendix

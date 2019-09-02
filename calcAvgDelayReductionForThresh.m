@@ -1,6 +1,6 @@
 function [avgdelayreduction] = calcAvgDelayReductionForThresh(pmAMPred, featureindex, labels, pred, thresh)
 
-% calcAvgDelayReduction - calculates the average reduction in delay to
+% calcAvgDelayReductionForThres - calculates the average reduction in delay to
 % treatment vs current clinical practice (over all interventions) for a
 % given threshold level that would trigger an alert
 
