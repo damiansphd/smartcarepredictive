@@ -9,10 +9,14 @@ function plotModelQualityScoresForPaper(pmTrCVFeatureIndex, pmModelRes, pmTrCVEx
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
 [epiavgdelayreduction] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epipred);
 
+% estimate for current clinical delay
+currclindelay = 2;
+
 titlefontsize = 14;
 labelfontsize = 12;
 axisfontsize = 10;
 unitfontsize = 10;
+smallfontsize = 8;
 
 widthinch = 5.5;
 heightinch = 3;
@@ -63,7 +67,7 @@ for i = 1:(ntitles + nplots)
                         'LineStyle', 'none', ...
                         'FontSize', labelfontsize, ...
                         'FontWeight', 'bold');
-        displaytext = {'Episode' ; 'Reduction in Delay'};
+        displaytext = {'Early Warning Time'};
         annotation(sp(i), 'textbox',  ...
                         'String', displaytext, ...
                         'Interpreter', 'tex', ...
@@ -94,8 +98,8 @@ for i = 1:(ntitles + nplots)
         xlim(ax, xl);
         ylim(ax, yl);
         
-        xlabel(ax, 'FPR');
-        ylabel(ax, 'TPR');
+        xlabel(ax, 'False Positive Rate');
+        ylabel(ax, 'True Positive Rate');
         
         roctext = sprintf('AUC = %.2f%%', epirocauc);
         annotation(sp(i), 'textbox',  ...
@@ -120,30 +124,37 @@ for i = 1:(ntitles + nplots)
         area(ax, epifpr, epiavgdelayreduction, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
         hold on;
+        
         chosenpt = 279; % other options are 217 or 347 
         scatter(ax, epifpr(chosenpt), epiavgdelayreduction(chosenpt), 'Marker', 'o', ...
-            'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'red', 'SizeData', 18);
+            'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
         
         ax.FontSize = axisfontsize; 
         ax.TickDir = 'out';      
         xlim(ax, xl);
         %ylim(ax, yl);
         
-        xlabel(ax, 'FPR');
-        ylabel(ax, 'Avg Delay Reduction');
+        xlabel(ax, 'False Positive Rate');
+        ylabel(ax, 'Early Warning Time');
         
-        delayredtext = {sprintf('Reduction in delay of %.0f', epiavgdelayreduction(chosenpt)); ...
-                        sprintf('days with FPR of %.0f%%', epifpr(chosenpt) * 100)};
+        %annotation(sp(i), 'doublearrow',[epifpr(chosenpt), currclindelay ],[epifpr(chosenpt) epiavgdelayreduction(chosenpt)], 'Color', 'red' )
+        line(ax, [0, 1], [currclindelay, currclindelay], ...
+            'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
+        arrow([epifpr(chosenpt), currclindelay], [epifpr(chosenpt) epiavgdelayreduction(chosenpt)-0.2], ...
+            'Length', 5, 'Ends', 'both', 'FaceColor', 'w', 'LineWidth', 1.0, 'EdgeColor', 'w');
+        
+        delayredtext = {sprintf('Alert %.1f days earlier with', epiavgdelayreduction(chosenpt) - currclindelay); ...
+                        sprintf('false positive rate of %.0f%%', epifpr(chosenpt) * 100)};
         annotation(sp(i), 'textbox',  ...
                         'String', delayredtext, ...
                         'Interpreter', 'tex', ...
                         'Units', 'normalized', ...
-                        'Position', [0.3, 0.3, 0.55, 0.2], ...
+                        'Position', [0.31, 0.35, 0.52, 0.2], ...
                         'HorizontalAlignment', 'left', ...
                         'VerticalAlignment', 'middle', ...
                         'BackgroundColor', 'white', ...
                         'LineStyle', '-', ...
-                        'FontSize', axisfontsize);
+                        'FontSize', smallfontsize);
         
     end
 end
