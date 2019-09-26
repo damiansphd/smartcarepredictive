@@ -23,7 +23,7 @@ labelfontsize = 12;
 axisfontsize = 10;
 unitfontsize = 10;
 
-widthinch = 11.25;
+widthinch = 8.25;
 heightinch = 7.5;
 name = '';
 singlehght = 1/14;
@@ -31,8 +31,8 @@ halfhght = singlehght * 0.5;
 doublehght = singlehght * 2;
 twoandhalfhght = singlehght * 2.5;
 triplehght = singlehght * 3;
-labelwidth = 0.15;
-plotwidth  = 0.425;
+labelwidth = 0.20;
+plotwidth  = 0.40;
 
 ntitles = 2;
 npredictions = 1;
@@ -51,6 +51,7 @@ labeltext = [];
 labeltext = [labeltext; {' '; ' '}];
 [measures] = sortMeasuresForPaper(studydisplayname, measures);
 tmpmeasures = measures(measures.RawMeas | measures.BucketMeas | measures.Range | measures.Volatility | measures.CChange | measures.PMean, :);
+tmpfev1idx = tmpmeasures.Index(ismember(tmpmeasures.DisplayName, 'LungFunction'));
 
 for m = 1:tmpnmeasures
     labeltext = [labeltext; cellstr(tmpmeasures.DisplayName{m}); ' '; ' '];
@@ -123,8 +124,8 @@ pfeatindex1 = pmFeatureIndex(fidx1,:);
 ppred1  = pmModelRes.pmNDayRes(labelidx).Pred(fidx1);
 plabel1 = trcvlabels(fidx1,labelidx);
 
-ppreddata1 = nan(1, pmaxdays);
-plabeldata1 = nan(1, pmaxdays);
+ppreddata1 = nan(1, pmaxdays1);
+plabeldata1 = nan(1, pmaxdays1);
 for d = 1:size(ppred1,1)
     ppreddata1(pfeatindex1.CalcDatedn(d))  = ppred1(d);
     plabeldata1(pfeatindex1.CalcDatedn(d)) = plabel1(d);
@@ -135,8 +136,8 @@ pfeatindex2 = pmFeatureIndex(fidx2,:);
 ppred2  = pmModelRes.pmNDayRes(labelidx).Pred(fidx2);
 plabel2 = trcvlabels(fidx2,labelidx);
 
-ppreddata2 = nan(1, pmaxdays);
-plabeldata2 = nan(1, pmaxdays);
+ppreddata2 = nan(1, pmaxdays2);
+plabeldata2 = nan(1, pmaxdays2);
 for d = 1:size(ppred2,1)
     ppreddata2(pfeatindex2.CalcDatedn(d))  = ppred2(d);
     plabeldata2(pfeatindex2.CalcDatedn(d)) = plabel2(d);
@@ -158,7 +159,7 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
                         'String', displaytext, ...
                         'Interpreter', 'tex', ...
                         'Units', 'normalized', ...
-                        'Position', [0.16, 0, .2, 1], ...
+                        'Position', [0.20, 0, .2, 1], ...
                         'HorizontalAlignment', 'left', ...
                         'VerticalAlignment', 'bottom', ...
                         'LineStyle', 'none', ...
@@ -247,17 +248,32 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
             ppreddata     = ppreddata2;
         end
         days = (1:pmaxdays);
-        xl = [35 pmaxdays];
-            
+        %xl = [35 pmaxdays];
+        xl = [35 113];
+        
         if currplot <= tmpnmeasures
             m = currplot;
             if type == 4
                 mrawdata      = prawdata(1, 1:pmaxdays, tmpmeasures.Index(m));
-                mdata         = pinterpdata(1, 1:pmaxdays, tmpmeasures.Index(m));
+                if tmpmeasures.Index(m) == tmpfev1idx
+                    actx = find(~isnan(mrawdata));
+                    acty = mrawdata(~isnan(mrawdata));
+                    fullx = (1:pmaxdays);
+                    mdata = interp1(actx, acty, fullx, 'linear');
+                else
+                    mdata     = pinterpdata(1, 1:pmaxdays, tmpmeasures.Index(m));
+                end
                 vdata         = pinterpvoldata(1, 1:pmaxdays, tmpmeasures.Index(m));  
             elseif type == 6
                 mrawdata      = prawdata(2, 1:pmaxdays, tmpmeasures.Index(m));
-                mdata         = pinterpdata(2, 1:pmaxdays, tmpmeasures.Index(m));
+                if tmpmeasures.Index(m) == tmpfev1idx
+                    actx = find(~isnan(mrawdata));
+                    acty = mrawdata(~isnan(mrawdata));
+                    fullx = (1:pmaxdays);
+                    mdata = interp1(actx, acty, fullx, 'linear');
+                else
+                    mdata     = pinterpdata(2, 1:pmaxdays, tmpmeasures.Index(m));
+                end
                 vdata         = pinterpvoldata(2, 1:pmaxdays, tmpmeasures.Index(m));
             end
 
@@ -284,11 +300,10 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
             ax.TickDir = 'out';
             ax.XTickLabel = '';
             ax.XColor = 'white';
-            xlim(ax, xl);
-            ylim(ax, yl);
-    
+            
             %plotMeasurementDataForPaper(ax, days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, tmpmeasures.Index(m), mfev1idx), smcolour, '-', 1.5, 'none', 1.0);
-            plotMeasurementDataForPaper(ax, days, mrawdata, smcolour, '-', 1.5, 'none', 1.0);
+            plotMeasurementDataForPaper(ax, days, mrawdata, smcolour, 'none', 1.5, 'o',     2.0);
+            plotMeasurementDataForPaper(ax, days, mdata,    smcolour, '-',    1.5, 'none', 2.0);
 
             for ab = 1:size(poralabsdates,1)
                 hold on;
@@ -315,16 +330,14 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
             ax.YTick = yticks;
             ax.YTickLabel = addCommaFormat(yticks);
             title(ax,' ');
-            
+            xlim(ax, xl);
+            ylim(ax, yl);
         else 
             % Predictions for Labels
             ax = subplot(1, 1, 1,'Parent', sp(i));
-            
-            xlim(xl);
             yl = [0 100];
-            ylim(yl);
             xlabel(ax, 'Days from start of study');
-            plotMeasurementDataForPaper(ax, days, ppreddata * 100,  'black', '-', 1.5, 'none', 1.0);
+            plotMeasurementDataForPaper(ax, days, ppreddata * 100,  'black', '-', 1.5, 'none', 2.0);
 
             for ab = 1:size(poralabsdates, 1)
                 hold on;
@@ -344,7 +357,8 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
                     plotFillArea(ax, pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
                 end
             end
-            
+            xlim(xl);
+            ylim(yl);
         end
         if type == 6 || type == 7
             currplot = currplot + 1;

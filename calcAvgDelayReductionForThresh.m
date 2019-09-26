@@ -1,4 +1,4 @@
-function [avgdelayreduction] = calcAvgDelayReductionForThresh(pmAMPred, featureindex, labels, pred, thresh)
+function [avgdelayreduction, count, trigcount] = calcAvgDelayReductionForThresh(pmAMPred, featureindex, labels, pred, thresh)
 
 % calcAvgDelayReductionForThres - calculates the average reduction in time to
 % treatment (over all interventions) for a given threshold level
