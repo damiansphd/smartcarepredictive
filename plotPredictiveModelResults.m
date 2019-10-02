@@ -1,11 +1,20 @@
 clear; close all; clc;
 
 % logic to load in results for a given  label method and model run
-[lb, lbdisplayname, validresponse] = selectLabelMethod();
+[fv1, validresponse] = selectFeatVer();
 if validresponse == 0
     return;
 end
-[basemodelresultsfile] = selectModelResultsFile(lb);
+[lb1, lbdisplayname, validresponse] = selectLabelMethod();
+if validresponse == 0
+    return;
+end
+[rm1, validresponse] = selectRawMeasComb();
+if validresponse == 0
+    return;
+end
+[basemodelresultsfile] = selectModelResultsFile(fv1, lb1, rm1);
+
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
 basemodelresultsfile = strrep(basemodelresultsfile, ' ModelResults', '');
 
