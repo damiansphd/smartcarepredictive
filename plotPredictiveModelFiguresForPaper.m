@@ -35,9 +35,9 @@ featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
 fprintf('Loading predictive model input data for %s\n', featureparamsfile);
 load(fullfile(basedir, subfolder, featureparamsmatfile));
 
-elecongoingtreatfile = sprintf('%sElecOngoingTreat.xlsx', studydisplayname);
-fprintf('Loading elective and ongoing treatment list from file %s\n', elecongoingtreatfile);
-elecongoingtreat = readtable(fullfile(basedir, 'DataFiles', elecongoingtreatfile));
+%elecongoingtreatfile = sprintf('%sElecOngoingTreat.xlsx', studydisplayname);
+%fprintf('Loading elective and ongoing treatment list from file %s\n', elecongoingtreatfile);
+%elecongoingtreat = readtable(fullfile(basedir, 'DataFiles', elecongoingtreatfile));
 toc
 fprintf('\n');
 
@@ -96,8 +96,10 @@ elseif runfunction == 7
 elseif runfunction == 8
     % Comparison to Current Clinical Practice
     epilen = 7;
-    pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, trigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, pmTrCVExABLabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
+    temppmAMPred = pmAMPred;
+    %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
+    pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
 elseif runfunction == 9
     % plot measures and predictions for a single patient - version with all
     % measures for appendix

@@ -19,11 +19,15 @@ function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmBuckMeasFea
 nexamples = 0;
 for p = 1:npatients
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p, :);
+    pampred = pmAMPred(pmAMPred.PatientNbr == p, :);
     for d = (maxfeatureduration + maxnormwindow):maxdays
+        %if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
+        %   (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
+        %         pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
         if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
-           (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
-                 pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
-             nexamples = nexamples + 1;
+           (~any(pabs.RelStartdn         <= d & pabs.RelStopdn              >= d)) && ...
+           (~any(pampred.IVScaledDateNum <= d & pampred.IVScaledStopDateNum >= d))
+            nexamples = nexamples + 1;
         end
     end
 end
@@ -66,6 +70,7 @@ pmExABxElLabels    = false(nexamples, 1);
 fprintf('Processing data for patients\n');
 for p = 1:npatients
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p, :);
+    pampred = pmAMPred(pmAMPred.PatientNbr == p, :);
     
     if ndemofeatures ~= 0
         age      = pmPatients.Age(p)      / max(pmPatients.Age);
@@ -81,13 +86,17 @@ for p = 1:npatients
     
     for d = (maxfeatureduration + maxnormwindow):maxdays
         % only include this run day for the period between first and last measurement for
-        % patient for days when the patient wasn't on antibiotics.
+        % patient for days when the patient wasn't on antibiotics (both from raw AB treatment 
+        %data plus grouped AB treatment data from intervention list.
         % potentially add a check on completeness of raw data in this
         % window
+        %if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
+        %   (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
+        %         pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
         if d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1) && ...
-           (~any(pabs.StartDate <= pmPatients.FirstMeasDate(p) + days(d - 1) & ...
-                 pabs.StopDate  >= pmPatients.FirstMeasDate(p) + days(d - 1)))
-                  
+           (~any(pabs.RelStartdn         <= d & pabs.RelStopdn              >= d)) && ...
+           (~any(pampred.IVScaledDateNum <= d & pampred.IVScaledStopDateNum >= d))   
+             
             pmFeatureIndex.PatientNbr(example) = pmPatients.PatientNbr(p);
             pmFeatureIndex.Study(example)      = pmPatients.Study(p);
             pmFeatureIndex.ID(example)         = pmPatients.ID(p);
@@ -169,22 +178,20 @@ for p = 1:npatients
             % the last n days. First uses Prediction day, second uses lower
             % bound as the ex start point
             pmExLabels(example, :) = checkExStartInTimeWindow(pmFeatureIndex(example, :), ...
-                    pmAMPred(pmAMPred.PatientNbr  == p, :), predictionduration, 'Pred');
+                    pampred, predictionduration, 'Pred');
                 
             pmExLBLabels(example, :) = checkExStartInTimeWindow(pmFeatureIndex(example, :), ...
-                    pmAMPred(pmAMPred.PatientNbr  == p, :), predictionduration, 'LB');    
+                    pampred, predictionduration, 'LB');    
                 
             % Label 5: Labels for Exacerbation period (ie between predicted
             % ex start and treatment date)
             pmExABLabels(example, :) = checkInExStartToTreatmentWindow(pmFeatureIndex(example, :), ...
-                    pmAMPred(pmAMPred.PatientNbr  == p, :), ...
-                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :), 'All');
+                    pampred, pmAntibiotics(pmAntibiotics.PatientNbr == p, :), 'All');
                 
             % Label 6: Labels for Exacerbation period (ie between predicted
             % ex start and treatment date) but exclude elective treatments
             pmExABxElLabels(example, :) = checkInExStartToTreatmentWindow(pmFeatureIndex(example, :), ...
-                    pmAMPred(pmAMPred.PatientNbr  == p, :), ...
-                    pmAntibiotics(pmAntibiotics.PatientNbr == p, :), 'xEl');
+                    pampred, pmAntibiotics(pmAntibiotics.PatientNbr == p, :), 'xEl');
 
             example = example + 1;
         end

@@ -40,7 +40,7 @@ pmStudyInfo = table('Size',[size(study,1), 7], 'VariableTypes', {'cell', 'cell',
 
 for a = 1:size(study,1)
     pmStudyInfo.Study(a)                    = study(a);
-    pmStudyInfo.ElectiveTrFile{a}           = sprintf('%selectivetreatments.xlsx', study{a});
+    pmStudyInfo.ElectiveTrFile{a}           = sprintf('%selectivetreatmentsupdated.xlsx', study{a});
     if isequal(study(a), {'SC'})
         pmStudyInfo.StudyName{a}            = 'SmartCare';
         pmStudyInfo.MeasurementMatFile{a}   = 'smartcaredata.mat';

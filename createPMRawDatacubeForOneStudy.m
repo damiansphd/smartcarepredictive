@@ -82,8 +82,9 @@ pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys
 %        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
 %pmAMPred.FirstMeasdn = [];
 %
-%pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
-%pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
+pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
+pmAMPred.ElectiveTreatment = [];
+pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
 
 pmDatacube = NaN(npatients, maxdays, nmeasures);
 

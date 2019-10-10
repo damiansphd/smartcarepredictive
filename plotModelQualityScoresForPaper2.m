@@ -1,4 +1,4 @@
-function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, pmTrCVExABLabels, pmAMPred, plotsubfolder, basefilename, epilen)
+function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basefilename, epilen)
 
 % plotModelQualityScoresForPaper - calculates model quality scores at
 % episode level and also how much earlier predictions are vs current
@@ -7,19 +7,29 @@ function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untr
 patients = unique(pmTrCVFeatureIndex.PatientNbr);
 pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 
-[epiindex, epilabl, epipred] = convertResultsToEpisodes(pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epilen);
+[epiindex, epilabl, epipred] = convertResultsToEpisodes(pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epilen);
 
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
-[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epipred);
+[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epipred);
 
-chosenpt10pc = 203;
+% use these for label method 5/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm5
+%chosenpt10pc = 203;
+%chosenpt15pc = 279;
+%chosenpt20pc = 352;
+%chosenpt33pc = 535;
+% use these for label method 6/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm6
+chosenpt10pc = 202;
 chosenpt15pc = 279;
-chosenpt20pc = 352;
-chosenpt33pc = 535;
+%chosenpt20pc = 346;
+chosenpt20pc = 383; %actually 22.5%
+chosenpt33pc = 530;
 
 tempthresh = sort(epipred, 'descend');
-[~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
+[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
 untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
+
+fprintf('At 22.5%% FPR, the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
+            100 * trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
 
 % estimate for current clinical delay
 %currclindelay = 2;
