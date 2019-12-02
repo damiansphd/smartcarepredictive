@@ -36,6 +36,7 @@ for i = 1:size(patients, 1)
         if epiindex.Length(epinbr) < epilen
             epiindex.PartialPeriod(epinbr) = 1;
             partialtxt = '****';
+            
         else
             epiindex.PartialPeriod(epinbr) = 0;
             partialtxt = '';

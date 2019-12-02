@@ -7,7 +7,7 @@ function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untr
 patients = unique(pmTrCVFeatureIndex.PatientNbr);
 pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 
-[epiindex, epilabl, epipred] = convertResultsToEpisodes(pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epilen);
+[epiindex, epilabl, epipred] = convertResultsToEpisodesNew(pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epilen);
 
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
 [epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epipred);
@@ -21,15 +21,16 @@ pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 chosenpt10pc = 202;
 chosenpt15pc = 279;
 %chosenpt20pc = 346;
-chosenpt20pc = 383; %actually 22.5%
+%chosenpt20pc = 383; %actually 22.5%
+chosenpt20pc  = 326; % actually 22%
 chosenpt33pc = 530;
 
 tempthresh = sort(epipred, 'descend');
 [~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
 untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
 
-fprintf('At 22.5%% FPR, the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
-            100 * trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
+fprintf('At %.1f%% FPR, the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
+            100 * epifpr(chosenpt20pc), 100 * trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
 
 % estimate for current clinical delay
 %currclindelay = 2;
@@ -58,7 +59,7 @@ typearray = [1, 4, 5, 6];
 
 typehght = [singlehght, singlehght, triplehght, triplehght, triplehght, triplehght];
 
-baseplotname1 = sprintf('%s - EpiLen %d Quality Scores for Paper 2', basefilename, epilen);
+baseplotname1 = sprintf('%s - EpiLen %d Quality Scores for Paper 2 New', basefilename, epilen);
 
 %n = 1;
 %randomprec = sum(epilabl) / size(epilabl, 1);
