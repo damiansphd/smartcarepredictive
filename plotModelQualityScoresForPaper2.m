@@ -1,4 +1,4 @@
-function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basefilename, epilen)
+function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basefilename, epilen, randmode)
 
 % plotModelQualityScoresForPaper - calculates model quality scores at
 % episode level and also how much earlier predictions are vs current
@@ -8,6 +8,13 @@ patients = unique(pmTrCVFeatureIndex.PatientNbr);
 pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 
 [epiindex, epilabl, epipred] = convertResultsToEpisodesNew(pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epilen);
+
+if randmode
+    epilabl = epilabl(randperm(size(epilabl, 1)));
+    randtext = 'Random';
+else
+    randtext = '';
+end
 
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
 [epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epipred);
@@ -22,15 +29,21 @@ chosenpt10pc = 202;
 chosenpt15pc = 279;
 %chosenpt20pc = 346;
 %chosenpt20pc = 383; %actually 22.5%
-chosenpt20pc  = 326; % actually 22%
+%chosenpt20pc  = 326; % actually 22% use for best combination
+%chosenpt20pc  = 325; % actually 22% use for best combination ex lung and just co/we
+%chosenpt20pc  = 327; % actually 22% use for just we
+%chosenpt20pc  = 305; % actually 22% use for just lu
+
+chosenpt20pc = find(epifpr < 0.221, 1, 'last');
+
 chosenpt33pc = 530;
 
 tempthresh = sort(epipred, 'descend');
 [~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
 untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
 
-fprintf('At %.1f%% FPR, the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
-            100 * epifpr(chosenpt20pc), 100 * trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
+fprintf('At %.1f%% FPR (pt %d), the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
+            100 * epifpr(chosenpt20pc), chosenpt20pc, 100 * trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
 
 % estimate for current clinical delay
 %currclindelay = 2;
@@ -59,7 +72,7 @@ typearray = [1, 4, 5, 6];
 
 typehght = [singlehght, singlehght, triplehght, triplehght, triplehght, triplehght];
 
-baseplotname1 = sprintf('%s - EpiLen %d Quality Scores for Paper 2 New', basefilename, epilen);
+baseplotname1 = sprintf('%s - EpiLen %d Quality Scores for Paper 2 New %s', basefilename, epilen, randtext);
 
 %n = 1;
 %randomprec = sum(epilabl) / size(epilabl, 1);

@@ -53,8 +53,9 @@ fprintf('----------------------\n');
 fprintf(' 6: Paper Figure 6 - Example Measures And Prediction\n');
 fprintf(' 7: Paper Figure 7 - Quality Scores Results\n');
 fprintf(' 8: Paper Figure 8 - Comparison to Current Clinical Practice\n');
-fprintf(' 9: Paper Figure 6 Appendix - Example All Measures And Prediction\n');
-fprintf('10: Old Paper Figure 6 - Example Measures And Prediction for Single Participant\n');
+fprintf(' 9: Paper Figure 8 - Comparison to Current Clinical Practice - Random classifier\n');
+fprintf('10: Paper Figure 6 Appendix - Example All Measures And Prediction\n');
+fprintf('11: Old Paper Figure 6 - Example Measures And Prediction for Single Participant\n');
 
 srunfunction = input('Choose function (6-9): ', 's');
 runfunction = str2double(srunfunction);
@@ -97,10 +98,19 @@ elseif runfunction == 8
     % Comparison to Current Clinical Practice
     epilen = 7;
     temppmAMPred = pmAMPred;
+    randmode = false;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen);
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode);
 elseif runfunction == 9
+    % Comparison to Current Clinical Practice - random classifier mode
+    epilen = 7;
+    temppmAMPred = pmAMPred;
+    randmode = true;
+    %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
+    pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode);
+elseif runfunction == 10
     % plot measures and predictions for a single patient - version with all
     % measures for appendix
     [pnbr, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
@@ -116,7 +126,7 @@ elseif runfunction == 9
         pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
         measures, nmeasures, mvolstats, labelidx, pmFeatureParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile, studydisplayname);
-elseif runfunction == 10
+elseif runfunction == 11
     % plot measures and predictions for a single patient
     [pnbr, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
     if ~validresponse
