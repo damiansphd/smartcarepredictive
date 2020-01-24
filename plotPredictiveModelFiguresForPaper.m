@@ -23,7 +23,8 @@ subfolder = 'MatlabSavedVariables';
 fprintf('Loading predictive model results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
-    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels','pmTrCVPatientSplit');
+    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', ...
+    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS');
 
 % added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1

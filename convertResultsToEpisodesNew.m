@@ -89,8 +89,8 @@ for i = 1:size(patients, 1)
                 epipred(epinbr) = max(ppred(pfeat.CalcDatedn >= date & pfeat.CalcDatedn <= epienddt));
                 
                 date = min(pfeat.CalcDatedn(pfeat.CalcDatedn > epiindex.Todn(epinbr)));
-                fprintf('EpiNbr %3d: PatNbr %3d Fromdn %3d, Todn %3d, Length %2d Label %1d Pred %.2f NextFromdn %3d %s\n', epinbr, epiindex.PatientNbr(epinbr), ...
-                        epiindex.Fromdn(epinbr), epiindex.Todn(epinbr), epiindex.Length(epinbr), epilabl(epinbr), epipred(epinbr), date, partialtxt);
+                %fprintf('EpiNbr %3d: PatNbr %3d Fromdn %3d, Todn %3d, Length %2d Label %1d Pred %.2f NextFromdn %3d %s\n', epinbr, epiindex.PatientNbr(epinbr), ...
+                %        epiindex.Fromdn(epinbr), epiindex.Todn(epinbr), epiindex.Length(epinbr), epilabl(epinbr), epipred(epinbr), date, partialtxt);
                 epinbr = epinbr + 1;
                 
             end
@@ -118,8 +118,8 @@ for i = 1:size(patients, 1)
             epipred(epinbr) = max(ppred(pfeat.CalcDatedn >= date & pfeat.CalcDatedn <= blockenddt));
             
             date = min(pfeat.CalcDatedn(pfeat.CalcDatedn > epiindex.Todn(epinbr)));
-            fprintf('EpiNbr %3d: PatNbr %3d Fromdn %3d, Todn %3d, Length %2d Label %1d Pred %.2f NextFromdn %3d %s\n', epinbr, epiindex.PatientNbr(epinbr), ...
-                    epiindex.Fromdn(epinbr), epiindex.Todn(epinbr), epiindex.Length(epinbr), epilabl(epinbr), epipred(epinbr), date, partialtxt);
+            %fprintf('EpiNbr %3d: PatNbr %3d Fromdn %3d, Todn %3d, Length %2d Label %1d Pred %.2f NextFromdn %3d %s\n', epinbr, epiindex.PatientNbr(epinbr), ...
+            %        epiindex.Fromdn(epinbr), epiindex.Todn(epinbr), epiindex.Length(epinbr), epilabl(epinbr), epipred(epinbr), date, partialtxt);
             epinbr = epinbr + 1;
         end
     end

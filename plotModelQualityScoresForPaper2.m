@@ -72,7 +72,7 @@ typearray = [1, 4, 5, 6];
 
 typehght = [singlehght, singlehght, triplehght, triplehght, triplehght, triplehght];
 
-baseplotname1 = sprintf('%s - EpiLen %d Quality Scores for Paper 2 New %s', basefilename, epilen, randtext);
+baseplotname1 = sprintf('%s-E%dQSfP%s', basefilename, epilen, randtext);
 
 %n = 1;
 %randomprec = sum(epilabl) / size(epilabl, 1);

@@ -26,7 +26,7 @@ typearray = [1, 3, 4, 5];
 
 typehght = [halfhght, halfhght, triplehght, triplehght, triplehght];
 
-baseplotname1 = sprintf('%s - Quality Scores for Paper', basefilename);
+baseplotname1 = sprintf('%s-QSfP', basefilename);
 
 n = 1;
 %[pmRandomRes] = generateRandomPRAndROCResults(pmModelRes.pmNDayRes(n).LabelSort);

@@ -23,7 +23,8 @@ subfolder = 'MatlabSavedVariables';
 fprintf('Loading predictive model results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
-    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels','pmTrCVPatientSplit');
+    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', ...
+    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS');
 
 % added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1
@@ -53,6 +54,11 @@ if (plottype == 2 || plottype == 4)
     else
         selectdays = setFocusDays();
     end
+end
+
+if ((plottype == 13 || plottype == 14) && ~ismember(pmModelParamsRow.ModelVer, {'vPM10', 'vPM11', 'vPM12'}))
+    fprintf('These plot types are only relevant for Random Forest and Gradient Boosted Models\n');
+    return;
 end
 
 [trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
@@ -163,6 +169,18 @@ elseif plottype == 11
 elseif plottype == 12
     modelcalibration = calcModelCalibrationByFold(pmTrCVFeatureIndex, pmTrCVPatientSplit, trcvlabels(:, labelidx), ...
         pmModelRes.pmNDayRes(labelidx), basemodelresultsfile, plotsubfolder, lbdisplayname, labelidx);
+elseif plottype == 13
+    [fold, validresponse] = selectFold(size(pmModelRes.pmNDayRes.Folds, 2));
+    if ~validresponse
+        return;
+    end
+    [tree, validresponse] = selectTree(size(pmModelRes.pmNDayRes.Folds(1).Model.Trained, 1));
+    if ~validresponse
+        return;
+    end
+    plotDecisionTree(pmModelRes.pmNDayRes, pmHyperParamQS, fold, tree, plotsubfolder, basemodelresultsfile);
+elseif plottype == 14
+    plotPredictorImportance(pmFeatureParamsRow, pmHyperParamQS, measures, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
 end
 
 

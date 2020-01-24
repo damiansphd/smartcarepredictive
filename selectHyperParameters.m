@@ -1,30 +1,31 @@
-function [modelrpfile, modelrpidx, modelrunparams, validresponse] = selectModelRunParameters()
+function [modelrpfile, modelrpidx, modelrunparams, validresponse] = selectHyperParameters()
 
-% selectModelRunParameters - select the matlab saved variable file for the model
-% run parameters
+% selectHyperParameters - select the matlab saved variable file for the model
+% hyper parameters
 
 basedir = setBaseDir();
 subfolder = 'DataFiles';
-modelinputslisting = dir(fullfile(basedir, subfolder, 'pmmp*.xlsx'));
+modelinputslisting = dir(fullfile(basedir, subfolder, 'pmhp*.xlsx'));
 modelrunparams = cell(size(modelinputslisting,1),1);
 for a = 1:size(modelrunparams,1)
     modelrunparams{a} = strrep(modelinputslisting(a).name, '.xlsx', '');
 end
 
 nmodels = size(modelrunparams,1);
-fprintf('Model parameter files available\n');
+fprintf('Hyper parameter files available\n');
 fprintf('-------------------------------\n');
+fprintf('0: N/A\n');
 
 for i = 1:nmodels
     fprintf('%d: %s\n', i, modelrunparams{i});
 end
 fprintf('\n');
 
-smodelrpidx = input('Choose file to use ? ', 's');
+shpidx = input('Choose hyperparameter file ? ', 's');
 
-modelrpidx = str2double(smodelrpidx);
+modelrpidx = str2double(shpidx);
 
-if (isnan(modelrpidx) || modelrpidx < 1 || modelrpidx > nmodels)
+if (isnan(modelrpidx) || modelrpidx < 0 || modelrpidx > nmodels)
     fprintf('Invalid choice\n');
     validresponse = false;
     modelrpidx = 0;
@@ -36,7 +37,11 @@ end
 
 fprintf('\n');
 
-modelrpfile = modelrunparams{modelrpidx};
+if modelrpidx > 0
+    modelrpfile = modelrunparams{modelrpidx};
+else
+    modelrpfile = '';
+end
 
 end
 

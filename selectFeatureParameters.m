@@ -1,4 +1,4 @@
-function [modelrpfile, moderplidx, modelrunparams] = selectFeatureParameters()
+function [modelrpfile, modelrpidx, modelrunparams, validresponse] = selectFeatureParameters()
 
 % selectFeatureParameters - select the matlab saved variable file for the 
 % combinations of parameters to create features and labels for
@@ -20,18 +20,23 @@ for i = 1:nmodels
 end
 fprintf('\n');
 
-moderplidx = input('Choose file to use ? ');
-if moderplidx > nmodels 
+smodelrpidx = input('Choose file to use ? ', 's');
+
+modelrpidx = str2double(smodelrpidx);
+
+if (isnan(modelrpidx) || modelrpidx < 1 || modelrpidx > nmodels)
     fprintf('Invalid choice\n');
+    validresponse = false;
+    modelrpidx = 0;
+    modelrpfile = '';
     return;
+else
+    validresponse = true;
 end
-if isequal(moderplidx,'')
-    fprintf('Invalid choice\n');
-    return;
-end
+
 fprintf('\n');
 
-modelrpfile = modelrunparams{moderplidx};
+modelrpfile = modelrunparams{modelrpidx};
 
 end
 

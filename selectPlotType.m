@@ -16,12 +16,15 @@ fprintf(' 9. Best and Worst Predictions\n');
 fprintf('10. Analyse model prediction components\n');
 fprintf('11. Interventions by month\n');
 fprintf('12. Model Calibration plot\n');
+fprintf('13. Plot Decision Tree\n');
+fprintf('14. Plot Predictor Importance\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
+nplots = 14;
 plottype = str2double(splottype);
 
-if (isnan(plottype) || plottype < 1 || plottype > 12)
+if (isnan(plottype) || plottype < 1 || plottype > nplots)
     fprintf('Invalid choice\n');
     validresponse = false;
     plottype = 0;
