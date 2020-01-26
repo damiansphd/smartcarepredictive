@@ -118,7 +118,16 @@ for fs = 1:nfeatureparamsets
                                           'double', 'double', 'double', 'double', 'double'}, ...
                         'VariableNames', {'LearnRate', 'NumTrees', 'MinLeafSize', 'MaxNumSplit', 'FracVarsToSample', ...
                                           'AvgLoss', 'PScore', 'ElecPScore', 'AvgEpiTPred', 'AvgEpiFPred', 'AvgEPV', ...
-                                          'PRAUC', 'ROCAUC', 'Acc', 'PosAcc', 'NegAcc'});    
+                                          'PRAUC', 'ROCAUC', 'Acc', 'PosAcc', 'NegAcc'});
+        hyperparamqsrow = hyperparamQS(1, :);
+        
+        temp = array2table(1);
+        temp.Properties.VariableNames{'Var1'} = 'Fold';
+        pmFoldHpTrQS = [temp, hyperparamQS(1, :)];
+        foldhprow = pmFoldHpTrQS;
+        pmFoldHpTrQS(1,:) = [];
+        pmFoldHpCVQS = [temp, hyperparamQS(1, :)];
+        pmFoldHpCVQS(1,:) = [];
 
         for lr = 1:nlr
             lrval = lrarray(lr);
@@ -138,27 +147,11 @@ for fs = 1:nfeatureparamsets
 
                             pmModelRes = struct('ModelType', modeltype, 'RunParams', mbasefilename);
 
-                            pmDayRes = struct('Folds'      , [], 'LLH', 0.0        , 'Pred'       , zeros(ntrcvexamples,1), ...
-                                              'PredSort'   , zeros(ntrcvexamples,1), 'LabelSort'  , zeros(ntrcvexamples,1), ...
-                                              'Precision'  , zeros(ntrcvexamples,1), 'Recall'     , zeros(ntrcvexamples,1), ...
-                                              'TPR'        , zeros(ntrcvexamples,1), 'FPR'        , zeros(ntrcvexamples,1), ...
-                                              'Loss'       , zeros(nfolds, 1)      , 'AvgLoss'    , 0.0, ...
-                                              'PRAUC'      , 0.0                   , 'ROCAUC'     , 0.0, ...
-                                              'Acc'        , 0.0                   , 'PosAcc'     , 0.0, ...
-                                              'NegAcc'     , 0.0                   , ...
-                                              'HighP'      , 0.0                   , 'MedP'       , 0.0, ....
-                                              'LowP'       , 0.0                   , 'ElecHighP'  , 0.0, ...
-                                              'ElecMedP'   , 0.0                   , 'ElecLowP'   , 0.0, ...
-                                              'PScore'     , 0.0                   , 'ElecPScore' , 0.0, ...
-                                              'AvgEpiTPred', 0.0                   , 'AvgEpiFPred', 0.0, ...
-                                              'AvgEPV'     , 0.0                   , ...
-                                              'bsPRAUC'    , zeros(nbssamples,1)   , 'bsROCAUC'   , zeros(nbssamples,1), ...
-                                              'bsAcc'      , zeros(nbssamples,1)   , 'bsPosAcc'   , zeros(nbssamples,1), ...
-                                              'bsNegAcc'   , zeros(nbssamples,1));
+                            pmDayRes = createModelDayResStuct(ntrcvexamples, nfolds, nbssamples);
 
                             for fold = 1:nfolds
 
-                                fprintf('CV Fold %d: ', fold);
+                                fprintf('Fold %d: ', fold);
 
                                 [pmTrFeatureIndex, pmTrMuIndex, pmTrSigmaIndex, pmTrNormFeatures, trlabels, ...
                                  pmCVFeatureIndex, pmCVMuIndex, pmCVSigmaIndex, pmCVNormFeatures, cvlabels, cvidx] ...
@@ -176,70 +169,58 @@ for fs = 1:nfeatureparamsets
                                         'NumLearningCycles', ntrval, ...
                                         'Learners', template, ...
                                         'PredictorNames', pmNormFeatNames));
-                                    pmDayRes.Loss(fold) = loss(pmDayRes.Folds(fold).Model, pmCVNormFeatures, cvlabels, 'Lossfun', 'hinge');
-                                    fprintf('Loss fcn = %.6f ', pmDayRes.Loss(fold));
-                                    fprintf('Predicting on CV set...');
+                                    fprintf('Done\n');
+                                    
+                                    % calculate training set quality scores
+                                    ntrexamples    = size(pmTrNormFeatures, 1);
+                                    pmTrRes        = createModelDayResStuct(ntrexamples, 1, 0);
+                                    [~, tempscore] = predict(pmDayRes.Folds(fold).Model, pmTrNormFeatures);
+                                    tempscore      = tempscore ./ sum(tempscore, 2);
+                                    pmTrRes.Pred   = tempscore(:, 2);
+                                    pmTrRes.Loss   = loss(pmDayRes.Folds(fold).Model, pmTrNormFeatures, trlabels, 'Lossfun', 'hinge');
+                                    
+                                    fprintf('Tr: ');
+                                    fprintf('LR: %.2f NT: %3d MLS: %3d MNS: %3d FVS: %.2f- ', lrval, ntrval, mlsval, mnsval, fvsval);
+                                    fprintf('Loss: %.6f ', pmTrRes.Loss);
+                                    pmTrRes        = calcAllQualScores(pmTrRes, trlabels, ntrexamples, pmAMPred, pmTrFeatureIndex, pmTrCVPatientSplit, epilen);
+                                    foldhprow.Fold = fold;
+                                    foldhprow      = setHyperParamQSrow(foldhprow, lrval, ntrval, mlsval, mnsval, fvsval, pmTrRes);
+                                    pmFoldHpTrQS     = [pmFoldHpTrQS; foldhprow];
+                                    fprintf('\n');
+                                    
+                                    % calculate cross validation set quality scores
+                                    ncvexamples    = size(pmCVNormFeatures, 1);
+                                    pmCVRes        = createModelDayResStuct(ncvexamples, 1, 0);
                                     [~, tempscore] = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures);
-                                    tempscore = tempscore ./ sum(tempscore, 2);
+                                    tempscore      = tempscore ./ sum(tempscore, 2);
+                                    pmCVRes.Pred   = tempscore(:, 2);
+                                    pmCVRes.Loss   = loss(pmDayRes.Folds(fold).Model, pmCVNormFeatures, cvlabels, 'Lossfun', 'hinge');
+                                    
+                                    fprintf('CV: ');
+                                    fprintf('LR: %.2f NT: %3d MLS: %3d MNS: %3d FVS: %.2f- ', lrval, ntrval, mlsval, mnsval, fvsval);
+                                    fprintf('Loss: %.6f ', pmCVRes.Loss);
+                                    pmCVRes        = calcAllQualScores(pmCVRes, cvlabels, ncvexamples, pmAMPred, pmCVFeatureIndex, pmTrCVPatientSplit, epilen);
+                                    foldhprow.Fold = fold;
+                                    foldhprow      = setHyperParamQSrow(foldhprow, lrval, ntrval, mlsval, mnsval, fvsval, pmCVRes);
+                                    pmFoldHpCVQS     = [pmFoldHpCVQS; foldhprow];
+                                    
+                                    % also store results on overall model results structure
                                     pmDayRes.Pred(cvidx) = tempscore(:, 2);
-                                
-                                %elseif isequal(pmModelParams.ModelVer{mp}, 'vPM11')
-                                %    fprintf('Training...');
-                                %    rng(2); % for reproducibility
-                                %    template = templateTree('Reproducible', true, ...
-                                %        'MinLeafSize', mlsval, ...
-                                %        'MaxNumSplits', mnsval);
-                                %    pmDayRes.Folds(fold).Model = compact(fitcensemble(pmTrNormFeatures, trlabels, ...
-                                %        'Method', mmethod, ...
-                                %        'NumLearningCycles', lcval, ...
-                                %        'Learners', template));
-                                %    fprintf('Predicting on CV set...');
-                                %    [templabel, tempscore] = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures);
-                                %    pmDayRes.Pred(cvidx) = tempscore(:, 2);
-                                %elseif isequal(pmModelParams.ModelVer{mp}, 'vPM12')
-                                %    fprintf('Training...');
-                                %    rng(2); % for reproducibility
-                                %    template = templateTree('Reproducible', true, 'MinLeafSize', mlsval, 'MaxNumSplits', mnsval);
-                                %    pmDayRes.Folds(fold).Model = compact(fitcensemble(pmTrNormFeatures, trlabels, ...
-                                %        'Method', mmethod, ...
-                                %        'NumLearningCycles', lcval, ...
-                                %        'Learners', template));
-                                %    fprintf('Predicting on CV set...');
-                                %    pmDayRes.Pred(cvidx) = predict(pmDayRes.Folds(fold).Model, pmCVNormFeatures);
-                                %else
-                                %    fprintf('Unknown model version\n');
-                                %    return
-                                
-                                
+                                    pmDayRes.Loss(fold)  = pmCVRes.Loss;
+                                    
+                                    fprintf('\n');
                                 end
-                                fprintf('Done\n');
-
                             end
-
+                            
+                            fprintf('Overall:\n');
+                            fprintf('CV: ');
                             fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                            [pmDayRes, pmAMPredUpd] = calcPredQualityScore(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmTrCVPatientSplit);
-                            pmDayRes = calcModelQualityScores(pmDayRes, trcvlabels, ntrcvexamples);
-                            pmDayRes = calcAvgEpiPred(pmDayRes, pmTrCVFeatureIndex, trcvlabels, epilen);                       
-
+                            [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmTrCVPatientSplit, epilen);
+                            
                             fprintf('\n');
-
-                            hyperparamQS.LearnRate(hpcomb)        = lrval;
-                            hyperparamQS.NumTrees(hpcomb)         = ntrval;
-                            hyperparamQS.MinLeafSize(hpcomb)      = mlsval;
-                            hyperparamQS.MaxNumSplit(hpcomb)      = mnsval;
-                            hyperparamQS.FracVarsToSample(hpcomb) = fvsval;
-                            hyperparamQS.AvgLoss(hpcomb)          = mean(pmDayRes.Loss);
-                            hyperparamQS.PScore(hpcomb)           = pmDayRes.PScore;
-                            hyperparamQS.ElecPScore(hpcomb)       = pmDayRes.ElecPScore;
-                            hyperparamQS.PRAUC(hpcomb)            = pmDayRes.PRAUC;
-                            hyperparamQS.ROCAUC(hpcomb)           = pmDayRes.ROCAUC;
-                            hyperparamQS.Acc(hpcomb)              = pmDayRes.Acc;
-                            hyperparamQS.PosAcc(hpcomb)           = pmDayRes.PosAcc;
-                            hyperparamQS.NegAcc(hpcomb)           = pmDayRes.NegAcc;
-                            hyperparamQS.AvgEpiTPred(hpcomb)      = pmDayRes.AvgEpiTPred;
-                            hyperparamQS.AvgEpiFPred(hpcomb)      = pmDayRes.AvgEpiFPred;
-                            hyperparamQS.AvgEPV(hpcomb)           = pmDayRes.AvgEPV;
-
+                            
+                            hyperparamQS(hpcomb, :) = setHyperParamQSrow(hyperparamqsrow, lrval, ntrval, mlsval, mnsval, fvsval, pmDayRes);
+                            
                             toc
                             fprintf('\n');
                         end
@@ -266,7 +247,8 @@ for fs = 1:nfeatureparamsets
             'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels', ...
             'pmTrCVFeatureIndex', 'pmTrCVMuIndex', 'pmTrCVSigmaIndex', 'pmTrCVNormFeatures', ...
             'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels',...
-            'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmAMPredUpd', 'pmHyperParamQS');
+            'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmAMPredUpd', ...
+            'pmHyperParamQS', 'pmFoldHpTrQS', 'pmFoldHpCVQS');
         toc
         fprintf('\n');
         
@@ -277,6 +259,8 @@ for fs = 1:nfeatureparamsets
         hpfilename = sprintf('%s HP.xlsx', mbasefilename);
         fprintf('Saving hyperparameter quality scores results to excel file %s\n', hpfilename);
         writetable(pmHyperParamQS.HyperParamQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'HyperParamQS');
+        writetable(pmFoldHpTrQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'TrainQS');
+        writetable(pmFoldHpCVQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'CrossValQS');
         toc
         
     end
