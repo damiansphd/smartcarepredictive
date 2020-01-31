@@ -1,4 +1,4 @@
-function plotPRAndROCCurvesForPaper(pmModelRes, pmFeatureParamsRow, lbdisplayname, ...
+function plotPRAndROCCurvesForPaper(mdlres, pmFeatureParamsRow, lbdisplayname, ...
     plotsubfolder, basefilename)
 
 % plotPRAndROCCurvesForPaper - plots PR and ROC curves for the model
@@ -30,7 +30,7 @@ baseplotname1 = sprintf('%s-QSfP', basefilename);
 
 n = 1;
 %[pmRandomRes] = generateRandomPRAndROCResults(pmModelRes.pmNDayRes(n).LabelSort);
-randomprec = sum(pmModelRes.pmNDayRes(n).LabelSort) / size(pmModelRes.pmNDayRes(n).LabelSort, 1);
+randomprec = sum(mdlres.LabelSort) / size(mdlres.LabelSort, 1);
 xl = [0 1];
 yl = [0 1];
 
@@ -79,7 +79,7 @@ for i = 1:(ntitles + nplots)
                     
         ax = subplot(1, 1, 1, 'Parent', sp(i));
 
-        area(ax, pmModelRes.pmNDayRes(n).Recall, pmModelRes.pmNDayRes(n).Precision, ...
+        area(ax, mdlres.Recall, mdlres.Precision, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
 
         line(ax, [0, 1], [randomprec, randomprec], ...
@@ -92,7 +92,7 @@ for i = 1:(ntitles + nplots)
         xlabel(ax, 'Recall');
         ylabel(ax, 'Precision');
 
-        prtext = sprintf('AUC = %.2f%%', pmModelRes.pmNDayRes(n).PRAUC);
+        prtext = sprintf('AUC = %.2f%%', mdlres.PRAUC);
         annotation(sp(i), 'textbox',  ...
                         'String', prtext, ...
                         'Interpreter', 'tex', ...
@@ -113,7 +113,7 @@ for i = 1:(ntitles + nplots)
                     
         ax = subplot(1, 1, 1, 'Parent', sp(i));
         
-        area(ax, pmModelRes.pmNDayRes(n).FPR, pmModelRes.pmNDayRes(n).TPR, ...
+        area(ax, mdlres.FPR, mdlres.TPR, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
         %line(ax, pmRandomRes.FPR, pmRandomRes.FPR, ...
         %    'Color', 'red', 'LineStyle', '-', 'LineWidth', 1.5);
@@ -128,7 +128,7 @@ for i = 1:(ntitles + nplots)
         xlabel(ax, 'FPR');
         ylabel(ax, 'TPR');
         
-        roctext = sprintf('AUC = %.2f%%', pmModelRes.pmNDayRes(n).ROCAUC);
+        roctext = sprintf('AUC = %.2f%%', mdlres.ROCAUC);
         annotation(sp(i), 'textbox',  ...
                         'String', roctext, ...
                         'Interpreter', 'tex', ...

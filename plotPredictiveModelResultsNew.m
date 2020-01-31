@@ -24,7 +24,7 @@ fprintf('Loading predictive model results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
     'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', ...
-    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS');
+    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS', 'pmFoldHpTrQS', 'pmFoldHpCVQS');
 
 % added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1
@@ -181,6 +181,8 @@ elseif plottype == 13
     plotDecisionTree(pmModelRes.pmNDayRes, pmHyperParamQS, fold, tree, plotsubfolder, basemodelresultsfile);
 elseif plottype == 14
     plotPredictorImportance(pmFeatureParamsRow, pmHyperParamQS, measures, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
+elseif plottype == 15
+    plotTrVsCVQualScores(pmFeatureParamsRow, pmFoldHpTrQS, pmFoldHpCVQS, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
 end
 
 

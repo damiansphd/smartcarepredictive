@@ -18,10 +18,11 @@ fprintf('11. Interventions by month\n');
 fprintf('12. Model Calibration plot\n');
 fprintf('13. Plot Decision Tree\n');
 fprintf('14. Plot Predictor Importance\n');
+fprintf('15. Plot Train vs CV quality scores\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
-nplots = 14;
+nplots = 15;
 plottype = str2double(splottype);
 
 if (isnan(plottype) || plottype < 1 || plottype > nplots)
