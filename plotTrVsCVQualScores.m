@@ -1,4 +1,4 @@
-function plotTrVsCVQualScores(pmFeatureParamsRow, pmFoldHpTrQS, pmFoldHpCVQS, mdl, plotsubfolder, basefilename)
+function plotTrVsCVQualScores(pmHyperParamQS, mdl, plotsubfolder, basefilename)
 
 % plotTrVsCVQualScores - plots the various quality scores calculated on
 % Training data and Cross Validation data. To help determine the optimal
@@ -23,40 +23,43 @@ pcount = 1;
 color1 = 'red';
 color2 = 'blue';
 
-[lr, validresponse] = selectFromArray('Learn Rate', pmFoldHpTrQS.LearnRate);
+foldhptrqs = pmHyperParamQS.FoldHpTrQS;
+foldhpcvqs = pmHyperParamQS.FoldHpCVQS;
+
+[lr, validresponse] = selectFromArray('Learn Rate', foldhptrqs.LearnRate);
 if ~validresponse
     return;
 end
-[nt, validresponse] = selectFromArray('Number of Trees', pmFoldHpTrQS.NumTrees);
+[nt, validresponse] = selectFromArray('Number of Trees', foldhptrqs.NumTrees);
 if ~validresponse
     return;
 end
-[mls, validresponse] = selectFromArray('Min Leaf Size', pmFoldHpTrQS.MinLeafSize);
+[mls, validresponse] = selectFromArray('Min Leaf Size', foldhptrqs.MinLeafSize);
 if ~validresponse
     return;
 end
-[fvs, validresponse] = selectFromArray('Fraction of Variables to Sample', pmFoldHpTrQS.FracVarsToSample);
+[fvs, validresponse] = selectFromArray('Fraction of Variables to Sample', foldhptrqs.FracVarsToSample);
 if ~validresponse
     return;
 end
 
 temp = split(basefilename, 'lr');
 filename = sprintf('%slr%.2f-nt%d-ml%d-ns%d-%dfv%.2f-TrVsCVQS', temp{1}, lr, nt, mls, ...
-                    min(pmFoldHpTrQS.MaxNumSplit), max(pmFoldHpTrQS.MaxNumSplit), fvs);
+                    min(foldhptrqs.MaxNumSplit), max(foldhptrqs.MaxNumSplit), fvs);
 
 [f, p] = createFigureAndPanelForPaper(filename, widthinch, heightinch);
 
 for qs = 1:nqs
     
-    trdataallfolds = pmFoldHpTrQS(pmFoldHpTrQS.LearnRate        == lr   & ...
-                                  pmFoldHpTrQS.NumTrees         == nt   & ...
-                                  pmFoldHpTrQS.MinLeafSize      == mls  & ...
-                                  pmFoldHpTrQS.FracVarsToSample == fvs, :);
+    trdataallfolds = foldhptrqs(foldhptrqs.LearnRate        == lr   & ...
+                                foldhptrqs.NumTrees         == nt   & ...
+                                foldhptrqs.MinLeafSize      == mls  & ...
+                                foldhptrqs.FracVarsToSample == fvs, :);
                                 
-    cvdataallfolds = pmFoldHpCVQS(pmFoldHpCVQS.LearnRate        == lr   & ...
-                                  pmFoldHpCVQS.NumTrees         == nt   & ...
-                                  pmFoldHpCVQS.MinLeafSize      == mls  & ...
-                                  pmFoldHpCVQS.FracVarsToSample == fvs, :);
+    cvdataallfolds = foldhpcvqs(foldhpcvqs.LearnRate        == lr   & ...
+                                foldhpcvqs.NumTrees         == nt   & ...
+                                foldhpcvqs.MinLeafSize      == mls  & ...
+                                foldhpcvqs.FracVarsToSample == fvs, :);
                               
     ymin = min(min(trdataallfolds{:, qsarray{qs, 1}}), min(cvdataallfolds{:, qsarray{qs, 1}}));
     ymax = max(max(trdataallfolds{:, qsarray{qs, 1}}), max(cvdataallfolds{:, qsarray{qs, 1}}));

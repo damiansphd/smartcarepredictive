@@ -1,6 +1,6 @@
 function plotVolatilityMeasuresForPatient(patientrow, pabs, pexsts, prawdata, ...
     pinterpdata, pinterpvoldata,  pmOverallStats, pmeasstats, ...
-    measures, nmeasures, mvolstats, plotsubfolder, basefilename)
+    measures, nmeasures, mvolstats, lbdisplayname, plotsubfolder, basefilename)
 
 % plotVolatilityMeasuresForPatient - for a given patient, plot the 8volatility of measures
 
@@ -10,7 +10,8 @@ pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 plotsacross = 1;
 plotsdown = nmeasures;
 
-baseplotname1 = sprintf('%s - Volatility Measures - Patient %d (Study %s, ID %d)', basefilename, patientnbr, patientrow.Study{1}, patientrow.ID);
+baseplotname1 = sprintf('%s-%sVolMP%d(%s%d)', ...
+    basefilename, lbdisplayname, patientnbr, patientrow.Study{1}, patientrow.ID);
 
 [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
 left_color = [0, 0.65, 1];

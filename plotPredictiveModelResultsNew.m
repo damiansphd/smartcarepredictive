@@ -24,7 +24,7 @@ fprintf('Loading predictive model results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
     'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', ...
-    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS', 'pmFoldHpTrQS', 'pmFoldHpCVQS');
+    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS');
 
 % added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1
@@ -124,7 +124,7 @@ elseif plottype == 7
             pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
             pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmInterpVolcube(pnbr, :, :), ...
             pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
-            measures, nmeasures, mvolstats, plotsubfolder, basemodelresultsfile);
+            measures, nmeasures, mvolstats, lbdisplayname, plotsubfolder, basemodelresultsfile);
     end
 elseif plottype == 8
     % plot volatility measures for a single patient
@@ -182,7 +182,7 @@ elseif plottype == 13
 elseif plottype == 14
     plotPredictorImportance(pmFeatureParamsRow, pmHyperParamQS, measures, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
 elseif plottype == 15
-    plotTrVsCVQualScores(pmFeatureParamsRow, pmFoldHpTrQS, pmFoldHpCVQS, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
+    plotTrVsCVQualScores(pmHyperParamQS, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
 end
 
 

@@ -49,7 +49,7 @@ for m = 1:nmeasures
 end
 labeltext = [labeltext; {'Prediction'; ' '}];
 
-baseplotname1 = sprintf('%s - %s Labels - Patient %d (Study %s, ID %d) For Paper', ...
+baseplotname1 = sprintf('%s-%s-P%d(%s%d)fP', ...
     basefilename, lbdisplayname, patientnbr, patientrow.Study{1}, patientrow.ID);
 
 [f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);

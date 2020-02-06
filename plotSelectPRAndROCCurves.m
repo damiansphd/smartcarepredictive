@@ -17,7 +17,7 @@ else
 end
 plotsdown = ceil((nplots * 2)/plotsacross);
 
-name1 = sprintf('%s PR and ROC Curve - %s Labels ', basemodelresultsfile, lbdisplayname);
+name1 = sprintf('%s-%s-PRROC', basemodelresultsfile, lbdisplayname);
 [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
 ax1 = gobjects((nplots * 2),1);
 

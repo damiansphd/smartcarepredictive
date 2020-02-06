@@ -16,8 +16,8 @@ else
 end
 plotsdown   = ceil(predictionduration/plotsacross);
 
-name1 = sprintf('%s PR Curve %s Labels',  basemodelresultsfile, lbdisplayname);
-name2 = sprintf('%s ROC Curve %s Labels', basemodelresultsfile, lbdisplayname);
+name1 = sprintf('%s-%s-PR',  basemodelresultsfile, lbdisplayname);
+name2 = sprintf('%s-%s-ROC', basemodelresultsfile, lbdisplayname);
 [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
 [f2, p2] = createFigureAndPanel(name2, 'Portrait', 'A4');
 ax1 = gobjects(predictionduration,1);

@@ -15,7 +15,7 @@ for n = 1:predictionduration
 
     [pmampredtest] = getPredictedIntr(pmampred, pmTrCVFeatureIndex, pmTrCVPatientSplit, pmModelRes.pmNDayRes(n));
     
-    name1 = sprintf('%s - Interventions by Month - %s Labels %d Day Prediction', basemodelresultsfile, lbdisplayname, n);
+    name1 = sprintf('%s-%s%dDIntrMnth', basemodelresultsfile, lbdisplayname, n);
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
     ax1 = gobjects(plotsacross * plotsdown,1);
     

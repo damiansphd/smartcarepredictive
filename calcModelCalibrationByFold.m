@@ -22,7 +22,7 @@ nfolds = size(modeldayres.Folds,2);
 plotsdown = nfolds + 1;
 plotsacross = 2;
 
-name1 = sprintf('%s Model Calibration - %s Labels %d Day Prediction', basemodelresultsfile, lbdisplayname, labelidx);
+name1 = sprintf('%s-%s%dModCalib', basemodelresultsfile, lbdisplayname, labelidx);
 [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
 ax1 = gobjects(nfolds + 1,1);
 

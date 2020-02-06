@@ -34,7 +34,7 @@ npages = ceil(npat/patperpage);
 cpage       = 1;
 cpat        = 1;
 
-baseplotname = sprintf('%s - High True Positives - Pg%dof%d', basefilename, cpage, npages);
+baseplotname = sprintf('%s-HTP%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 fprintf('High True Positives   : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
 
@@ -70,7 +70,7 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - High True Positives - Pg%dof%d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s-HTP%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end
@@ -84,7 +84,7 @@ npages = ceil(npat/patperpage);
 cpage       = 1;
 cpat        = 1;
 
-baseplotname = sprintf('%s - Medium True Positives - Pg%dof%d', basefilename, cpage, npages);
+baseplotname = sprintf('%s-MTP%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 fprintf('Medium True Positives : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
 
@@ -120,7 +120,7 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Medium True Positives - Pg%dof%d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s-MTP%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end
@@ -134,7 +134,7 @@ npages = ceil(npat/patperpage);
 cpage       = 1;
 cpat        = 1;
 
-baseplotname = sprintf('%s - Low False Negatives - Pg%dof%d', basefilename, cpage, npages);
+baseplotname = sprintf('%s-LFN%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 fprintf('Low True Positives    : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
 
@@ -170,7 +170,7 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Low False Negatives - Pg%dof%d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s-LFN%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end
@@ -184,7 +184,7 @@ npages = ceil(npat/patperpage);
 cpage       = 1;
 cpat        = 1;
 
-baseplotname = sprintf('%s - Elective Treatments - Pg%dof%d', basefilename, cpage, npages);
+baseplotname = sprintf('%s-ET%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 fprintf('Elective Treatments : %d of %d (%.0f%%)\n', npat, size(pmampred,1), 100 * npat/size(pmampred,1));
 
@@ -220,7 +220,7 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Elective Treatments - Pg%dof%d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s-ET%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end
@@ -277,7 +277,7 @@ cpage       = 1;
 cpat        = 1;
 npages      = ceil(npat/patperpage);
 
-baseplotname = sprintf('%s - Highest False Positives - Pg%dof%d', basefilename, cpage, npages);
+baseplotname = sprintf('%s-HFP%dof%d', basefilename, cpage, npages);
 [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
 lgtype = 'FP';
 
@@ -324,7 +324,7 @@ for i = 1:npat
         close(f);
         cpage = cpage + 1;
         cpat = 1;
-        baseplotname = sprintf('%s - Highest False Positives - Pg%dof%d', basefilename, cpage, npages);
+        baseplotname = sprintf('%s-HFP%dof%d', basefilename, cpage, npages);
         [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');    
     end
 end

@@ -24,7 +24,7 @@ else
     plotsdown = nmeasures + 1;
 end
 
-baseplotname1 = sprintf('%s - %s Labels %d Day Prediction - Patient %d (Study %s, ID %d)', ...
+baseplotname1 = sprintf('%s-%s%dDPredP%d(%s%d)', ...
     basefilename, lbdisplayname, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);
 
 [f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
@@ -173,7 +173,7 @@ if predictionduration > 1
     plotsacross = 1;
     plotsdown = pmFeatureParamsRow.predictionduration;
 
-    baseplotname2 = sprintf('%s - %s Labels All Predictions - Patient %d (Study %s, ID %d)', ...
+    baseplotname2 = sprintf('%s-%sAllPredP%d(%s%d)', ...
                         basefilename, lbdisplayname, patientnbr, patientrow.Study{1}, patientrow.ID);
     [f2,p2] = createFigureAndPanel(baseplotname2, 'Portrait', 'A4');
 

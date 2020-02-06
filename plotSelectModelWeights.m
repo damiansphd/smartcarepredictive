@@ -36,7 +36,7 @@ for n = 1:size(selectdays,2)
     
     yl1 = [minval maxval];
 
-    name1 = sprintf('%s Feature Weights - %s Labels %d Day Prediction', basemodelresultsfile, lbdisplayname, selectdays(n));
+    name1 = sprintf('%s-%s-%dDFWght', basemodelresultsfile, lbdisplayname, selectdays(n));
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
     ax1 = gobjects(tempnmeasures,1);
 
