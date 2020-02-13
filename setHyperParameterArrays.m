@@ -1,4 +1,4 @@
-function [lrarray, ntrarray, mlsarray, mnsarray, fvsarray, nlr, ntr, nmls, nmns, nfvs] = setHyperParameterArrays(pmHyperParams)
+function [lrarray, ntrarray, mlsarray, mnsarray, fvsarray, nlr, ntr, nmls, nmns, nfvs, hpsuffix] = setHyperParameterArrays(pmHyperParams)
 
 % setHyperParameterArrays - sets the hyper parameter arrays from the file
 % input
@@ -38,6 +38,11 @@ ntr  = size(ntrarray, 2);
 nmls = size(mlsarray, 2);
 nmns = size(mnsarray, 2);
 nfvs = size(fvsarray, 2);
+
+hpsuffix = sprintf('lr%.2f-%.2fnt%d-%dml%d-%dns%d-%dfv%.2f-%.2f', ...
+                    lrarray(1),  lrarray(end),  ntrarray(1), ntrarray(end), ...
+                    mlsarray(1), mlsarray(end), mnsarray(1), mnsarray(end), ...
+                    fvsarray(1), fvsarray(end));
 
 end
 

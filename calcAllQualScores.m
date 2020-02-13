@@ -1,10 +1,10 @@
-function [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmTrCVPatientSplit, epilen)
+function [mdlres, ampredupd] = calcAllQualScores(mdlres, trcvlabels, ntrcvexamples, ampred, featureindex, patientsplit, epilen)
 % calcAllQualScores - function that calls all the underlying quality score
 % calculation functions
 
-[pmDayRes, pmAMPredUpd] = calcPredQualityScore(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmTrCVPatientSplit);
-pmDayRes      = calcModelQualityScores(pmDayRes, trcvlabels, ntrcvexamples);
-pmDayRes      = calcAvgEpiPred(pmDayRes, pmTrCVFeatureIndex, trcvlabels, epilen);  
+[mdlres, ampredupd] = calcPredQualityScore(mdlres, trcvlabels, ntrcvexamples, ampred, featureindex, patientsplit);
+mdlres      = calcModelQualityScores(mdlres, trcvlabels, ntrcvexamples);
+mdlres      = calcAvgEpiPred(mdlres, featureindex, trcvlabels, epilen);  
 
 end
 

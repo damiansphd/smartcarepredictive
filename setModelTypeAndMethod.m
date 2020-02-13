@@ -2,7 +2,13 @@ function [modeltype, mmethod] = setModelTypeAndMethod(modelver)
 
 % setModelNameAndMethod - sets the model type and method
 
-if isequal(modelver, 'vPM10')
+if isequal(modelver, 'vPM1')
+    modeltype = 'MATLAB Logistic Regression';
+    mmethod   = '';
+elseif isequal(modelver, 'vPM4')
+    modeltype = 'Decision Tree';
+    mmethod   = '';
+elseif isequal(modelver, 'vPM10')
     modeltype = 'Random Forest';
     mmethod   = 'Bag';
 elseif isequal(modelver, 'vPM11')

@@ -1,18 +1,20 @@
-function [bsmode, validresponse] = selectBSMode()
+function [btmode, btsuffix, validresponse] = selectBSMode()
 
 % selectBSMode - choose whether to run bootstrapping or not
 
-sbsmode = input(sprintf('Run bootstrapping (1 = Y, 2 = N) ? '), 's');
+sbtmode = input(sprintf('Run bootstrapping (1 = Y, 2 = N) ? '), 's');
 
-bsmode = str2double(sbsmode);
+btmode = str2double(sbtmode);
 
-if (isnan(bsmode) || bsmode < 1 || bsmode > 2)
+if (isnan(btmode) || btmode < 1 || btmode > 2)
     fprintf('Invalid choice\n');
     validresponse = false;
-    bsmode = 0;
+    btmode = 0;
 else
     validresponse = true;
 end
+
+btsuffix = sprintf('bt%1d',btmode);
 
 end
 

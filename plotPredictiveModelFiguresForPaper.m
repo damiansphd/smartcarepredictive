@@ -1,4 +1,6 @@
 clear; close all; clc;
+tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
+addpath(tempdir);
 
 % logic to load in results for a given feature&label version, label method and raw measures combination
 [fv1, validresponse] = selectFeatVer();

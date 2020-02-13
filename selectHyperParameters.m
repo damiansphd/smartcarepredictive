@@ -14,7 +14,6 @@ end
 nmodels = size(modelrunparams,1);
 fprintf('Hyper parameter files available\n');
 fprintf('-------------------------------\n');
-fprintf('0: N/A\n');
 
 for i = 1:nmodels
     fprintf('%d: %s\n', i, modelrunparams{i});
@@ -25,7 +24,7 @@ shpidx = input('Choose hyperparameter file ? ', 's');
 
 modelrpidx = str2double(shpidx);
 
-if (isnan(modelrpidx) || modelrpidx < 0 || modelrpidx > nmodels)
+if (isnan(modelrpidx) || modelrpidx < 1 || modelrpidx > nmodels)
     fprintf('Invalid choice\n');
     validresponse = false;
     modelrpidx = 0;

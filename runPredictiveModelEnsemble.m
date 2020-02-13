@@ -23,25 +23,15 @@ ncombinations     = nfeatureparamsets * nmodelparamsets;
 if validresponse == 0
     return;
 end
-if ~ismember(basehpparamfile, '')
-    hpparamfile          = strcat(basehpparamfile, '.xlsx');
-    pmHyperParams        = readtable(fullfile(basedir, subfolder, hpparamfile));
-    [lrarray, ntrarray, mlsarray, mnsarray, fvsarray, nlr, ntr, nmls, nmns, nfvs] = setHyperParameterArrays(pmHyperParams);
-    
-else
-    lrarray = 1; ntrarray = 1; mlsarray = 1; mnsarray = 1; fvsarray = 1; nlr = 1; ntr = 1; nmls = 1; nmns = 1; nfvs = 1;
-end
-hpsuffix = sprintf('lr%.2f-%.2fnt%d-%dml%d-%dns%d-%dfv%.2f-%.2f', ...
-                    lrarray(1),  lrarray(end),  ntrarray(1), ntrarray(end), ...
-                    mlsarray(1), mlsarray(end), mnsarray(1), mnsarray(end), ...
-                    fvsarray(1), fvsarray(end));
+pmHyperParams        = readtable(fullfile(basedir, subfolder, strcat(basehpparamfile, '.xlsx')));
+[lrarray, ntrarray, mlsarray, mnsarray, fvsarray, nlr, ntr, nmls, nmns, nfvs, hpsuffix] = setHyperParameterArrays(pmHyperParams);
                 
-[bsmode, validresponse] = selectBSMode();
+[btmode, btsuffix, validresponse] = selectBSMode();
 if validresponse == 0
     return;
 end
 
-[runmode, validresponse] = selectRunMode();
+[runtype, rtsuffix, validresponse] = selectRunMode();
 if validresponse == 0
     return;
 end
@@ -49,6 +39,8 @@ end
 nbssamples = 50; % temporary hardcoding - replace with model parameter when have more time
 epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
 lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
+
+pmBSAllQS = struct('FeatureParams', [], 'ModelParams', []);
 
 for fs = 1:nfeatureparamsets
     
@@ -73,7 +65,12 @@ for fs = 1:nfeatureparamsets
         fprintf('\n');
         
         mbasefilename = generateFileNameFromFullModelParams(fbasefilename, pmModelParams(mp,:));
-        mbasefilename = sprintf('%s%s', mbasefilename, hpsuffix);
+        mbasefilename = sprintf('%s%s%s%s', mbasefilename, hpsuffix, rtsuffix, btsuffix);
+        plotsubfolder = sprintf('Plots/%s', mbasefilename);
+        mkdir(fullfile(basedir, plotsubfolder));
+        
+        pmBSAllQS(combnbr).FeatureParams = pmThisFeatureParams(fs, :);
+        pmBSAllQS(combnbr).ModelParams   = pmModelParams(mp,:);
         
         featureduration = pmThisFeatureParams.featureduration(fs);
         nexamples = size(pmNormFeatures,1);
@@ -88,10 +85,16 @@ for fs = 1:nfeatureparamsets
                              pmABLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels, pmPatientSplit, nsplits);
         
         ntrcvexamples = size(pmTrCVNormFeatures, 1);
+        ntestexamples = size(pmTestNormFeatures, 1);
         nnormfeatures = size(pmTrCVNormFeatures, 2);
+        if runtype == 2
+            nfolds = 1;
+        end
         
         [labels] = setLabelsForLabelMethod(pmModelParams.labelmethod(mp), pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
         trcvlabels = labels(:);
+        [labels] = setLabelsForLabelMethod(pmModelParams.labelmethod(mp), pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels);
+        testlabels = labels(:);
         
         % for the 'Ex Start to Treatment' label, there is only one task.
         % for the other label methods, use the predictionduration from the
@@ -108,35 +111,8 @@ for fs = 1:nfeatureparamsets
         fprintf('\n');
         
         nhpcomb      = nlr * ntr * nmls * nmns * nfvs;
- 
-        %pmHyperParamQS = struct('FeatureParams', [], 'ModelParams', []);
-        %pmHyperParamQS.FeatureParams = pmThisFeatureParams(fs, :);
-        %pmHyperParamQS.ModelParams   = pmModelParams(mp,:);
-        
-        [hyperparamQS, hyperparamqsrow, foldhpTrQS, foldhpCVQS, foldhprow] = createHpQSTables(nhpcomb);
-        
-        %hyperparamQS = table('Size',[nhpcomb, 20], ...
-        %                'VariableTypes', {'double', 'double', 'double', 'double', 'double', ...
-        %                                  'double', 'double', 'double', 'double', 'double', 'double',...
-        %                                  'double', 'double', 'double', 'double', 'double', ...
-        %                                  'double', 'double', 'double', 'double'}, ...
-        %                'VariableNames', {'LearnRate', 'NumTrees', 'MinLeafSize', 'MaxNumSplit', 'FracVarsToSample', ...
-        %                                  'AvgLoss', 'PScore', 'ElecPScore', 'AvgEpiTPred', 'AvgEpiFPred', 'AvgEPV', ...
-        %                                  'PRAUC', 'ROCAUC', 'Acc', 'PosAcc', 'NegAcc', ...
-        %                                  'MaxNumNodes', 'AvgNumNodes', 'MaxBranchNodes', 'AvgBranchNodes'});
-        %hyperparamqsrow = hyperparamQS(1, :);
-        % 
-        %temp = array2table(1);
-        %temp.Properties.VariableNames{'Var1'} = 'Fold';
-        %pmFoldHpTrQS = [temp, hyperparamQS(1, :)];
-        %foldhprow = pmFoldHpTrQS;
-        %pmFoldHpTrQS(1,:) = [];
-        %pmFoldHpCVQS = [temp, hyperparamQS(1, :)];
-        %pmFoldHpCVQS(1,:) = [];
-        
-        plotsubfolder = sprintf('Plots/%s', mbasefilename);
-        mkdir(fullfile(basedir, plotsubfolder));
-
+        [hyperparamQS, foldhpTrQS, foldhpCVQS, foldhpTestQS] = createHpQSTables(nhpcomb, nfolds);
+    
         for lr = 1:nlr
             lrval = lrarray(lr);
             for tr = 1:ntr
@@ -153,84 +129,122 @@ for fs = 1:nfeatureparamsets
 
                             fprintf('%2d of %2d Hyperparameter combinations\n', hpcomb, nhpcomb);
 
-                            %pmModelRes = struct('ModelType', modeltype, 'RunParams', mbasefilename);
+                            if runtype == 1
+                                % run n-fold cross-validation
+                                pmDayRes = createModelDayResStuct(ntrcvexamples, nfolds, nbssamples);
 
-                            pmDayRes = createModelDayResStuct(ntrcvexamples, nfolds, nbssamples);
+                                for fold = 1:nfolds
+                                    
+                                    foldhpcomb = (hpcomb - 1) * nfolds + fold;
 
-                            for fold = 1:nfolds
+                                    fprintf('Fold %d: ', fold);
 
-                                fprintf('Fold %d: ', fold);
+                                    [pmTrFeatureIndex, pmTrMuIndex, pmTrSigmaIndex, pmTrNormFeatures, trlabels, ...
+                                     pmCVFeatureIndex, pmCVMuIndex, pmCVSigmaIndex, pmCVNormFeatures, cvlabels, cvidx] ...
+                                        = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVMuIndex, pmTrCVSigmaIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
 
-                                [pmTrFeatureIndex, pmTrMuIndex, pmTrSigmaIndex, pmTrNormFeatures, trlabels, ...
-                                 pmCVFeatureIndex, pmCVMuIndex, pmCVSigmaIndex, pmCVNormFeatures, cvlabels, cvidx] ...
-                                    = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVMuIndex, pmTrCVSigmaIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
+                                    if ismember(pmModelParams.ModelVer{mp}, {'vPM1', 'vPM4', 'vPM10', 'vPM11', 'vPM12', 'vPM13'})
+                                        % train model
+                                        fprintf('Training...');
+                                        [pmDayRes] = trainPredModel(pmModelParams.ModelVer{mp}, pmDayRes, pmTrNormFeatures, trlabels, ...
+                                                            pmNormFeatNames, nnormfeatures, fold, mmethod, lrval, ntrval, mlsval, mnsval, fvsval);
+                                        fprintf('Done\n');
+                                        
+                                        % calculate predictions and quality scores on training data
+                                        fprintf('Tr: ');
+                                        [foldhpTrQS, ~] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTrQS, pmTrFeatureIndex, ...
+                                                            pmTrNormFeatures, trlabels, fold, foldhpcomb, pmAMPred, ...
+                                                            pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
+                                                            lrval, ntrval, mlsval, mnsval, fvsval);
+                                        %filename = sprintf('%s-Tr-F%d', mbasefilename, fold);
+                                        %plotPRAndROCCurvesForPaper(pmTrRes, [] , 'na', plotsubfolder, filename);
+                                        
+
+                                        % calculate predictions and quality scores on training data
+                                        fprintf('CV: ');
+                                        [foldhpCVQS, pmCVRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpCVQS, pmCVFeatureIndex, ...
+                                                                    pmCVNormFeatures, cvlabels, fold, foldhpcomb, pmAMPred, ...
+                                                                    pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
+                                                                    lrval, ntrval, mlsval, mnsval, fvsval);
+                                        %filename = sprintf('%s-CV-F%d', mbasefilename, fold);
+                                        %plotPRAndROCCurvesForPaper(pmCVRes, '', '', plotsubfolder, filename);
+                                        
+
+                                        % also store results on overall model results structure
+                                        pmDayRes.Pred(cvidx) = pmCVRes.Pred; %tempscore(:, 2);
+                                        pmDayRes.Loss(fold)  = pmCVRes.Loss;
+                                    else
+                                        fprintf('Unsupported model version\n');
+                                        return;
+                                    end
+                                end
+
+                                fprintf('Overall:\n');
+                                fprintf('CV: ');
+                                fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmPatientSplit, epilen);
+
+                                fprintf('\n');
+
+                                hyperparamQS(hpcomb, :) = setHyperParamQSrow(hyperparamQS(hpcomb, :), lrval, ntrval, mlsval, mnsval, fvsval, pmDayRes);
+
+                                toc
+                                fprintf('\n');
                                 
-                                if ismember(pmModelParams.ModelVer{mp}, {'vPM10', 'vPM11', 'vPM12', 'vPM13'})
+                            elseif runtype == 2
+                                % run on held-out test data
+                                fold = 1;
+                                foldhpcomb = 1;
+                                pmDayRes = createModelDayResStuct(ntestexamples, fold, nbssamples);
+                                
+                                if ismember(pmModelParams.ModelVer{mp}, {'vPM1', 'vPM4','vPM10', 'vPM11', 'vPM12', 'vPM13'})
                                     % train model
                                     fprintf('Training...');
-                                    [pmDayRes] = trainPredModel(pmModelParams.ModelVer{mp}, pmDayRes, pmTrNormFeatures, trlabels, ...
+                                    [pmDayRes] = trainPredModel(pmModelParams.ModelVer{mp}, pmDayRes, pmTrCVNormFeatures, trcvlabels, ...
                                                         pmNormFeatNames, nnormfeatures, fold, mmethod, lrval, ntrval, mlsval, mnsval, fvsval);
                                     fprintf('Done\n');
                                     
-                                    % create predictions on training set
-                                    ntrexamples = size(pmTrNormFeatures, 1);
-                                    pmTrRes     = createModelDayResStuct(ntrexamples, 1, 0);
-                                    pmTrRes     = predictPredModel(pmTrRes, pmDayRes.Folds(fold).Model, pmTrNormFeatures, trlabels, lossfunc);
+                                    % calculate predictions and quality scores on training data
                                     fprintf('Tr: ');
-                                    fprintf('LR: %.2f NT: %3d MLS: %3d MNS: %3d FVS: %.2f- ', lrval, ntrval, mlsval, mnsval, fvsval);
-                                    fprintf('Loss: %.6f ', pmTrRes.Loss);
-                                    
-                                    % calculate training set quality scores
-                                    pmTrRes        = calcAllQualScores(pmTrRes, trlabels, ntrexamples, pmAMPred, pmTrFeatureIndex, pmTrCVPatientSplit, epilen);
-                                    foldhprow.Fold = fold;
-                                    foldhprow      = setHyperParamQSrow(foldhprow, lrval, ntrval, mlsval, mnsval, fvsval, pmTrRes);
-                                    foldhprow      = setHyperParamQSTreeInfo(foldhprow, pmDayRes.Folds(fold).Model);
-                                    foldhpTrQS     = [foldhpTrQS; foldhprow];
+                                    [foldhpTrQS, ~] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTrQS, pmTrCVFeatureIndex, ...
+                                                        pmTrCVNormFeatures, trcvlabels, fold, foldhpcomb, pmAMPred, ...
+                                                        pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
+                                                        lrval, ntrval, mlsval, mnsval, fvsval);
                                     %filename = sprintf('%s-Tr-F%d', mbasefilename, fold);
                                     %plotPRAndROCCurvesForPaper(pmTrRes, [] , 'na', plotsubfolder, filename);
-                                    fprintf('\n');
                                     
-                                    % create predictions on cv set
-                                    ncvexamples    = size(pmCVNormFeatures, 1);
-                                    pmCVRes        = createModelDayResStuct(ncvexamples, 1, 0);
-                                    pmCVRes        = predictPredModel(pmCVRes, pmDayRes.Folds(fold).Model, pmCVNormFeatures, cvlabels, lossfunc);
-                                    fprintf('CV: ');
-                                    fprintf('LR: %.2f NT: %3d MLS: %3d MNS: %3d FVS: %.2f- ', lrval, ntrval, mlsval, mnsval, fvsval);
-                                    fprintf('Loss: %.6f ', pmCVRes.Loss);
-                                    
-                                    % calculate cross validation set quality scores
-                                    pmCVRes        = calcAllQualScores(pmCVRes, cvlabels, ncvexamples, pmAMPred, pmCVFeatureIndex, pmTrCVPatientSplit, epilen);
-                                    foldhprow.Fold = fold;
-                                    foldhprow      = setHyperParamQSrow(foldhprow, lrval, ntrval, mlsval, mnsval, fvsval, pmCVRes);
-                                    foldhprow      = setHyperParamQSTreeInfo(foldhprow, pmDayRes.Folds(fold).Model);
-                                    foldhpCVQS     = [foldhpCVQS; foldhprow];
-                                    %filename = sprintf('%s-CV-F%d', mbasefilename, fold);
-                                    %plotPRAndROCCurvesForPaper(pmCVRes, '', '', plotsubfolder, filename);
-                                    fprintf('\n');
+                                    fprintf('Test: ');
+                                    [foldhpTestQS, pmTestRes, pmAMPredUpd] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTestQS, pmTestFeatureIndex, ...
+                                                                pmTestNormFeatures, testlabels, fold, foldhpcomb, pmAMPred, ...
+                                                                pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
+                                                                lrval, ntrval, mlsval, mnsval, fvsval);
+                                    %filename = sprintf('%s-Test-F%d', mbasefilename, fold);
+                                    %plotPRAndROCCurvesForPaper(pmTestRes, '', '', plotsubfolder, filename);
                                     
                                     % also store results on overall model results structure
-                                    pmDayRes.Pred(cvidx) = pmCVRes.Pred; %tempscore(:, 2);
-                                    pmDayRes.Loss(fold)  = pmCVRes.Loss;
+                                    pmDayRes.Pred       = pmTestRes.Pred;
+                                    pmDayRes.Loss(fold) = pmTestRes.Loss;
+                                    
                                 else
                                     fprintf('Unsupported model version\n');
                                     return;
                                 end
+                                
+                            else
+                                fprintf('Unknown run mode\n');
+                                return
                             end
-                            
-                            fprintf('Overall:\n');
-                            fprintf('CV: ');
-                            fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                            [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmTrCVPatientSplit, epilen);
-                            
-                            fprintf('\n');
-                            
-                            hyperparamQS(hpcomb, :) = setHyperParamQSrow(hyperparamqsrow, lrval, ntrval, mlsval, mnsval, fvsval, pmDayRes);
-                            
-                            toc
-                            fprintf('\n');
                         end
                     end
                 end
+            end
+        end
+        
+        if btmode == 1
+            if runtype == 1
+                [pmDayRes] = calcBSQualScores(pmDayRes, trcvlabels, nbssamples, ntrcvexamples);
+            else
+                [pmDayRes] = calcBSQualScores(pmDayRes, testlabels, nbssamples, ntestexamples);
             end
         end
         
@@ -240,9 +254,21 @@ for fs = 1:nfeatureparamsets
         pmHyperParamQS.HyperParamQS  = hyperparamQS;
         pmHyperParamQS.FoldHpTrQS    = foldhpTrQS;
         pmHyperParamQS.FoldHpCVQS    = foldhpCVQS;
+        pmHyperParamQS.FoldHpTestQS  = foldhpTestQS;
         
         pmModelRes = struct('ModelType', modeltype, 'RunParams', mbasefilename);
         pmModelRes.pmNDayRes(1) = pmDayRes;
+        
+        pmDayRes.Folds     = [];
+        pmDayRes.Pred      = [];
+        pmDayRes.PredSort  = [];
+        pmDayRes.LabelSort = [];
+        pmDayRes.Precision = [];
+        pmDayRes.Recall    = [];
+        pmDayRes.TPR       = [];
+        pmDayRes.FPR       = [];
+
+        pmBSAllQS(combnbr).NDayQS(1) = pmDayRes;
         
         pmFeatureParamsRow = pmThisFeatureParams(fs,:);
         pmModelParamsRow   = pmModelParams(mp,:);
@@ -253,7 +279,7 @@ for fs = 1:nfeatureparamsets
         basedir = setBaseDir();
         subfolder = 'MatlabSavedVariables';
         outputfilename = sprintf('%s ModelResults.mat', mbasefilename);
-        fprintf('Saving output variables to file %s\n', outputfilename);
+        fprintf('Saving model output variables to file %s\n', outputfilename);
         save(fullfile(basedir, subfolder, outputfilename), ...
             'pmTestFeatureIndex', 'pmTestMuIndex', 'pmTestSigmaIndex', 'pmTestNormFeatures', ...
             'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels', ...
@@ -271,12 +297,24 @@ for fs = 1:nfeatureparamsets
         hpfilename = sprintf('%s HP.xlsx', mbasefilename);
         fprintf('Saving hyperparameter quality scores results to excel file %s\n', hpfilename);
         writetable(pmHyperParamQS.HyperParamQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'HyperParamQS');
-        writetable(foldhpTrQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'TrainQS');
-        writetable(foldhpCVQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'CrossValQS');
+        writetable(pmHyperParamQS.FoldHpTrQS,   fullfile(basedir, subfolder, hpfilename), 'Sheet', 'TrainQS');
+        writetable(pmHyperParamQS.FoldHpCVQS,   fullfile(basedir, subfolder, hpfilename), 'Sheet', 'CrossValQS');
+        writetable(pmHyperParamQS.FoldHpTestQS, fullfile(basedir, subfolder, hpfilename), 'Sheet', 'TestQS');
         toc
+        fprintf('\n');
         
     end
 end
+
+tic
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+outputfilename = sprintf('BSQ-%s-%s-%s%s.mat', basefeatureparamfile, basemodelparamfile, basehpparamfile, rtsuffix);
+fprintf('Saving bootstrap results to file %s\n', outputfilename);
+save(fullfile(basedir, subfolder, outputfilename), ...
+     'pmBSAllQS', 'basefeatureparamfile', 'basemodelparamfile', 'nbssamples', 'ncombinations');
+toc
+fprintf('\n');
 
 beep on;
 beep;
