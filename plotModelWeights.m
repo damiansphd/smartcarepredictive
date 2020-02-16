@@ -1,5 +1,5 @@
-function plotModelWeights(pmModelRes, pmTrCVNormFeatures, measures, nmeasures, pmTrCVPatientSplit, ...
-    featureparamsrow, pmModelParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile)
+function plotModelWeights(pmModelRes, trfeatures, measures, nmeasures, ...
+    featureparamsrow, modelparamsrow, lbdisplayname, plotsubfolder, basemodelresultsfile)
 
 % plotModelWeights - plots the model weights for all prediction labels
 % for both given labels 
@@ -22,7 +22,7 @@ for n = 1:predictionduration
     nfolds = size(pmModelRes.pmNDayRes(n).Folds,2);
 
     plotsacross = 1;
-    plotsdown = nfolds + 2;
+    plotsdown = max(nfolds,4) + 2;
     
     name1 = sprintf('%s-%s-%dDFWght', basemodelresultsfile, lbdisplayname, n);
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
@@ -30,9 +30,9 @@ for n = 1:predictionduration
     
     fwarray = zeros(nnormfeatures + 1, nfolds);
     for fold = 1:nfolds
-        if ismember(pmModelParamsRow.ModelVer(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
+        if ismember(modelparamsrow.ModelVer(1), {'vPM1'})
             fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate;
-        elseif ismember(pmModelParamsRow.ModelVer(1), {'vPM2'})
+        elseif ismember(modelparamsrow.ModelVer(1), {'vPM2'})
             fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.w;
         else
             fprintf('Unsupported model version\n');
@@ -45,10 +45,10 @@ for n = 1:predictionduration
     yl1 = [minval maxval];
     
     for fold = 1:nfolds
-        if ismember(pmModelParamsRow.ModelVer(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
+        if ismember(modelparamsrow.ModelVer(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
             intercept      = fwarray(1, fold);
             featureweights = fwarray(2:end, fold);
-        elseif ismember(pmModelParamsRow.ModelVer(1), {'vPM2'})
+        elseif ismember(modelparamsrow.ModelVer(1), {'vPM2'})
             featureweights = fwarray(1:end - 1, fold);
             intercept      = fwarray(end, fold);
         else
@@ -77,7 +77,7 @@ for n = 1:predictionduration
     
     % plot std deviation of features
     fold = fold + 1;
-    featurestd = std(pmTrCVNormFeatures,1);
+    featurestd = std(trfeatures,1);
     ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
     bar(ax1(fold), (1:nnormfeatures), featurestd, .75, 'FaceColor', 'green', 'EdgeColor', 'black');
     xl1 = [0 nnormfeatures];
@@ -98,7 +98,7 @@ for n = 1:predictionduration
     
     % plot mean of features
     fold = fold + 1;
-    featuremean = mean(pmTrCVNormFeatures,1);
+    featuremean = mean(trfeatures,1);
     ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
     bar(ax1(fold), (1:nnormfeatures), featuremean, .75, 'FaceColor', 'green', 'EdgeColor', 'black');
     xl1 = [0 nnormfeatures];

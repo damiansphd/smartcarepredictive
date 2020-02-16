@@ -1,5 +1,5 @@
 function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata, pinterpdata, pinterpvoldata, ...
-    pmFeatureIndex, trcvlabels, pmModelRes, pmOverallStats, ...
+    testfeatidx, testlabels, pmModelRes, pmOverallStats, ...
     pmeasstats, measures, nmeasures, mvolstats, labelidx, pmFeatureParamsRow, ...
     lbdisplayname, plotsubfolder, basefilename)
 
@@ -60,10 +60,10 @@ pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
     'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2', ...
     'Pred', 'RelLB1', 'RelUB1', 'RelLB2', 'RelUB2'});
 
-fidx = (pmFeatureIndex.PatientNbr == patientnbr);
-pfeatindex = pmFeatureIndex(fidx,:);
+fidx = (testfeatidx.PatientNbr == patientnbr);
+pfeatindex = testfeatidx(fidx,:);
 ppred  = pmModelRes.pmNDayRes(labelidx).Pred(fidx);
-plabel = trcvlabels(fidx,labelidx);
+plabel = testlabels(fidx,labelidx);
 
 ppreddata = nan(1, pmaxdays);
 plabeldata = nan(1, pmaxdays);
@@ -181,7 +181,7 @@ if predictionduration > 1
 
     for n = 1:predictionduration
         ppred  = pmModelRes.pmNDayRes(n).Pred(fidx);
-        plabel = trcvlabels(fidx, n);
+        plabel = testlabels(fidx, n);
     
         ppreddata = nan(1, pmaxdays);
         plabeldata = nan(1, pmaxdays);

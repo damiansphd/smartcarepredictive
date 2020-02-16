@@ -1,4 +1,7 @@
 clear; close all; clc;
+
+% add alignment model code directory to path to allow sharing of code
+basedir = setBaseDir();
 tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
 addpath(tempdir);
 
@@ -23,10 +26,14 @@ tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 fprintf('Loading predictive model results data for %s\n', modelresultsfile);
-load(fullfile(basedir, subfolder, modelresultsfile), 'pmModelRes', ...
-    'pmFeatureParamsRow', 'pmModelParamsRow', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
-    'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', ...
-    'pmTrCVExABxElLabels','pmTrCVPatientSplit', 'pmHyperParamQS');
+load(fullfile(basedir, subfolder, modelresultsfile), ...
+            'pmTestFeatureIndex', 'pmTestNormFeatures', ...
+            'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels', ...
+            'pmTestPatientSplit', ...
+            'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', ...
+            'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels',...
+            'pmTrCVPatientSplit', ...
+            'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamQS', 'pmOtherRunParams');
 
 % added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1
@@ -60,24 +67,32 @@ fprintf(' 9: Paper Figure 8 - Comparison to Current Clinical Practice - Random c
 fprintf('10: Paper Figure 6 Appendix - Example All Measures And Prediction\n');
 fprintf('11: Old Paper Figure 6 - Example Measures And Prediction for Single Participant\n');
 
-srunfunction = input('Choose function (6-9): ', 's');
-runfunction = str2double(srunfunction);
+splottype = input('Choose function (6-9): ', 's');
+plottype = str2double(splottype);
 
-if (isnan(runfunction) || runfunction < 6 || runfunction > 10)
+if (isnan(plottype) || plottype < 6 || plottype > 10)
     fprintf('Invalid choice\n');
-    runfunction = -1;
+    plottype = -1;
     return;
 end
 
-[trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
+trainlabels   = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
+testlabels    = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels);
+[trainfeatidx, trainfeatures, trainlabels, trainpatsplit, testfeatidx, testfeatures, testlabels, testpatsplit] = ...
+            setTrainTestArraysForRunType(pmTrCVFeatureIndex, pmTrCVNormFeatures, trainlabels, pmTrCVPatientSplit, ...
+                                         pmTestFeatureIndex, pmTestNormFeatures, testlabels, pmTestPatientSplit, ...
+                                         pmOtherRunParams.runtype);
 
-if runfunction == 6
+                                     
+%[trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
+
+if plottype == 6
     % plot measures and predictions for a single patient
-    [pnbr1, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
+    [pnbr1, validresponse] = selectPatientNbr(testpatsplit.PatientNbr);
     if ~validresponse
         return;
     end
-    [pnbr2, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
+    [pnbr2, validresponse] = selectPatientNbr(testpatsplit.PatientNbr);
     if ~validresponse
         return;
     end
@@ -88,32 +103,32 @@ if runfunction == 6
         pmAntibiotics(pmAntibiotics.PatientNbr == pnbr2 & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr2),:), ...
         pmAMPred(pmAMPred.PatientNbr == pnbr1,:), pmAMPred(pmAMPred.PatientNbr == pnbr2,:), ...
         pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmInterpVolcube(pnbr, :, :), ...
-        pmTrCVFeatureIndex, trcvlabels, pmModelRes, pmOverallStats, ...
+        testfeatidx, testlabels, pmModelRes, pmOverallStats, ...
         pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr1,:), ...
         pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr2,:), ...
         measures, labelidx, pmFeatureParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile, studydisplayname);
-elseif runfunction == 7
+elseif plottype == 7
     % Quality Scores Results
     plotPRAndROCCurvesForPaper(pmModelRes.pmNDayRes(1), pmFeatureParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile);
     
-elseif runfunction == 8
+elseif plottype == 8
     % Comparison to Current Clinical Practice
     epilen = 7;
     temppmAMPred = pmAMPred;
     randmode = false;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode);
-elseif runfunction == 9
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(testfeatidx, pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode);
+elseif plottype == 9
     % Comparison to Current Clinical Practice - random classifier mode
     epilen = 7;
     temppmAMPred = pmAMPred;
     randmode = true;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode);
-elseif runfunction == 10
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(testfeatidx, pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode);
+elseif plottype == 10
     % plot measures and predictions for a single patient - version with all
     % measures for appendix
     [pnbr, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
@@ -125,13 +140,13 @@ elseif runfunction == 10
         pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr),:), ...
         pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
         pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmInterpVolcube(pnbr, :, :), ...
-        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        testfeatidx, testlabels, pmModelRes, ...
         pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
         measures, nmeasures, mvolstats, labelidx, pmFeatureParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile, studydisplayname);
-elseif runfunction == 11
+elseif plottype == 11
     % plot measures and predictions for a single patient
-    [pnbr, validresponse] = selectPatientNbr(pmTrCVPatientSplit.PatientNbr);
+    [pnbr, validresponse] = selectPatientNbr(testpatsplit.PatientNbr);
     if ~validresponse
         return;
     end
@@ -140,7 +155,7 @@ elseif runfunction == 11
         pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr),:), ...
         pmAMPred(pmAMPred.PatientNbr == pnbr,:), ...
         pmRawDatacube(pnbr, :, :), pmInterpDatacube(pnbr, :, :), pmInterpVolcube(pnbr, :, :), ...
-        pmTrCVFeatureIndex, trcvlabels, pmModelRes, ...
+        testfeatidx, testlabels, pmModelRes, ...
         pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr,:), ...
         measures, nmeasures, mvolstats, labelidx, pmFeatureParamsRow, lbdisplayname, ...
         plotsubfolder, basemodelresultsfile, studydisplayname);

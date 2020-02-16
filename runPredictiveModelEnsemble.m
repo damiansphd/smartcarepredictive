@@ -1,5 +1,10 @@
 clear; close all; clc;
 
+% add alignment model code directory to path to allow sharing of code
+basedir = setBaseDir();
+tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
+addpath(tempdir);
+
 basedir = setBaseDir();
 subfolder = 'DataFiles';
 [basefeatureparamfile, ~, ~, validresponse] = selectFeatureParameters();
@@ -78,6 +83,7 @@ for fs = 1:nfeatureparamsets
         % separate out test data and keep aside
         [pmTestFeatureIndex, pmTestMuIndex, pmTestSigmaIndex, pmTestNormFeatures, ...
          pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels, ...
+         pmTestPatientSplit, ...
          pmTrCVFeatureIndex, pmTrCVMuIndex, pmTrCVSigmaIndex, pmTrCVNormFeatures, ...
          pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels,...
          pmTrCVPatientSplit, nfolds] ...
@@ -230,6 +236,18 @@ for fs = 1:nfeatureparamsets
                                     return;
                                 end
                                 
+                                fprintf('Overall:\n');
+                                fprintf('Test: ');
+                                fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels, ntestexamples, pmAMPred, pmTestFeatureIndex, pmPatientSplit, epilen);
+
+                                fprintf('\n');
+
+                                hyperparamQS(hpcomb, :) = setHyperParamQSrow(hyperparamQS(hpcomb, :), lrval, ntrval, mlsval, mnsval, fvsval, pmDayRes);
+
+                                toc
+                                fprintf('\n');
+                                
                             else
                                 fprintf('Unknown run mode\n');
                                 return
@@ -272,7 +290,14 @@ for fs = 1:nfeatureparamsets
         
         pmFeatureParamsRow = pmThisFeatureParams(fs,:);
         pmModelParamsRow   = pmModelParams(mp,:);
-
+        
+        pmOtherRunParams = struct();
+        pmOtherRunParams.btmode     = btmode;
+        pmOtherRunParams.runtype    = runtype;
+        pmOtherRunParams.nbssamples = nbssamples;
+        pmOtherRunParams.epilen     = epilen;
+        pmOtherRunParams.lossfunc   = lossfunc;
+        
         fprintf('\n');
 
         tic
@@ -283,10 +308,11 @@ for fs = 1:nfeatureparamsets
         save(fullfile(basedir, subfolder, outputfilename), ...
             'pmTestFeatureIndex', 'pmTestMuIndex', 'pmTestSigmaIndex', 'pmTestNormFeatures', ...
             'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels', ...
+            'pmTestPatientSplit', ...
             'pmTrCVFeatureIndex', 'pmTrCVMuIndex', 'pmTrCVSigmaIndex', 'pmTrCVNormFeatures', ...
             'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels',...
-            'pmTrCVPatientSplit', 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmAMPredUpd', ...
-            'pmHyperParamQS');
+            'pmTrCVPatientSplit', ...
+            'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmAMPredUpd', 'pmHyperParamQS', 'pmOtherRunParams');
         toc
         fprintf('\n');
         
@@ -309,7 +335,7 @@ end
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-outputfilename = sprintf('BSQ-%s-%s-%s%s.mat', basefeatureparamfile, basemodelparamfile, basehpparamfile, rtsuffix);
+outputfilename = sprintf('BSQ-%s-%s-%s-%s-%s.mat', basefeatureparamfile, basemodelparamfile, basehpparamfile, rtsuffix, btsuffix);
 fprintf('Saving bootstrap results to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder, outputfilename), ...
      'pmBSAllQS', 'basefeatureparamfile', 'basemodelparamfile', 'nbssamples', 'ncombinations');

@@ -1,4 +1,4 @@
-function plotExByMonth(pmampred, pmTrCVFeatureIndex, trcvlabels, pmTrCVPatientSplit, ...
+function plotExByMonth(pmampred, testfeatidx, testlabels, testpatsplit, ...
     pmModelRes, basemodelresultsfile, plotsubfolder, lbdisplayname)
 
 % plotExByMonth - plots a histogram of the exacerbations by month
@@ -13,7 +13,7 @@ for n = 1:predictionduration
     plotsacross = 1;
     plotsdown = 4;
 
-    [pmampredtest] = getPredictedIntr(pmampred, pmTrCVFeatureIndex, pmTrCVPatientSplit, pmModelRes.pmNDayRes(n));
+    [pmampredtest] = getPredictedIntr(pmampred, testfeatidx, testpatsplit, pmModelRes.pmNDayRes(n));
     
     name1 = sprintf('%s-%s%dDIntrMnth', basemodelresultsfile, lbdisplayname, n);
     [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
@@ -32,9 +32,9 @@ for n = 1:predictionduration
     title('Predicted Treatment Starts by month');
     
     thisplot = thisplot + 1;
-    hdata = pmTrCVFeatureIndex;
-    hdata.Month(:) = month(pmTrCVFeatureIndex.CalcDate, 'shortname');
-    hdata.Label = trcvlabels;
+    hdata = testfeatidx;
+    hdata.Month(:) = month(testfeatidx.CalcDate, 'shortname');
+    hdata.Label = testlabels;
     hdata = hdata(:, {'Month', 'Label'});
 
     totals = varfun(@sum, hdata, 'GroupingVariables', {'Month'});
