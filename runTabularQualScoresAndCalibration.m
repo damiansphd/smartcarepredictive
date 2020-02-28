@@ -1,5 +1,11 @@
 clear; close all; clc;
 
+% add alignment model code directory to path to allow sharing of code
+basedir = setBaseDir();
+tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
+addpath(tempdir);
+
+
 [~, studydisplayname, ~] = selectStudy();
 [lb, lbdisplayname, validresponse] = selectLabelMethod();
 if validresponse == 0
@@ -69,4 +75,51 @@ writetable(pmCalibTable, fullfile(basedir, subfolder, outputfilename), 'Sheet', 
 
 toc
 fprintf('\n');
+
+plotsdown   = 1; 
+plotsacross = 1;
+thisplot = 1;
+widthinch = 3.5;
+heightinch = 3.5;
+fontname = 'Arial';
+
+colours = [ 250, 191, 143; ...
+            250, 191, 143; ...
+            247, 150,  70; ...
+            196, 215, 155; ...
+            196, 215, 155; ...
+            196, 215, 155; ...
+            155, 187,  89; ...
+            149, 179, 215; ...
+             79, 129, 189];
+ colours = colours ./ 255;
+ 
+
+outputfilename = strrep(bsqsfile, '.mat', '');
+plottitle = sprintf('%s - MeasContrib', outputfilename);
+[f, p] = createFigureAndPanelForPaper('', widthinch, heightinch);
+ax = subplot(plotsdown, plotsacross, thisplot, 'Parent', p);
+
+hold on;
+for i = 1:size(pmBSAllQSTable, 1)
+    tempstring = split(pmBSAllQSTable.RawMeas{i}, ':');
+    xlabeltext(i) = tempstring(2);
+    b = bar(ax, i, pmBSAllQSTable.AvgEPV(i));
+    b.FaceColor = colours(i, :);
+end
+ax.FontSize = 6;
+ax.FontName = fontname;
+xticks(ax, 1:size(pmBSAllQSTable, 1));
+ax.XTickLabel = xlabeltext;
+xtickangle(ax, 45);
+xlabel(ax, 'Measures', 'FontSize', 8);
+ylabel(ax, 'Episodic prediction value', 'FontSize', 8);
+xlim(ax, [0.4, size(pmBSAllQSTable, 1) + 0.6]);
+
+% save plot
+plotsubfolder = sprintf('Plots');
+savePlotInDir(f, plottitle, basedir, plotsubfolder);
+%savePlotInDirAsSVG(f, plottitle, plotsubfolder);
+close(f);
+
 

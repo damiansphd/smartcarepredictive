@@ -38,6 +38,7 @@ load(fullfile(basedir, subfolder, modelresultsfile), ...
 % added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1
     pmTrCVExABxElLabels = [];
+    pmTestExABxElLabels = [];
 end
 
 featureparamsfile = generateFileNameFromFullFeatureParams(pmFeatureParamsRow);

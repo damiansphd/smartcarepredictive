@@ -65,7 +65,7 @@ if (plottype == 2 || plottype == 4)
     end
 end
 
-if ((plottype == 13 || plottype == 14) && ~ismember(pmModelParamsRow.ModelVer, {'vPM10', 'vPM11', 'vPM12'}))
+if (((plottype == 13 || plottype == 14)) && ~ismember(pmModelParamsRow.ModelVer, {'vPM10', 'vPM11', 'vPM12', 'vPM13'}))
     fprintf('These plot types are only relevant for Random Forest and Gradient Boosted Models\n');
     return;
 end
@@ -76,24 +76,6 @@ testlabels    = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTestIVLa
             setTrainTestArraysForRunType(pmTrCVFeatureIndex, pmTrCVNormFeatures, trainlabels, pmTrCVPatientSplit, ...
                                          pmTestFeatureIndex, pmTestNormFeatures, testlabels, pmTestPatientSplit, ...
                                          pmOtherRunParams.runtype);
-
-%if pmOtherRunParams.runtype == 1
-%    trainfeatidx  = pmTrCVFeatureIndex;
-%    testfeatidx   = pmTrCVFeatureIndex;
-%    trainfeatures = pmTrCVNormFeatures;
-%    testfeatures  = pmTrCVNormFeatures;
-%    trainlabels   = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
-%    testlabels    = trainlabels;
-%    testpatsplit  = pmTrCVPatientSplit;
-%elseif pmOtherRunParams.runtype == 2
-%    trainfeatidx  = pmTrCVFeatureIndex;
-%    testfeatidx   = pmTestFeatureIndex;
-%    trainfeatures = pmTrCVNormFeatures;
-%    testfeatures  = pmTestNormFeatures;
-%    trainlabels   = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
-%    testlabels    = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels);
-%    testpatsplit  = pmTestPatientSplit;
-%end
 
 if plottype == 1
     % plot weights

@@ -1,13 +1,13 @@
-function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(pmTrCVFeatureIndex, pmModelRes, trcvlabels, pmAMPred, plotsubfolder, basefilename, epilen, randmode)
+function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(featidx, pmModelRes, labels, pmAMPred, plotsubfolder, basefilename, epilen, randmode)
 
 % plotModelQualityScoresForPaper - calculates model quality scores at
 % episode level and also how much earlier predictions are vs current
 % clinical practice
 
-patients = unique(pmTrCVFeatureIndex.PatientNbr);
+patients = unique(featidx.PatientNbr);
 pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 
-[epiindex, epilabl, epipred] = convertResultsToEpisodesNew(pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epilen);
+[epiindex, epilabl, epipred] = convertResultsToEpisodesNew(featidx, labels, pmModelRes.pmNDayRes(1).Pred, epilen);
 
 if randmode
     epilabl = epilabl(randperm(size(epilabl, 1)));
@@ -17,7 +17,7 @@ else
 end
 
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
-[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, epipred);
+[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipred);
 
 % use these for label method 5/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm5
 %chosenpt10pc = 203;
@@ -39,7 +39,7 @@ chosenpt20pc = find(epifpr < 0.221, 1, 'last');
 chosenpt33pc = 530;
 
 tempthresh = sort(epipred, 'descend');
-[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, pmTrCVFeatureIndex, trcvlabels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
+[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
 untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
 
 fprintf('At %.1f%% FPR (pt %d), the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...

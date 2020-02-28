@@ -1,13 +1,13 @@
-function [modelcalibration] = calcModelCalibration(trcvlabels, modeldaypred, binedges, nbins, fold)
+function [modelcalibration] = calcModelCalibration(testlabels, modeldaypred, binedges, nbins, fold)
 
 % calcModelCalibration - calculates the model calibration (and plots the
 % results)
 
-nexamples = size(trcvlabels, 1);
+nexamples = size(testlabels, 1);
 modelcalibration = table('Size',[nbins, 6], ...
     'VariableTypes', {'double', 'double', 'cell',     'double',     'double',   'double'}, ...
     'VariableNames', {'Fold',   'Bin',    'BinRange', 'TrueLabels', 'NbrInBin', 'Calibration'});
-results = [modeldaypred, trcvlabels, zeros(nexamples, 1)];
+results = [modeldaypred, testlabels, zeros(nexamples, 1)];
 
 for n = 1:nbins
     idx = results(:,1) >= binedges(n) & results(:,1) < binedges(n + 1);

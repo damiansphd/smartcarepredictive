@@ -36,24 +36,37 @@ name = sprintf('%s Pg%dof%d', basename, cpage, npages);
 
 for i = 1:ncombinations
     
-    featureparamsrow = pmBSAllQS(i).FeatureParams;
-    modelparamsrow   = pmBSAllQS(i).ModelParams;
+    featureparamsrow  = pmBSAllQS(i).FeatureParams;
+    modelparamsrow    = pmBSAllQS(i).ModelParams;
+    otherrunparamsrow = pmBSAllQS(i).OtherRunParams;
+    hpsuffix          = pmBSAllQS(i).hpsuffix;
+    rtsuffix          = pmBSAllQS(i).rtsuffix;
+    btsuffix          = pmBSAllQS(i).btsuffix;
+    
     featureparamsfile = generateFileNameFromFullFeatureParams(featureparamsrow);
     featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
     fprintf('Loading predictive model input data for %s\n', featureparamsfile);
     load(fullfile(basedir, subfolder, featureparamsmatfile), 'measures', 'nmeasures');
     mbasefilename = generateFileNameFromFullModelParams(featureparamsfile, modelparamsrow);
-    mresultsfilename = sprintf('%s ModelResults', mbasefilename);
+    mresultsfilename = sprintf('%s%s%s%s ModelResults', mbasefilename, hpsuffix, rtsuffix, btsuffix);
     modelparamsmatfile = sprintf('%s.mat', mresultsfilename);
     fprintf('Loading predictive model results for %s\n', mresultsfilename);
     load(fullfile(basedir, subfolder, modelparamsmatfile), 'pmModelRes', ...
-        'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels');
+        'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels', ...
+        'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels');
     % added for backward compatibility
     if exist('pmTrCVExABxElLabels', 'var') ~= 1
         pmTrCVExABxElLabels = [];
+        pmTestExABxElLabels = [];
     end
     labelidx = min(size(pmModelRes.pmNDayRes, 2), 5);
-    [trcvlabels] = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
+    
+    trainlabels   = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
+    testlabels    = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels);
+    [~, ~, trainlabels, ~, ~, ~, testlabels, ~] = setTrainTestArraysForRunType([], [], trainlabels, [], ...
+                                                        [], [], testlabels, [], otherrunparamsrow.runtype);
+                                     
+    %[trcvlabels] = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
 
     [resultrow, resultstring] = setBSQSTableDisplayRow(featureparamsrow, modelparamsrow, pmBSAllQS(i).NDayQS, measures, nmeasures);
     combtable = [combtable; resultrow];
@@ -63,7 +76,7 @@ for i = 1:ncombinations
     end
     
     fold = 0;
-    modelcalibration = calcModelCalibration(trcvlabels(:, labelidx), pmModelRes.pmNDayRes(labelidx).Pred, binedges, nbins, fold);
+    modelcalibration = calcModelCalibration(testlabels(:, labelidx), pmModelRes.pmNDayRes(labelidx).Pred, binedges, nbins, fold);
     [calibrow] = setCalibrationTableDisplayRow(resultrow, modelcalibration, nbins);
     calibtable = [calibtable; calibrow];
     
