@@ -6,6 +6,10 @@ function [shortname] = getShortNameForMeasure(measure)
 switch measure
     case 'ActivityRecording'
         shortname = 'Ac';
+    case 'AppetiteRecording'
+        shortname = 'Ap';
+    case 'BreathlessnessRecording'
+        shortname = 'Br'; 
     case {'CoughRecording'}
         shortname = 'Co';
     case 'LungFunctionRecording'
@@ -14,10 +18,18 @@ switch measure
         shortname = 'O2';
     case 'PulseRateRecording'
         shortname = 'Pu';
+    case 'RespiratoryRateRecording'
+        shortname = 'Rr';
     case {'SleepActivityRecording'}
         shortname = 'Sl';
+    case {'SleepDisturbanceRecording'}
+        shortname = 'Sd';
+    case {'SputumVolumeRecording'}
+        shortname = 'Sv';
     case 'TemperatureRecording'
         shortname = 'Te';
+    case 'TirednessRecording'
+        shortname = 'Ti';
     case 'WeightRecording'
         shortname = 'Wt';
     case {'WellnessRecording'}

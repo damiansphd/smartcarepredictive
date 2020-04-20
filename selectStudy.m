@@ -8,17 +8,20 @@ fprintf('-----------------------\n');
 fprintf('1: Smartcare\n');
 fprintf('2: Telemed\n');
 fprintf('3: Both Smartcare and Telemed\n');
+fprintf('4: Climb\n');
+fprintf('5: Breathe\n');
 fprintf('\n');
-studynbr = input('Choose study to run for: ');
+sstudynbr = input('Choose study to run for: ', 's');
 
-if studynbr > 3
+studynbr = str2double(sstudynbr);
+
+if (isnan(studynbr) || studynbr < 1 || studynbr > 5)
     fprintf('Invalid choice\n');
+    studynbr = -1;
+    studydisplayname = '**';
     return;
 end
-if isequal(studynbr,'')
-    fprintf('Invalid choice\n');
-    return;
-end
+
 fprintf('\n');
 
 if studynbr == 1
@@ -30,6 +33,12 @@ elseif studynbr == 2
 elseif studynbr == 3
     study = {'SC'; 'TM'};
     studydisplayname = 'SC_TM';
+elseif studynbr == 4
+    study = {'CL'};
+    studydisplayname = 'CL';
+elseif studynbr == 5
+    study = {'BR'};
+    studydisplayname = 'BR';
 else
     fprintf('Invalid study\n');
     return;
@@ -55,6 +64,16 @@ for a = 1:size(study,1)
         pmStudyInfo.MeasurementMatFile{a}   = 'telemeddata.mat';
         pmStudyInfo.ClinicalMatFile{a}      = 'telemedclinicaldata.mat';
         pmStudyInfo.AMPredMatFile{a}        = 'TMvEM4_sig4_mu4_ca2_sm2_rm4_ob1_im1_cm2_mm3_mo25_dw25_ex-28_obj1.36073688.mat';
+    elseif isequal(study(a), {'CL'})
+        pmStudyInfo.StudyName{a}            = 'Climb';
+        pmStudyInfo.MeasurementMatFile{a}   = 'climbdata.mat';
+        pmStudyInfo.ClinicalMatFile{a}      = 'climbclinicaldata.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'CLvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm15_mo25_dw25_nl1_rs4_ds1_ct5_scC-A_vs1_vm0.3_ni32_ex-27_obj1.38808296.mat';
+    elseif isequal(study(a), {'BR'})
+        pmStudyInfo.StudyName{a}            = 'Breathe';
+        pmStudyInfo.MeasurementMatFile{a}   = 'breathedata.mat';
+        pmStudyInfo.ClinicalMatFile{a}      = 'breatheclinicaldata.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct5_scA_vs0_vm0.0_ni48_ex-29_obj1.42602073.mat';
     else
         fprintf('Unknown study\n')
         return;

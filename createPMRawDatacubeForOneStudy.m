@@ -19,7 +19,7 @@ pmPatients = table('Size',[npatients, 17], ...
     'StudyStartdn', 'FirstMeasdn', 'LastMeasdn', 'RelFirstMeasdn', 'RelLastMeasdn'});
 
 pmAntibiotics = table('Size',[0, 14], ...
-    'VariableTypes', {'double', 'cell', 'double', 'cell', 'double',  'cell', ...
+    'VariableTypes', {'double', 'cell', 'double', 'cell', 'double', 'cell', ...
     'cell', 'cell', 'datetime', 'datetime', 'double', 'double', 'double', 'double'}, ...
     'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'AntibioticID', 'AntibioticName', ...
     'Route', 'HomeIV_s_', 'StartDate', 'StopDate', 'Startdn', 'Stopdn', 'RelStartdn', 'RelStopdn'});
@@ -51,7 +51,13 @@ for p = 1:npatients
         maxdays = pmPatients.RelLastMeasdn(p);
     end
 
-    tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate'});
+    if ismember(study, {'CL','BR'})
+        tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticName', 'Route', 'HomeIV_s', 'StartDate', 'StopDate'});
+        tempAntibiotics.Properties.VariableNames({'HomeIV_s'}) =  {'HomeIV_s_'};
+        tempAntibiotics.AntibioticID(:) = 0;
+    else
+        tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate'});
+    end
     temppnbr = array2table(p * ones(size(tempAntibiotics,1),1));
     temppnbr.Properties.VariableNames({'Var1'}) = {'PatientNbr'};
     tempstudy = array2table(cell(size(tempAntibiotics,1),1));

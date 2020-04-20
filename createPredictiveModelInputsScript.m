@@ -1,9 +1,12 @@
 clear; close all; clc;
 
+basedir = setBaseDir();
+tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
+addpath(tempdir);
+
 [studynbr, studydisplayname, pmStudyInfo] = selectStudy();
 nstudies = size(pmStudyInfo,1);
 
-basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 
 tic

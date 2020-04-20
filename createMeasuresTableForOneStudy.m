@@ -1,4 +1,4 @@
-function [measures, nmeasures] = createMeasuresTableForOneStudy(physdata)
+function [measures, nmeasures] = createMeasuresTableForOneStudy(physdata, study)
 
 % createMeasuresTable - creates the table of measures
 
@@ -14,7 +14,11 @@ measures.Index       = (1:nmeasures)';
 measures.Name        = unique(physdata.RecordingType);
 measures.DisplayName = replace(measures.Name, 'Recording', '');
 measures.Factor      = ones(nmeasures, 1);
-measures.Factor(ismember(measures.DisplayName, {'PulseRate'})) = -1;
+
+[invmeasarray] = getInvertedMeasures(study);
+%measures.Factor(ismember(measures.DisplayName, {'PulseRate'})) = -1;
+measures.Factor(ismember(measures.DisplayName, invmeasarray)) = -1;
+
 measures.RawMeas     = zeros(nmeasures, 1); % populate during model execution
 measures.BucketMeas  = zeros(nmeasures, 1); % populate during model execution
 measures.Range       = zeros(nmeasures, 1); % populate during model execution

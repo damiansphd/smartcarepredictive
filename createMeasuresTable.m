@@ -4,11 +4,14 @@ function [measures, nmeasures] = createMeasuresTable(pmStudyInfo, nstudies, base
 
 for a = 1:nstudies
     fprintf('Processing study %s\n', pmStudyInfo.StudyName{a});
-    load(fullfile(basedir, subfolder, pmStudyInfo.MeasurementMatFile{a}));
-    if isequal(pmStudyInfo.Study(a), {'TM'})
-        physdata = tmphysdata;
-    end
-    [temp_measures, temp_nmeasures] = createMeasuresTableForOneStudy(physdata);
+    study = pmStudyInfo.Study{a};
+    [datamatfile, ~, ~] = getRawDataFilenamesForStudy(study);
+    [physdata, ~] = loadAndHarmoniseMeasVars(datamatfile, subfolder, study);
+    %load(fullfile(basedir, subfolder, pmStudyInfo.MeasurementMatFile{a}));
+    %if isequal(pmStudyInfo.Study(a), {'TM'})
+    %    physdata = tmphysdata;
+    %end
+    [temp_measures, temp_nmeasures] = createMeasuresTableForOneStudy(physdata, study);
     if a == 1
         measures   = temp_measures;
         nmeasures  = temp_nmeasures;
