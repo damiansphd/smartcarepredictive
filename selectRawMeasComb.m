@@ -4,7 +4,7 @@ function [rm1, validresponse] = selectRawMeasComb()
 % results listing by
 
 validresponse = true;
-maxrmcomb = 54;
+maxrmcomb = 150;
 
 srm1 = input('Choose raw measures combination ? ', 's');
 

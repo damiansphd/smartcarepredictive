@@ -91,6 +91,7 @@ pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys
 pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
 pmAMPred.ElectiveTreatment = [];
 pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
+pmAMPred(isnan(pmAMPred.PatientNbr), :) = [];
 
 pmDatacube = NaN(npatients, maxdays, nmeasures);
 

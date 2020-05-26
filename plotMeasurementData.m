@@ -13,8 +13,15 @@ line(ax, days, mdata, ...
     'MarkerEdgeColor', markerec, ...
     'MarkerFaceColor', markerfc);
 xl = [min(min(days), xl(1)) max(max(days), xl(2))];
+if (xl(2) - xl(1) < 100)
+    xl(2) = xl(1) + 100;
+end
 xlim(xl);
 yl = [min(min(mdata * 0.95), yl(1)) max(max(mdata * 1.05), yl(2))];
+if yl(1) == 0 && yl(2) == 0
+    yl(1) = 0;
+    yl(2) = 1;
+end
 ylim(yl);
 
 set(gca,'fontsize',6);

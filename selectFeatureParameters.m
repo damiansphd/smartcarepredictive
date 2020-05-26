@@ -3,9 +3,12 @@ function [modelrpfile, modelrpidx, modelrunparams, validresponse] = selectFeatur
 % selectFeatureParameters - select the matlab saved variable file for the 
 % combinations of parameters to create features and labels for
 
+[~, studydisplayname, ~] = selectStudy();
+
 basedir = setBaseDir();
 subfolder = 'DataFiles';
-modelinputslisting = dir(fullfile(basedir, subfolder, '*pmfp*.xlsx'));
+matchstring = sprintf('*pmfp*%s*.xlsx', studydisplayname);
+modelinputslisting = dir(fullfile(basedir, subfolder, matchstring));
 modelrunparams = cell(size(modelinputslisting,1),1);
 for a = 1:size(modelrunparams,1)
     modelrunparams{a} = strrep(modelinputslisting(a).name, '.xlsx', '');

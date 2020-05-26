@@ -4,33 +4,55 @@ function [shortname] = getShortNameForMeasure(measure)
 % measure passed in
 
 switch measure
-    case 'ActivityRecording'
+    case {'ActivityRecording'}
         shortname = 'Ac';
-    case 'AppetiteRecording'
+    case {'AppetiteRecording'}
         shortname = 'Ap';
-    case 'BreathlessnessRecording'
+    case {'BreathlessnessRecording'}
         shortname = 'Br'; 
+    case {'CalorieRecording'}
+        shortname = 'Ca';
     case {'CoughRecording'}
         shortname = 'Co';
-    case 'LungFunctionRecording'
+    case {'FEF2575Recording'}
+        shortname = 'Ff';
+    case {'FEV075Recording'}
+        shortname = 'F7';
+    case {'FEV1DivFEV6Recording'}
+        shortname = 'Fd';
+    case {'FEV1Recording'}
+        shortname = 'F1';
+    case {'FEV6Recording'}
+        shortname = 'F6';
+    case {'HasColdOrFluRecording'}
+        shortname = 'Cf';
+    case {'HasHayFeverRecording'}
+        shortname = 'Hy';    
+    case {'LungFunctionRecording'}
         shortname = 'Lu';
-    case 'O2SaturationRecording'
+    case {'MinsAsleepRecording'}
+        shortname = 'Ms';
+    case {'MinsAwakeRecording'}
+        shortname = 'Ma';    
+    case {'O2SaturationRecording'}
         shortname = 'O2';
-    case 'PulseRateRecording'
+    case {'PulseRateRecording'}
         shortname = 'Pu';
-    case 'RespiratoryRateRecording'
+    case {'RespiratoryRateRecording'}
         shortname = 'Rr';
+    case {'RestingHRRecording'}
+        shortname = 'Hr';
     case {'SleepActivityRecording'}
         shortname = 'Sl';
     case {'SleepDisturbanceRecording'}
         shortname = 'Sd';
     case {'SputumVolumeRecording'}
         shortname = 'Sv';
-    case 'TemperatureRecording'
+    case {'TemperatureRecording'}
         shortname = 'Te';
-    case 'TirednessRecording'
+    case {'TirednessRecording'}
         shortname = 'Ti';
-    case 'WeightRecording'
+    case {'WeightRecording'}
         shortname = 'Wt';
     case {'WellnessRecording'}
         shortname = 'We';    
