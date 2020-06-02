@@ -7,6 +7,8 @@ function plotMeasuresAndPredictionsForPatient(patientrow, pabs, pexsts, prawdata
 % with the predictions from the predictive classification model and the 
 % true labels.
 
+basedir = setBaseDir();
+
 smfn       = pmFeatureParamsRow.smfunction;
 smwin      = pmFeatureParamsRow.smwindow;
 smln       = pmFeatureParamsRow.smlength;
@@ -17,20 +19,8 @@ pmaxdays = patientrow.LastMeasdn - patientrow.FirstMeasdn + 1;
 
 mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 
-plotsacross = 1;
-if nmeasures < 6
-    plotsdown = 8;
-else
-    plotsdown = nmeasures + 1;
-end
-
 baseplotname1 = sprintf('%s-%s%dDPredP%d(%s%d)', ...
     basefilename, lbdisplayname, labelidx, patientnbr, patientrow.Study{1}, patientrow.ID);
-
-[f1,p1] = createFigureAndPanel(baseplotname1, 'Portrait', 'A4');
-left_color = [0, 0.65, 1];
-right_color = [0.13, 0.55, 0.13];
-set(f1,'defaultAxesColorOrder',[left_color; right_color]);
 
 pivabsdates = pabs(ismember(pabs.Route, 'IV'),{'Startdn', 'Stopdn', 'RelStartdn','RelStopdn'});
 for ab = 1:size(pivabsdates,1)
@@ -72,7 +62,18 @@ for d = 1:size(ppred,1)
     plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
 end
 
-%ax1 = gobjects(nmeasures + 1,1);
+plotsacross = 1;
+plotsdown = 9;
+page = 1;
+npages = ceil((nmeasures + 1) / plotsdown);
+
+plotname = sprintf('%s-P%dof%d', baseplotname1, page, npages);
+[f1,p1] = createFigureAndPanel(plotname, 'Portrait', 'A4');
+left_color = [0, 0.65, 1];
+right_color = [0.13, 0.55, 0.13];
+set(f1,'defaultAxesColorOrder',[left_color; right_color]);
+
+thisplot = 1;
 
 for m = 1:nmeasures
     
@@ -98,74 +99,87 @@ for m = 1:nmeasures
             (pmeasstats.Mean(pmeasstats.MeasureIndex == m) + pmeasstats.StdDev(pmeasstats.MeasureIndex == m))];
     end
     
-    ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
-    yyaxis(ax1(m),'left');
+    ax1(thisplot) = subplot(plotsdown, plotsacross, thisplot, 'Parent',p1);
+    yyaxis(ax1(thisplot),'left');
     
-    [xl, yl] = plotMeasurementData(ax1(m), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    %[xl, yl] = plotMeasurementData(ax1(m), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl] = plotMeasurementData(ax1(m), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
+    [xl, yl] = plotMeasurementData(ax1(thisplot), days, mdata, xl, yl, plottext, combinedmask, left_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    %[xl, yl] = plotMeasurementData(ax1(thisplot), days, smooth(mdata,5), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(thisplot), days, applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, m, mfev1idx), xl, yl, plottext, combinedmask, left_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl] = plotMeasurementData(ax1(thisplot), days, interppts, xl, yl, plottext, combinedmask, left_color, 'none', 1.0, 'o', 1.0, lint_color, lint_color);
     
     for ab = 1:size(poralabsdates,1)
         hold on;
-        plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
+        plotFillArea(ax1(thisplot), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
         hold off;
     end
     
     for ab = 1:size(pivabsdates,1)
         hold on;
-        plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
+        plotFillArea(ax1(thisplot), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
         hold off;
     end
     
     for ex = 1:size(pexstsdates, 1)
         hold on;
-        [xl, yl] = plotVerticalLine(ax1(m), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-        plotFillArea(ax1(m), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        [xl, yl] = plotVerticalLine(ax1(thisplot), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
+        plotFillArea(ax1(thisplot), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
         if pexstsdates.RelLB2(ex) ~= -1
-            plotFillArea(ax1(m), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+            plotFillArea(ax1(thisplot), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
         end
     end
     
-    yl2 = [0 mvolstats(m, 6)];
-    yyaxis(ax1(m),'right');
+    yl2 = [0 mvolstats(thisplot, 6)];
+    yyaxis(ax1(thisplot),'right');
     
-    [xl, yl2] = plotMeasurementData(ax1(m), days(normwindow+2:end), vdata(normwindow+2:end), xl, yl2, plottext, combinedmask, right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl2] = plotMeasurementData(ax1(m), days(normwindow+2:end), smooth(vdata(normwindow+2:end),5), xl, yl2, plottext, combinedmask, right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
-    [xl, yl2] = plotMeasurementData(ax1(m), days(normwindow+2:end), intervppts(normwindow+2:end), xl, yl2, plottext, combinedmask, right_color, 'none', 1.0, 'o', 1.0, rint_color, rint_color);
+    [xl, yl2] = plotMeasurementData(ax1(thisplot), days(normwindow+2:end), vdata(normwindow+2:end), xl, yl2, plottext, combinedmask, right_color, ':', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(thisplot), days(normwindow+2:end), smooth(vdata(normwindow+2:end),5), xl, yl2, plottext, combinedmask, right_color, '-', 1.0, 'none', 1.0, 'blue', 'green');
+    [xl, yl2] = plotMeasurementData(ax1(thisplot), days(normwindow+2:end), intervppts(normwindow+2:end), xl, yl2, plottext, combinedmask, right_color, 'none', 1.0, 'o', 1.0, rint_color, rint_color);
+
+    thisplot = thisplot + 1;
+    if thisplot > plotsdown
+        savePlotInDir(f1, plotname, basedir, plotsubfolder);
+        close(f1);
+        thisplot = 1;
+        page = page + 1;
+        plotname = sprintf('%s-P%dof%d', baseplotname1, page, npages);
+        [f1,p1] = createFigureAndPanel(plotname, 'Portrait', 'A4');
+        left_color = [0, 0.65, 1];
+        right_color = [0.13, 0.55, 0.13];
+        set(f1,'defaultAxesColorOrder',[left_color; right_color]);
+    end
 end
 
 % Predictions for Labels
-m = nmeasures + 1;
-ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent',p1);
+
+ax1(thisplot) = subplot(plotsdown, plotsacross, thisplot, 'Parent',p1);
 xlim(xl);
 yl = [0 1];
 ylim(yl);
 plottitle = sprintf('%d Day Prediction for %s Labels', labelidx, lbdisplayname);
-[xl, yl] = plotMeasurementData(ax1(m), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
-[xl, yl] = plotMeasurementData(ax1(m), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
+[xl, yl] = plotMeasurementData(ax1(thisplot), days, plabeldata, xl, yl, plottitle, 0, 'green', '-', 1.0, 'none', 1.0, 'blue', 'green');
+[xl, yl] = plotMeasurementData(ax1(thisplot), days, ppreddata, xl, yl, plottitle, 0, 'black', '-', 1.0, 'none', 1.0, 'blue', 'green');
 
 for ab = 1:size(poralabsdates, 1)
     hold on;
-    plotFillArea(ax1(m), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
+    plotFillArea(ax1(thisplot), poralabsdates.RelStartdn(ab), poralabsdates.RelStopdn(ab), yl(1), yl(2), 'yellow', 0.1, 'none');
     hold off;
 end
 for ab = 1:size(pivabsdates, 1)
     hold on;
-    plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
+    plotFillArea(ax1(thisplot), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
     hold off;
 end
 for ex = 1:size(pexstsdates, 1)
     hold on;
-    [xl, yl] = plotVerticalLine(ax1(m), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
-    plotFillArea(ax1(m), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+    [xl, yl] = plotVerticalLine(ax1(thisplot), pexstsdates.Pred(ex), xl, yl, 'blue', '-', 1.0);
+    plotFillArea(ax1(thisplot), pexstsdates.RelLB1(ex), pexstsdates.RelUB1(ex), yl(1), yl(2), 'blue', 0.1, 'none');
     if pexstsdates.RelLB2(ex) ~= -1
-        plotFillArea(ax1(m), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
+        plotFillArea(ax1(thisplot), pexstsdates.RelLB2(ex), pexstsdates.RelUB2(ex), yl(1), yl(2), 'blue', 0.1, 'none');
     end
 end
 
 basedir = setBaseDir();
-savePlotInDir(f1, baseplotname1, basedir, plotsubfolder);
+savePlotInDir(f1, plotname, basedir, plotsubfolder);
 close(f1);
 
 predictionduration = size(pmModelRes.pmNDayRes, 2);

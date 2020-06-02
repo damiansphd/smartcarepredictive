@@ -73,7 +73,8 @@ for a = 1:size(study,1)
         pmStudyInfo.StudyName{a}            = 'Breathe';
         pmStudyInfo.MeasurementMatFile{a}   = 'breathedata.mat';
         pmStudyInfo.ClinicalMatFile{a}      = 'breatheclinicaldata.mat';
-        pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct5_sc13-V_vs1_vm0.2_ni51_ex-27_obj1.32442172.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct5_sc13-V_vs1_vm0.2_ni51_ex-27_obj1.32442172.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct5_sc13-V_vs1_vm0.5_ni55_ex-27_obj1.22612209.mat';
     else
         fprintf('Unknown study\n')
         return;

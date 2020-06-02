@@ -1,7 +1,7 @@
 function [pmMucube, pmSigmacube, pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
     muntilepoints, sigmantilepoints] = createPMNormWindowcube(pmPatients, pmInterpcube, ...
                     pmOverallStats, pmPatientMeasStats, normmethod, normwindow, nbuckpmeas, ...
-                    npatients, maxdays, measures, nmeasures)
+                    npatients, maxdays, measures, nmeasures, study)
 
 % createPMNormWindowcube - creates the normalisation window cube (10 day
 % upper quartile mean prior to feature window) - for use with normalisation
@@ -59,7 +59,10 @@ elseif (normmethod == 3 || normmethod == 4)
             pmSigmacube(p, 1:pmaxdays, m) = pstd;
             for d = (normwindow +1):pmaxdays
                 pmuwind = pmInterpcube(p, (d - normwindow):(d - 1), m);
-                if ~isequal(measures.DisplayName(m), cellstr('PulseRate'))
+                % could change this to check if factor = -1 instead or use
+                % getInvertedMeasures
+                %if ~isequal(measures.DisplayName(m), cellstr('PulseRate'))
+                if measures.Factor(m) == 1
                     pmuwind = sort(pmuwind(~isnan(pmuwind)), 'ascend');
                 else
                     pmuwind = sort(pmuwind(~isnan(pmuwind)), 'descend');
@@ -80,6 +83,31 @@ else
     fprintf('Unknown normalisation method\n');
 end
 
+% for project breathe, exclude certain measures from normalisation
+exnormmeas   = getExNormMeasures(study);
+midx = ismember(measures.DisplayName, exnormmeas);
+if ismember(study, {'BR'})
+    if normmethod == 1
+        pmMucube(:, :, midx)    = 0;
+        pmSigmacube(:, :, midx) = 1;
+    elseif normmethod == 2
+        for p = 1:npatients
+            pmaxdays = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
+            pmMucube(:, 1:pmaxdays, midx)     = 0;
+            pmSigmacube(:, 1:pmaxdays, midx)  = 1;
+        end
+    elseif (normmethod == 3 || normmethod == 4)
+        for p = 1:npatients
+            pmaxdays = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
+            pmMucube(p, (normwindow + 1):pmaxdays, midx) = 0;
+            pmSigmacube(p, 1:pmaxdays, midx)             = 1;
+        end
+    else
+        fprintf('Unknown normalisation method\n');   
+    end
+end
+
+    
 % create normalised Mu and Sigma cubes (for use as features)
 munorm     = zeros(nmeasures, 2);
 sigmanorm  = zeros(nmeasures,2);
@@ -96,8 +124,13 @@ for m = 1:nmeasures
         munorm(m, 2)     = std(meandata);
         sigmanorm(m, 1)  = mean(stddata);
         sigmanorm(m, 2)  = std(stddata);
-        pmMuNormcube(:, :, m)    = (pmMucube(:, :, m)    - munorm(m, 1))    ./ munorm(m, 2);
-        pmSigmaNormcube(:, :, m) = (pmSigmacube(:, :, m) - sigmanorm(m, 1)) ./ sigmanorm(m, 2);
+        if ismember(study, {'BR'}) && midx(m)
+            pmMuNormcube(:, :, m)    = pmMucube(:, :, m);
+            pmSigmaNormcube(:, :, m) = pmSigmacube(:, :, m);
+        else
+            pmMuNormcube(:, :, m)    = (pmMucube(:, :, m)    - munorm(m, 1))    ./ munorm(m, 2);
+            pmSigmaNormcube(:, :, m) = (pmSigmacube(:, :, m) - sigmanorm(m, 1)) ./ sigmanorm(m, 2);
+        end
     end
 end
 

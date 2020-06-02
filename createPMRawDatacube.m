@@ -11,24 +11,12 @@ for a = 1:nstudies
     [physdata, offset] = loadAndHarmoniseMeasVars(datamatfile, subfolder, study);
     [cdPatient, ~, cdAntibiotics, ~, ~, ~, ...
         ~, ~, ~, ~] = loadAndHarmoniseClinVars(clinicalmatfile, subfolder, study);
-    %fprintf('Loading clinical data\n');
-    %load(fullfile(basedir, subfolder, pmStudyInfo.ClinicalMatFile{a}));
-    %fprintf('Loading measurement data\n');
-    %load(fullfile(basedir, subfolder, pmStudyInfo.MeasurementMatFile{a}));
     
     fprintf('Loading alignment model prediction results\n');
     load(fullfile(basedir, subfolder, pmStudyInfo.AMPredMatFile{a}), 'amInterventions', 'ex_start');
     fprintf('Loading elective treatments\n');
     pmElectiveTreatments = readtable(fullfile(basedir, 'DataFiles', pmStudyInfo.ElectiveTrFile{a}));
 
-    % update this to use Alignment model functions when expanding to project climb
-    %if isequal(pmStudyInfo.Study(a), {'TM'})
-    %    physdata = tmphysdata;
-    %    cdPatient = tmPatient;
-    %    cdAntibiotics = tmAntibiotics;
-    %    offset = tmoffset;
-    %end
-    
     % store the study offset in pmStudyInfo table
     pmStudyInfo.Offset(a) = offset;
     

@@ -131,6 +131,12 @@ ax = subplot(plotsdown, plotsacross, thisplot, 'Parent', p);
 hold on;
 for i = 1:size(pmBSAllQSTable, 1)
     tempstring = split(pmBSAllQSTable.RawMeas{i}, ':');
+    if ismember(tempstring(1), {'1'})
+        tempstring = split(pmBSAllQSTable.Volatility{i}, ':');
+        if ismember(tempstring(1), {'1'})
+            tempstring = split(pmBSAllQSTable.PMean{i}, ':');
+        end 
+    end
     % could add a check here in case raw meas = none to check volfeat etc
     xlabeltext(i) = tempstring(2);
     b = bar(ax, i, pmBSAllQSTable.AvgEPV(i));
