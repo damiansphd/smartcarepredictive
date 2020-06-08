@@ -281,6 +281,98 @@ for a = 1:size(masks,1)
     elseif masks(a) == 122
         fprintf('Set for Cough, FEV1, MinsAsleep, O2Saturation, RestingHR, Temperature, Wellness\n');
         keepidx = ismember(measures.DisplayName,{'Cough', 'FEV1', 'MinsAsleep', 'O2Saturation', 'RestingHR', 'Temperature', 'Wellness'});
+    elseif masks(a) == 201
+        fprintf('Set for Activity\n');
+        keepidx = ismember(measures.DisplayName,{'Activity'});
+    elseif masks(a) == 202
+        fprintf('Set for Appetite\n');
+        keepidx = ismember(measures.DisplayName,{'Appetite'});
+    elseif masks(a) == 203
+        fprintf('Set for Breathlessness\n');
+        keepidx = ismember(measures.DisplayName,{'Breathlessness'});
+    elseif masks(a) == 204
+        fprintf('Set for Cough\n');
+        keepidx = ismember(measures.DisplayName,{'Cough'});
+    elseif masks(a) == 205
+        fprintf('Set for FEV1\n');
+        keepidx = ismember(measures.DisplayName,{'FEV1'});
+    elseif masks(a) == 206
+        fprintf('Set for InterpFEV1\n');
+        keepidx = ismember(measures.DisplayName,{'InterpFEV1'});
+    elseif masks(a) == 207
+        fprintf('Set for InterpWeight\n');
+        keepidx = ismember(measures.DisplayName,{'InterpWeight'});
+    elseif masks(a) == 208
+        fprintf('Set for O2Saturation\n');
+        keepidx = ismember(measures.DisplayName,{'O2Saturation'});
+    elseif masks(a) == 209
+        fprintf('Set for PulseRate\n');
+        keepidx = ismember(measures.DisplayName,{'PulseRate'});
+    elseif masks(a) == 210
+        fprintf('Set for RespiratoryRate\n');
+        keepidx = ismember(measures.DisplayName,{'RespiratoryRate'});
+    elseif masks(a) == 211
+        fprintf('Set for SleepActivity\n');
+        keepidx = ismember(measures.DisplayName,{'SleepActivity'});
+    elseif masks(a) == 212
+        fprintf('Set for SleepDisturbance\n');
+        keepidx = ismember(measures.DisplayName,{'SleepDisturbance'});
+    elseif masks(a) == 213
+        fprintf('Set for SputumVolume\n');
+        keepidx = ismember(measures.DisplayName,{'SputumVolume'});
+    elseif masks(a) == 214
+        fprintf('Set for Temperature\n');
+        keepidx = ismember(measures.DisplayName,{'Temperature'});
+    elseif masks(a) == 215
+        fprintf('Set for Tiredness\n');
+        keepidx = ismember(measures.DisplayName,{'Tiredness'});
+    elseif masks(a) == 216
+        fprintf('Set for Weight\n');
+        keepidx = ismember(measures.DisplayName,{'Weight'});
+    elseif masks(a) == 217
+        fprintf('Set for Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Wellness'});
+    elseif masks(a) == 218
+        fprintf('Set for Cough, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'Wellness'});
+    elseif masks(a) == 219
+        fprintf('Set for Appetite, SleepActivity, SputumVolume, Tiredness\n');
+        keepidx = ismember(measures.DisplayName,{'Appetite', 'SleepActivity', 'SputumVolume', 'Tiredness'});
+    elseif masks(a) == 220
+        fprintf('Set for Appetite, Cough, SleepActivity, SputumVolume, Tiredness, Wellness,\n');
+        keepidx = ismember(measures.DisplayName,{'Appetite', 'Cough', 'SleepActivity', 'SputumVolume', 'Tiredness', 'Wellness'});
+    elseif masks(a) == 221
+        fprintf('Set for FEV1, O2Saturation, PulseRate\n');
+        keepidx = ismember(measures.DisplayName,{'FEV1', 'O2Saturation', 'PulseRate'});
+    elseif masks(a) == 222
+        fprintf('Set for FEV1, O2Saturation, PulseRate, Temperature, Weight\n');
+        keepidx = ismember(measures.DisplayName,{'FEV1', 'O2Saturation', 'PulseRate', 'Temperature', 'Weight'});
+    elseif masks(a) == 223
+        fprintf('Set for Cough, FEV1, O2Saturation, PulseRate, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Cough', 'FEV1', 'O2Saturation', 'PulseRate', 'Wellness'});
+    elseif masks(a) == 224
+        fprintf('Set for Appetite, Cough, FEV1, O2Saturation, PulseRate, SleepActivity, SputumVolume, Temperature, Tiredness, Weight, Wellness,\n');
+        keepidx = ismember(measures.DisplayName,{'Appetite', 'Cough', 'FEV1', 'O2Saturation', 'PulseRate', ...
+                                                'SleepActivity', 'SputumVolume', 'Temperature', 'Tiredness', 'Wellness', 'Weight'});
+    elseif masks(a) == 225
+        fprintf('Set for Appetite, Breathlessness, Cough, SleepActivity, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Appetite', 'Breathlessness', 'Cough', 'SleepActivity', 'Wellness'});
+    elseif masks(a) == 226
+        fprintf('Set for PulseRate, Temperature\n');
+        keepidx = ismember(measures.DisplayName,{'PulseRate', 'Temperature'});
+    elseif masks(a) == 227
+        fprintf('Set for Appetite, Breathlessness, Cough, PulseRate, SleepActivity, Temperature, Wellness\n');
+        keepidx = ismember(measures.DisplayName,{'Appetite', 'Breathlessness', 'Cough', 'PulseRate', 'SleepActivity', 'Temperature', 'Wellness'});    
+    elseif masks(a) == 228
+        fprintf('Set for Activity, Appetite, Breathlessness, Cough, SleepActivity, SleepDisturbance, Tiredness, Wellness,\n');
+        keepidx = ismember(measures.DisplayName,{'Activity', 'Appetite', 'Breathlessness', 'Cough', 'SleepActivity', 'SleepDisturbance', 'Tiredness', 'Wellness'});
+    elseif masks(a) == 229
+        fprintf('Set for O2Saturation, PulseRate, Temperature, Weight\n');
+        keepidx = ismember(measures.DisplayName,{'O2Saturation', 'PulseRate', 'Temperature', 'Weight'});
+    elseif masks(a) == 230
+        fprintf('Set for Activity, Appetite, Breathlessness, Cough, O2Saturation, PulseRate, SleepActivity, SleepDisturbance, Temperature, Tiredness, Weight, Wellness,\n');
+        keepidx = ismember(measures.DisplayName,{'Activity', 'Appetite', 'Breathlessness', 'Cough', 'O2Saturation', ...
+                                                 'PulseRate', 'SleepActivity', 'SleepDisturbance', 'Temperature', 'Tiredness', 'Weight', 'Wellness'});
     end
     
     mask(keepidx) = 1;
