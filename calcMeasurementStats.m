@@ -26,7 +26,8 @@ for p = 1:npatients
         row = nmeasures * (p-1) + m;
         data = pmRawDatacube(p, ~isnan(pmRawDatacube(p, :, m)), m)';
         if (size(data,1) > 2)
-            pmPatientMeasStats.PatientNbr(row)   = p;
+            %pmPatientMeasStats.PatientNbr(row)   = p;
+            pmPatientMeasStats.PatientNbr(row)   = pmPatients.PatientNbr(p);
             pmPatientMeasStats.Study(row)        = pmPatients.Study(p);
             pmPatientMeasStats.ID(row)           = pmPatients.ID(p);
             pmPatientMeasStats.MeasureIndex(row) = m;

@@ -63,7 +63,7 @@ for d = 1:size(ppred,1)
 end
 
 plotsacross = 1;
-plotsdown = 9;
+plotsdown = 10;
 page = 1;
 npages = ceil((nmeasures + 1) / plotsdown);
 

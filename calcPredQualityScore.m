@@ -17,10 +17,17 @@ mdlres.LowP   = sum((pmampredupd.MaxPred(idx) <  mthres),1);
 mdlres.PScore = 100 * (mdlres.HighP + (0.5 * mdlres.MedP)) / sum(idx,1);
 
 idx = pmampredupd.ElectiveTreatment == 'Y';
-mdlres.ElecHighP  = sum((pmampredupd.MaxPred(idx) >= hthres),1);
-mdlres.ElecMedP   = sum((pmampredupd.MaxPred(idx) <  hthres & pmampredupd.MaxPred(idx) >= mthres),1);
-mdlres.ElecLowP   = sum((pmampredupd.MaxPred(idx) <  mthres),1);
-mdlres.ElecPScore = 100 * (mdlres.ElecLowP + (0.5 * mdlres.ElecMedP)) / sum(idx,1);
+if sum(idx, 1) > 0
+    mdlres.ElecHighP  = sum((pmampredupd.MaxPred(idx) >= hthres),1);
+    mdlres.ElecMedP   = sum((pmampredupd.MaxPred(idx) <  hthres & pmampredupd.MaxPred(idx) >= mthres),1);
+    mdlres.ElecLowP   = sum((pmampredupd.MaxPred(idx) <  mthres),1);
+    mdlres.ElecPScore = 100 * (mdlres.ElecLowP + (0.5 * mdlres.ElecMedP)) / sum(idx,1);
+else
+    mdlres.ElecHighP  = 0;
+    mdlres.ElecMedP   = 0;
+    mdlres.ElecLowP   = 0;
+    mdlres.ElecPScore = 100;
+end
 
 fprintf('PScore = %.1f%% (%d/%d/%d), ElecPScore = %.1f%% (%d/%d/%d) ', mdlres.PScore, mdlres.HighP, ...
     mdlres.MedP, mdlres.LowP, mdlres.ElecPScore, mdlres.ElecHighP, mdlres.ElecMedP, mdlres.ElecLowP);
