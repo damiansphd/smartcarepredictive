@@ -11,8 +11,10 @@ mstestqs.ScaledDateNumFrom = pmmsscenario.ScaledDateNumFrom;
 mstestqs.ScaledDateNumTo   = pmmsscenario.ScaledDateNumTo;
 mstestqs.ScenarioType      = pmmsscenario.ScenarioType;
 mstestqs.MMask             = pmmsscenario.MMask;
+mstestqs.MMaskText         = pmmsscenario.MMaskText;
 mstestqs.Frequency         = pmmsscenario.Frequency;
 mstestqs.Duration          = pmmsscenario.Duration ;
+mstestqs.Percentage        = pmmsscenario.Percentage;
 
 mstestqs.AvgLoss           = foldhpTestQS.AvgLoss;
 mstestqs.PScore            = foldhpTestQS.PScore;

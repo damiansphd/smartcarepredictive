@@ -182,6 +182,7 @@ basedir = setBaseDir();
 savePlotInDir(f1, plotname, basedir, plotsubfolder);
 close(f1);
 
+
 predictionduration = size(pmModelRes.pmNDayRes, 2);
 if predictionduration > 1
     plotsacross = 1;
