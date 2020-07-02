@@ -7,11 +7,14 @@ plot(ax, 100 * binmids, 100 * binmids, 'Color', color1);
 plot(ax, 100 * binmids, modelcalibration, 'Color', color2, 'Marker', 'o');
 plot(ax, 100 * binmids(sdidx), modelcalibration(sdidx), 'Color', color3, 'Marker', 'o', 'LineStyle', 'none');
 hold off;
-set(gca,'fontsize',6);
+ax.FontSize = 6;
+%set(gca,'fontsize',6);
 title(ax, plottitle,'FontSize', 6);
 legend(ax, 'Ideal', 'Actual', 'Actual (Low Count)', 'Location', 'northwest');
-xlabel('Bin Mid-Points', 'FontSize', 6);
-ylabel('Actual Predictions', 'FontSize', 6); 
+xlabel(ax, 'Bin Mid-Points', 'FontSize', 6);
+ylabel(ax, 'Actual Predictions', 'FontSize', 6); 
+xlim(ax, [0 100]);
+xlim(ax, [0 100]);
 
 end
 

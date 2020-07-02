@@ -1,10 +1,10 @@
-function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmBuckMeasFeats, pmRangeFeats, pmVolFeats, ...
+function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmMSFeats, pmBuckMeasFeats, pmRangeFeats, pmVolFeats, ...
         pmAvgSegFeats, pmVolSegFeats, pmCChangeFeats, pmPMeanFeats, pmPStdFeats, ...
         pmBuckPMeanFeats, pmBuckPStdFeats, pmDateFeats, pmDemoFeats, ...
         pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels] = ...
     createBaseFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, ...
             pmInterpDatacube, pmInterpVolcube, pmInterpSegVolcube, ...
-            pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ...
+            pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, pmMSDatacube, ...
             pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
             pmMucube, pmSigmacube, ...
             measures, nmeasures, npatients, maxdays, ...
@@ -34,7 +34,7 @@ end
 
 % set various variables
 [featureduration, predictionduration, datefeat, nbuckets, navgseg, nvolseg, nbuckpmeas, ...
-          nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
+          nrawfeatures, nmsfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
           nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
           nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures] = ...
             setBaseNumMeasAndFeatures(basefeatparamsrow, nmeasures);
@@ -47,6 +47,7 @@ pmMuIndex         = zeros(nexamples, nmeasures);
 pmSigmaIndex      = zeros(nexamples, nmeasures);
 
 pmRawMeasFeats   = zeros(nexamples, nrawfeatures);
+pmMSFeats        = zeros(nexamples, nmsfeatures);
 pmBuckMeasFeats  = zeros(nexamples, nbucketfeatures);
 pmRangeFeats     = zeros(nexamples, nrangefeatures);
 pmVolFeats       = zeros(nexamples, nvolfeatures);
@@ -109,25 +110,28 @@ for p = 1:npatients
             % 1) Raw features
             pmRawMeasFeats(example, :) = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, nrawfeatures]);
             
-            % 2) Bucketed features
+            % 2) Missingness features
+            pmMSFeats(example, :) = reshape(pmMSDatacube(p, (d - featureduration + 1): d, :), [1, nmsfeatures]);
+            
+            % 3) Bucketed features
             pmBuckMeasFeats(example, :) = reshape(reshape(pmBucketedcube(p, (d - featureduration + 1): d, :, :), [featureduration  * nmeasures, nbuckets])', ...
                     [1, nbucketfeatures]);
             
-            % 3) Range features
+            % 4) Range features
             pmRangeFeats(example, :) = reshape(pmInterpRangecube(p, d, :), [1, nrangefeatures]);
             
-            % 4) Volatility features
+            % 5) Volatility features
             pmVolFeats(example, :) = reshape(pmInterpVolcube(p, (d - (featureduration - 1) + 1): d, :), [1, nvolfeatures]);
             
-            % 5) add average measuresment segment features
+            % 6) add average measuresment segment features
             pmAvgSegFeats(example, :) = reshape(reshape(pmInterpSegAvgcube(p, d, :, :), [nmeasures, navgseg])', ...
                     [1, navgsegfeatures]);
             
-            % 6) add average volatility segment features
+            % 7) add average volatility segment features
             pmVolSegFeats(example, :) = reshape(reshape(pmInterpSegVolcube(p, d, :, :), [nmeasures, nvolseg])', ...
                     [1, nvolsegfeatures]);
             
-            % 7) contiguous change feature
+            % 8) contiguous change feature
             for m = 1:nmeasures
                 cchange = 0;
                 for i = 2:navgseg
@@ -140,24 +144,24 @@ for p = 1:npatients
                 pmCChangeFeats(example, m) = cchange;
             end
             
-            % 8) patient mean features
+            % 9) patient mean features
             pmPMeanFeats(example, :) = reshape(pmMuNormcube(p, d - featureduration + 1, :), [1, npmeanfeatures]);
             
-            % 9) patient std features
+            % 10) patient std features
             pmPStdFeats(example, :) = reshape(pmSigmaNormcube(p, d - featureduration + 1, :), [1, npstdfeatures]);
             
-            % 10) bucketed patient mean features
+            % 11) bucketed patient mean features
             pmBuckPMeanFeats(example, :) = reshape(reshape(pmBuckMuNormcube(p, d - featureduration + 1, :, :), [nmeasures, nbuckpmeas])', ...
                     [1, nbuckpmeanfeatures]);
             
-            % 11) bucketed patient std features
+            % 12) bucketed patient std features
             pmBuckPStdFeats(example, :) = reshape(reshape(pmBuckSigmaNormcube(p, d - featureduration + 1, :, :), [nmeasures, nbuckpmeas])', ...
                     [1, nbuckpstdfeatures]);
             
-            % 12) Date feature
+            % 13) Date feature
             pmDateFeats(example, :) = createCyclicDateFeatures(pmFeatureIndex.CalcDate(example), ndatefeatures, datefeat);
             
-            % 13) Patient demographic features (Age, Height, Weight, Sex,
+            % 14) Patient demographic features (Age, Height, Weight, Sex,
             % PredFEV1
             pmDemoFeats(example, 1) = age;
             pmDemoFeats(example, 2) = height;
@@ -208,6 +212,8 @@ fprintf('Normalising Feature Arrays\n');
 munorm         = duplicateMeasuresByFeatures(pmMuIndex, featureduration, nmeasures);
 sigmanorm      = duplicateMeasuresByFeatures(pmSigmaIndex, featureduration, nmeasures);
 pmRawMeasFeats = (pmRawMeasFeats - munorm) ./ sigmanorm;
+
+% pmMSFeats doesn't need normalising as it's a binary feature
 
 munorm         = duplicateMeasuresByFeatures(pmMuIndex, navgseg, nmeasures);
 sigmanorm      = duplicateMeasuresByFeatures(pmSigmaIndex, navgseg, nmeasures);

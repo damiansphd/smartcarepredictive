@@ -167,7 +167,7 @@ for i = 1:nmsscenarios
         msmaxdays = pmMSPatient.RelLastMeasdn;
         
         % apply missingness and then recreate cubes, features, labels
-        [pmMSFeatureIndex, pmMSNormFeatures, mslabels, pmMSRawDatacube, pmMSInterpDatacube, pmMSInterpVolcube, msmvolstats] ...
+        [pmMSFeatureIndex, pmMSNormFeatures, mslabels, pmMSRawDatacube, pmMSDatacube, pmMSInterpDatacube, pmMSInterpVolcube, msmvolstats] ...
             = createMSScenarionew(pmMSAMPred, pmMSAntibiotics, pmMSPatient, pmMSPatientMeasStats, ...
                 pmMSRawDatacube, pmOverallStats, pmMSMucube, pmMSSigmacube, pmMSMuNormcube, pmMSSigmaNormcube, ...
                 pmMSBuckMuNormcube, pmMSBuckSigmaNormcube, ...
@@ -211,6 +211,7 @@ for i = 1:nmsscenarios
     mslabels           = mslabels(msidx);
        
     pmMSRawDatacube       = pmMSRawDatacube(      1, fromdn:todn, :);
+    pmMSDatacube          = pmMSDatacube(         1, fromdn:todn, :);
     pmMSInterpDatacube    = pmMSInterpDatacube(   1, fromdn:todn, :);
     pmMSInterpVolcube     = pmMSInterpVolcube(    1, fromdn:todn, :);
     pmMSMucube            = pmMSMucube(           1, fromdn:todn, :);
@@ -252,6 +253,7 @@ for i = 1:nmsscenarios
     assignin('base', sprintf('pmMSAntibiotics_%d', i),    pmMSAntibiotics);
     assignin('base', sprintf('pmMSPatientSplit_%d', i),   pmMSPatientSplit);
     assignin('base', sprintf('pmMSRawDatacube_%d', i),    pmMSRawDatacube);
+    assignin('base', sprintf('pmMSDatacube_%d', i),       pmMSDatacube);
     assignin('base', sprintf('pmMSInterpDatacube_%d', i), pmMSInterpDatacube);
     assignin('base', sprintf('pmMSInterpVolcube_%d', i),  pmMSInterpVolcube);
     assignin('base', sprintf('pmMSMucube_%d', i),         pmMSMucube);

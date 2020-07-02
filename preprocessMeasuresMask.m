@@ -3,7 +3,8 @@ function [measures] = preprocessMeasuresMask(measures, nmeasures, featureparamsr
 % preprocessMeasuresMask - set the various masks for different types of
 % measure feature
 
-masks = [featureparamsrow.rawmeasfeat; 
+masks = [featureparamsrow.rawmeasfeat;
+         featureparamsrow.msfeat;
          featureparamsrow.bucketfeat ;
          featureparamsrow.rangefeat  ;
          featureparamsrow.volfeat    ;
@@ -15,7 +16,7 @@ masks = [featureparamsrow.rawmeasfeat;
          featureparamsrow.buckpmean;
          featureparamsrow.buckpstd];
      
-colnames = {'RawMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'; 'PMean'; 'PStd'; 'BuckPMean'; 'BuckPStd'};
+colnames = {'RawMeas'; 'MSMeas'; 'BucketMeas'; 'Range'; 'Volatility'; 'AvgSeg'; 'VolSeg'; 'CChange'; 'PMean'; 'PStd'; 'BuckPMean'; 'BuckPStd'};
 
 for a = 1:size(masks,1)
     fprintf('Setting %s mask : ', colnames{a});

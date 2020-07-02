@@ -13,10 +13,10 @@ fold = pmTrCVPatientSplit.SplitNbr(pmTrCVPatientSplit.PatientNbr == pnbr);
 normfeaturerow = pmTrCVNormFeatures(pmTrCVFeatureIndex.PatientNbr == pnbr & pmTrCVFeatureIndex.CalcDatedn == calcdatedn, :);
 
 [featureduration, predictionduration, monthfeat, demofeat, ...
- nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nbucketmeasures, nrangemeasures, ...
+ nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nmsmeasures, nbucketmeasures, nrangemeasures, ...
  nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
  npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
- nrawfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
+ nrawfeatures, nmsfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
  nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
  nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures, ...
  nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
@@ -45,6 +45,20 @@ fprintf('--------------------------------------\n');
 for i = 1:nrawmeasures
     printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmfeat, nextfeat);
     nextfeat = nextfeat + nmfeat;
+end
+
+tempmeas = measures(measures.MSMeas==1,:);
+if nmsmeasures == 0
+    nmsfeat = 0;
+else
+    nmsfeat = nmsfeatures/nmsmeasures;
+end
+fprintf('\n');
+fprintf('Missingness Measures (%2d features per measure)\n', nmsfeat);
+fprintf('----------------------------------------------\n');
+for i = 1:nmsmeasures
+    printFeatVals(normfeaturerow, featureweights, calcdatedn, i, tempmeas, nmsfeat, nextfeat);
+    nextfeat = nextfeat + nmsfeat;
 end
 
 tempmeas = measures(measures.BucketMeas==1,:);

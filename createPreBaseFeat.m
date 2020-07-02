@@ -1,8 +1,8 @@
 function [pmMucube, pmSigmacube, pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
         muntilepoints, sigmantilepoints, pmInterpDatacube, pmInterpVolcube, mvolstats, pmInterpSegVolcube, ...
-        pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ntilepoints] ...
+        pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ntilepoints, pmMSDatacube] ...
         = createPreBaseFeat(pmPatients, npatients, pmOverallStats, pmPatientMeasStats, ...
-        pmInterpDatacube, maxdays, measures, nmeasures, featureparams, rp)
+        pmRawDatacube, pmInterpDatacube, maxdays, measures, nmeasures, featureparams, rp)
 
 % createPreBaseFeat - utility function to create the various norm, vol,
 % range cubes - can be used by main createBaseFeaturesAndLabelsScript as
@@ -56,6 +56,10 @@ fprintf('Creating bucketed data\n');
 toc
 fprintf('\n');
 
+% create missingness data cube
+tic
+fprintf('Creating missingness cube\n');
+pmMSDatacube = ~isnan(pmRawDatacube);
 toc
 fprintf('\n');
 
