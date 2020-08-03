@@ -19,7 +19,7 @@ function [outputrow] = applySmoothMethodToInterpRow(interpdatarow, smfunction, s
 % smlength - number of days for window
 
 if smfunction == 0
-    outputrow = rawdatarow;
+    outputrow = interpdatarow;
 else
     if smwindow == 1
         width = smlength;

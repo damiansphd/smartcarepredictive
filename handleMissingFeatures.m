@@ -1,7 +1,7 @@
 function [pmInterpDatacube] = handleMissingFeatures(pmPatients, pmInterpDatacube, pmOverallStats, npatients, maxdays, nmeasures)
 
 % handleMissingFeatures - for any measures with no data points for a given
-% patient, populate with the overalt population mean for that measure
+% patient, populate with the overall population mean for that measure
 
 overallmean = pmOverallStats.Mean;
 

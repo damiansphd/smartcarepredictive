@@ -55,7 +55,8 @@ end
 % interpolate missing data
 tic
 fprintf('Re-Interpolating\n');
-[pmMSInterpDatacube] = createPMInterpDatacube(pmMSPatient, pmMSRawDatacube, msnpatients, msmaxdays, nmeasures); 
+[pmMSInterpDatacube]   = createPMInterpDatacube(pmMSPatient, pmMSRawDatacube, msnpatients, msmaxdays, nmeasures);
+[pmMSLimInterpDatacube] = createPMLimInterpDatacube(pmMSPatient, pmMSRawDatacube, msnpatients, nmeasures);
 toc
 fprintf('\n');
 
@@ -66,10 +67,10 @@ fprintf('Re-handling missing features\n');
 toc
 fprintf('\n');
 
-[~, ~, ~, ~, ~, ~, ~, ~, pmMSInterpDatacube, pmMSInterpVolcube, mvolstats, pmInterpSegVolcube, ...
+[~, ~, ~, ~, ~, ~, ~, ~, ~, pmMSInterpDatacube, pmMSInterpVolcube, mvolstats, pmInterpSegVolcube, ...
     pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, ntilepoints, pmMSDatacube] ...
     = createPreBaseFeat(pmMSPatient, msnpatients, pmOverallStats, pmMSPatientMeasStats, ...
-    pmMSRawDatacube, pmMSInterpDatacube, msmaxdays, measures, nmeasures, pmFeatureParamsRow, 1);
+    pmMSRawDatacube, pmMSInterpDatacube, pmMSLimInterpDatacube, msmaxdays, measures, nmeasures, pmFeatureParamsRow);
 
 % create  base feature/label examples from the data
 % need to add setting and using of the measures mask

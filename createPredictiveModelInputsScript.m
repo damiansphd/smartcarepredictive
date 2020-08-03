@@ -31,7 +31,8 @@ fprintf('\n');
 % interpolate missing data
 tic
 fprintf('Interpolating missing data\n');
-[pmInterpDatacube] = createPMInterpDatacube(pmPatients, pmRawDatacube, npatients, maxdays, nmeasures); 
+[pmInterpDatacube]    = createPMInterpDatacube(pmPatients, pmRawDatacube, npatients, maxdays, nmeasures);
+[pmLimInterpDatacube] = createPMLimInterpDatacube(pmPatients, pmRawDatacube, npatients, nmeasures);
 toc
 fprintf('\n');
 
@@ -50,6 +51,6 @@ fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', 'pmStudyInfo', ...
     'pmPatients', 'npatients', 'pmAntibiotics', 'pmAMPred', ...
     'pmOverallStats', 'pmPatientMeasStats', ...
-    'pmRawDatacube', 'pmInterpDatacube', ...
+    'pmRawDatacube', 'pmInterpDatacube', 'pmLimInterpDatacube', ...
     'maxdays', 'measures', 'nmeasures');
 toc

@@ -3,7 +3,7 @@ function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmMSFeats, pm
         pmBuckPMeanFeats, pmBuckPStdFeats, pmDateFeats, pmDemoFeats, ...
         pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels] = ...
     createBaseFeaturesAndLabelsFcn(pmPatients, pmAntibiotics, pmAMPred, ...
-            pmInterpDatacube, pmInterpVolcube, pmInterpSegVolcube, ...
+            pmDatacube, pmInterpVolcube, pmInterpSegVolcube, ...
             pmInterpRangecube, pmInterpSegAvgcube, pmBucketedcube, pmMSDatacube, ...
             pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
             pmMucube, pmSigmacube, ...
@@ -108,7 +108,7 @@ for p = 1:npatients
             pmSigmaIndex(example, :) = reshape(pmSigmacube(p, d - featureduration + 1, :), [1 nmeasures]);
                   
             % 1) Raw features
-            pmRawMeasFeats(example, :) = reshape(pmInterpDatacube(p, (d - featureduration + 1): d, :), [1, nrawfeatures]);
+            pmRawMeasFeats(example, :) = reshape(pmDatacube(p, (d - featureduration + 1): d, :), [1, nrawfeatures]);
             
             % 2) Missingness features
             pmMSFeats(example, :) = reshape(pmMSDatacube(p, (d - featureduration + 1): d, :), [1, nmsfeatures]);
@@ -212,6 +212,11 @@ fprintf('Normalising Feature Arrays\n');
 munorm         = duplicateMeasuresByFeatures(pmMuIndex, featureduration, nmeasures);
 sigmanorm      = duplicateMeasuresByFeatures(pmSigmaIndex, featureduration, nmeasures);
 pmRawMeasFeats = (pmRawMeasFeats - munorm) ./ sigmanorm;
+
+% and set missing values to be -100 (out of range constant).
+outrangeconst = -100;
+pmRawMeasFeats(logical(pmMSFeats)) = outrangeconst;
+
 
 % pmMSFeats doesn't need normalising as it's a binary feature
 
