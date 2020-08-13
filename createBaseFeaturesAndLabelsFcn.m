@@ -8,7 +8,7 @@ function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmMSFeats, pm
             pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
             pmMucube, pmSigmacube, ...
             measures, nmeasures, npatients, maxdays, ...
-            maxfeatureduration, maxnormwindow, basefeatparamsrow)
+            maxfeatureduration, maxnormwindow, basefeatparamsrow, outrangeconst)
  
 % createBaseFeaturesAndLabelsFcn - function to create the base sets of features and
 % labels for each example in the overall data set - for all measures for a given 
@@ -41,32 +41,14 @@ end
 
 example = 1;
 
-pmFeatureIndex = table('Size',[nexamples, 5], 'VariableTypes', {'double', 'cell', 'double', 'datetime', 'double'}, ...
-    'VariableNames', {'PatientNbr', 'Study', 'ID', 'CalcDate', 'CalcDatedn'});
-pmMuIndex         = zeros(nexamples, nmeasures);
-pmSigmaIndex      = zeros(nexamples, nmeasures);
-
-pmRawMeasFeats   = zeros(nexamples, nrawfeatures);
-pmMSFeats        = zeros(nexamples, nmsfeatures);
-pmBuckMeasFeats  = zeros(nexamples, nbucketfeatures);
-pmRangeFeats     = zeros(nexamples, nrangefeatures);
-pmVolFeats       = zeros(nexamples, nvolfeatures);
-pmAvgSegFeats    = zeros(nexamples, navgsegfeatures);
-pmVolSegFeats    = zeros(nexamples, nvolsegfeatures); 
-pmCChangeFeats   = zeros(nexamples, ncchangefeatures);
-pmPMeanFeats     = zeros(nexamples, npmeanfeatures);
-pmPStdFeats      = zeros(nexamples, npstdfeatures);
-pmBuckPMeanFeats = zeros(nexamples, nbuckpmeanfeatures);
-pmBuckPStdFeats  = zeros(nexamples, nbuckpstdfeatures);
-pmDateFeats      = zeros(nexamples, ndatefeatures);
-pmDemoFeats      = zeros(nexamples, ndemofeatures);
-
-pmIVLabels         = false(nexamples, predictionduration);
-pmExLabels         = false(nexamples, predictionduration);
-pmABLabels         = false(nexamples, predictionduration);
-pmExLBLabels       = false(nexamples, predictionduration);
-pmExABLabels       = false(nexamples, 1);
-pmExABxElLabels    = false(nexamples, 1);
+[pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmMSFeats, pmBuckMeasFeats, pmRangeFeats, pmVolFeats, ...
+        pmAvgSegFeats, pmVolSegFeats, pmCChangeFeats, pmPMeanFeats, pmPStdFeats, ...
+        pmBuckPMeanFeats, pmBuckPStdFeats, pmDateFeats, pmDemoFeats, ...
+        pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels] ...
+        = createFeatureAndLabelArrays(nexamples, nmeasures, predictionduration, ...
+          nrawfeatures, nmsfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
+          nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
+          nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures); 
 
 fprintf('Processing data for patients\n');
 for p = 1:npatients
@@ -103,6 +85,14 @@ for p = 1:npatients
             pmFeatureIndex.ID(example)         = pmPatients.ID(p);
             pmFeatureIndex.CalcDatedn(example) = d;
             pmFeatureIndex.CalcDate(example)   = pmPatients.FirstMeasDate(p) + days(d - 1);
+            
+            pmFeatureIndex.ScenType(example)    = 0;
+            pmFeatureIndex.Scenario(example)    = {'Actual'};
+            pmFeatureIndex.BaseExample(example) = 0;
+            pmFeatureIndex.Measure{example}     = '';
+            pmFeatureIndex.Percentage(example)  = 0;
+            pmFeatureIndex.Frequency(example)   = 0;
+            pmFeatureIndex.MSExample(example)   = 0;
             
             pmMuIndex(example, :)    = reshape(pmMucube(p, d - featureduration + 1, :), [1 nmeasures]);
             pmSigmaIndex(example, :) = reshape(pmSigmacube(p, d - featureduration + 1, :), [1 nmeasures]);
@@ -214,9 +204,7 @@ sigmanorm      = duplicateMeasuresByFeatures(pmSigmaIndex, featureduration, nmea
 pmRawMeasFeats = (pmRawMeasFeats - munorm) ./ sigmanorm;
 
 % and set missing values to be -100 (out of range constant).
-outrangeconst = -100;
 pmRawMeasFeats(logical(pmMSFeats)) = outrangeconst;
-
 
 % pmMSFeats doesn't need normalising as it's a binary feature
 

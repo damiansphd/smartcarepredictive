@@ -12,14 +12,16 @@ epiindex = table('Size',[bufferrows, 10], ...
 
 epilabl = zeros(bufferrows, 1);
 epipred = zeros(bufferrows, 1);
+actualscentype = 0;
 
 epinbr = 1;
 patients = unique(featureindex.PatientNbr);
 for i = 1:size(patients, 1)
     pnbr     = patients(i);
-    pfeat    = featureindex(featureindex.PatientNbr == pnbr, :);
-    plabel   = labels(featureindex.PatientNbr == pnbr, :);
-    ppred    = pred(featureindex.PatientNbr == pnbr, :);
+    pfidx    = featureindex.PatientNbr == pnbr & featureindex.ScenType == actualscentype;
+    pfeat    = featureindex(pfidx, :);
+    plabel   = labels(pfidx, :);
+    ppred    = pred(pfidx, :);
     
     pdiff    = [1; diff(pfeat.CalcDatedn)];
     
@@ -78,10 +80,10 @@ for i = 1:size(patients, 1)
                 epiindex.Length(epinbr)     = epienddt - date + 1;
                 if epiindex.Length(epinbr) < epilen
                     epiindex.PartialPeriod(epinbr) = 1;
-                    partialtxt = '****';     
+                    %partialtxt = '****';     
                 else
                     epiindex.PartialPeriod(epinbr) = 0;
-                    partialtxt = '';
+                    %partialtxt = '';
                 end
                 % create episode label entry
                 epilabl(epinbr) = 0;
@@ -110,7 +112,6 @@ for i = 1:size(patients, 1)
             epiindex.Length(epinbr)     = blockenddt - date + 1;
             
             epiindex.PartialPeriod(epinbr) = 0;
-            partialtxt = '';
             
             % create episode label entry
             epilabl(epinbr) = 1;
@@ -118,6 +119,7 @@ for i = 1:size(patients, 1)
             epipred(epinbr) = max(ppred(pfeat.CalcDatedn >= date & pfeat.CalcDatedn <= blockenddt));
             
             date = min(pfeat.CalcDatedn(pfeat.CalcDatedn > epiindex.Todn(epinbr)));
+            %partialtxt = '';
             %fprintf('EpiNbr %3d: PatNbr %3d Fromdn %3d, Todn %3d, Length %2d Label %1d Pred %.2f NextFromdn %3d %s\n', epinbr, epiindex.PatientNbr(epinbr), ...
             %        epiindex.Fromdn(epinbr), epiindex.Todn(epinbr), epiindex.Length(epinbr), epilabl(epinbr), epipred(epinbr), date, partialtxt);
             epinbr = epinbr + 1;

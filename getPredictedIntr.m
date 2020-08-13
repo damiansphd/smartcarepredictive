@@ -17,7 +17,7 @@ for i = 1:ninterventions
     pnbr = pmampredupd.PatientNbr(i);
     exstart = pmampredupd.Pred(i);
     ivstart = pmampredupd.IVScaledDateNum(i);
-    intridx = featidx.PatientNbr == pnbr & featidx.CalcDatedn >= exstart & featidx.CalcDatedn < ivstart;
+    intridx = featidx.PatientNbr == pnbr & featidx.ScenType == 0 & featidx.CalcDatedn >= exstart & featidx.CalcDatedn < ivstart;
     if sum(intridx) ~= 0
         pmampredupd.SplitNbr(i) = patientsplit.SplitNbr(patientsplit.PatientNbr == pnbr);
         pmampredupd.IntrDuration(i) = ivstart - exstart;
