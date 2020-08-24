@@ -6,7 +6,7 @@ function [auFeatureIndex, auMuIndex, auSigmaIndex, auRawMeasFeats, auMSFeats, au
         pmRangeFeats, pmVolFeats, pmAvgSegFeats, pmVolSegFeats, pmCChangeFeats, pmPMeanFeats, pmPStdFeats, ...
         pmBuckPMeanFeats, pmBuckPStdFeats, pmDateFeats, pmDemoFeats, ...
         pmIVLabels, pmABLabels, pmExLabels, pmExLBLabels, pmExABLabels, pmExABxElLabels, basefeatparamsrow, ...
-        nmeasures, outrangeconst)
+        nmeasures)
 
 
 % first create augmented feature and label arrays.
@@ -15,6 +15,8 @@ multiplier = basefeatparamsrow.augmethod;
 naugexamples  = norigexamples * multiplier;
 
 nmsscentypes = 4;
+
+outrangeconst = basefeatparamsrow.msconst;
 
 [~, predictionduration, ~, ~, ~, ~, ~, ...
           nrawfeatures, nmsfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...

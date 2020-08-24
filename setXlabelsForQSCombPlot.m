@@ -1,8 +1,8 @@
-function [xlabel] = setXlabelsForQSCombPlot(bsqstablerow, filename, type, f4etype, mstype)
+function [xlabel] = setXlabelsForQSCombPlot(bsqstablerow, filename, type)
 
 % setXlabelsForQSCombPlot - sets the xlabel for the QS Comb plot
 
-if ismember(type, {f4etype})
+if type == 1
     if contains(filename, '-MS')
         tempstring = split(bsqstablerow.MSMeas{1}, ':');
     else
@@ -14,7 +14,7 @@ if ismember(type, {f4etype})
             end 
         end
     end
-elseif ismember(type, {mstype})
+elseif type == 2 || type == 3
     tempstring = split(bsqstablerow.InterpMthd{1}, ':');
 end
 

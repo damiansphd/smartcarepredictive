@@ -85,17 +85,19 @@ fontname = 'Arial';
 
 outputfilename = strrep(bsqsfile, '.mat', '');
 
-[type, f4etype, mstype, doplot] = setTypeForQSCombPlot(outputfilename);
+plottypes = {'Fig4E' ; 'Missingness Interp' ; 'Interp Range'};
+
+[type, doplot] = setTypeForQSCombPlot(outputfilename);
 
 if doplot
-    [colarray] = setColoursForQSCombPlot(studydisplayname, type, f4etype, mstype);
-    plottitle = sprintf('%s - %s MeasContrib', outputfilename, type);
+    [colarray] = setColoursForQSCombPlot(studydisplayname, type);
+    plottitle = sprintf('%s - %s MeasContrib', outputfilename, plottypes{type});
     [f, p] = createFigureAndPanelForPaper('', widthinch, heightinch);
     ax = subplot(plotsdown, plotsacross, thisplot, 'Parent', p);
 
     hold on;
     for i = 1:size(pmBSAllQSTable, 1)
-        xlabeltext(i) = setXlabelsForQSCombPlot(pmBSAllQSTable(i,:), basefeatureparamfile, type, f4etype, mstype);
+        xlabeltext(i) = setXlabelsForQSCombPlot(pmBSAllQSTable(i,:), basefeatureparamfile, type);
         b = bar(ax, i, pmBSAllQSTable.AvgEPV(i));
         b.FaceColor = colarray(i, :);
     end
@@ -104,9 +106,9 @@ if doplot
     xticks(ax, 1:size(pmBSAllQSTable, 1));
     ax.XTickLabel = xlabeltext;
     xtickangle(ax, 45);
-    if ismember(type, f4etype)
+    if type == 1
         xlabel(ax, 'Measures', 'FontSize', 8);
-    elseif ismember(type, mstype)
+    elseif type == 2 || type == 3
         xlabel(ax, 'Interpolation method', 'FontSize', 8);
     end
     ylabel(ax, 'Episodic prediction value', 'FontSize', 8);

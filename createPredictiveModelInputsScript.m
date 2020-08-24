@@ -28,21 +28,6 @@ fprintf('Calculating measurement stats (overall and by patient\n');
 toc
 fprintf('\n');
 
-% interpolate missing data
-tic
-fprintf('Interpolating missing data\n');
-[pmInterpDatacube]    = createPMInterpDatacube(pmPatients, pmRawDatacube, npatients, maxdays, nmeasures);
-[pmLimInterpDatacube] = createPMLimInterpDatacube(pmPatients, pmRawDatacube, npatients, nmeasures);
-toc
-fprintf('\n');
-
-% handle missing features (eg no sleep measures for a given patient)
-tic
-fprintf('Handling missing features\n');
-[pmInterpDatacube] = handleMissingFeatures(pmPatients, pmInterpDatacube, pmOverallStats, npatients, maxdays, nmeasures); 
-toc
-fprintf('\n');
-
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
@@ -50,7 +35,8 @@ outputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', 'pmStudyInfo', ...
     'pmPatients', 'npatients', 'pmAntibiotics', 'pmAMPred', ...
-    'pmOverallStats', 'pmPatientMeasStats', ...
-    'pmRawDatacube', 'pmInterpDatacube', 'pmLimInterpDatacube', ...
+    'pmOverallStats', 'pmPatientMeasStats', 'pmRawDatacube', ...
     'maxdays', 'measures', 'nmeasures');
 toc
+
+

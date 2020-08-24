@@ -138,7 +138,10 @@ for fs = 1:nfeatureparamsets
 
                             if runtype == 1
                                 % run n-fold cross-validation
-                                pmDayRes = createModelDayResStuct(ntrcvexamples, nfolds, nbssamples);
+                                origidx = pmTrCVFeatureIndex.ScenType == 0;
+                                norigex = sum(origidx);
+                                pmDayRes = createModelDayResStuct(norigex, nfolds, nbssamples);
+                                %pmDayRes = createModelDayResStuct(ntrcvexamples, nfolds, nbssamples);
 
                                 for fold = 1:nfolds
                                     
@@ -150,6 +153,8 @@ for fs = 1:nfeatureparamsets
                                      pmCVFeatureIndex, pmCVMuIndex, pmCVSigmaIndex, pmCVNormFeatures, cvlabels, cvidx] ...
                                         = splitTrCVFeatures(pmTrCVFeatureIndex, pmTrCVMuIndex, pmTrCVSigmaIndex, pmTrCVNormFeatures, trcvlabels, pmTrCVPatientSplit, fold);
 
+                                    origcvidx = cvidx & pmTrCVFeatureIndex.ScenType == 0;
+                                    
                                     if ismember(pmModelParams.ModelVer{mp}, {'vPM1', 'vPM4', 'vPM10', 'vPM11', 'vPM12', 'vPM13'})
                                         % train model
                                         fprintf('Training...');
@@ -168,19 +173,24 @@ for fs = 1:nfeatureparamsets
                                             plotPRAndROCCurvesForPaper(pmTrRes, [] , 'na', plotsubfolder, filename);
                                         end
 
-                                        % calculate predictions and quality scores on training data
+                                        % calculate predictions and quality scores on cv data
                                         fprintf('CV: ');
-                                        [foldhpCVQS, pmCVRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpCVQS, pmCVFeatureIndex, ...
-                                                                    pmCVNormFeatures, cvlabels, fold, foldhpcomb, pmAMPred, ...
+                                        [foldhpCVQS, pmCVRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpCVQS, pmTrCVFeatureIndex(origcvidx, :), ...
+                                                                    pmTrCVNormFeatures(origcvidx, :), trcvlabels(origcvidx), fold, foldhpcomb, pmAMPred, ...
                                                                     pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
                                                                     lrval, ntrval, mlsval, mnsval, fvsval);
+                                        %[foldhpCVQS, pmCVRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpCVQS, pmCVFeatureIndex, ...
+                                        %                            pmCVNormFeatures, cvlabels, fold, foldhpcomb, pmAMPred, ...
+                                        %                            pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
+                                        %                            lrval, ntrval, mlsval, mnsval, fvsval);
                                         if plotbyfold == 1
                                             filename = sprintf('%s-CV-F%d', mbasefilename, fold);
                                             plotPRAndROCCurvesForPaper(pmCVRes, '', '', plotsubfolder, filename);
                                         end
 
                                         % also store results on overall model results structure
-                                        pmDayRes.Pred(cvidx) = pmCVRes.Pred; %tempscore(:, 2);
+                                        pmDayRes.Pred(origcvidx) = pmCVRes.Pred;
+                                        %pmDayRes.Pred(cvidx) = pmCVRes.Pred; %tempscore(:, 2);
                                         pmDayRes.Loss(fold)  = pmCVRes.Loss;
                                     else
                                         fprintf('Unsupported model version\n');
@@ -191,7 +201,8 @@ for fs = 1:nfeatureparamsets
                                 fprintf('Overall:\n');
                                 fprintf('CV: ');
                                 fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmPatientSplit, epilen);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels(origidx), norigex, pmAMPred, pmTrCVFeatureIndex(origidx, :), pmPatientSplit, epilen);
+                                %[pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels, ntrcvexamples, pmAMPred, pmTrCVFeatureIndex, pmPatientSplit, epilen);
 
                                 fprintf('\n');
 
@@ -204,7 +215,10 @@ for fs = 1:nfeatureparamsets
                                 % run on held-out test data
                                 fold = 1;
                                 foldhpcomb = 1;
-                                pmDayRes = createModelDayResStuct(ntestexamples, fold, nbssamples);
+                                origidx = pmTestFeatureIndex.ScenType == 0;
+                                norigex = sum(origidx);
+                                pmDayRes = createModelDayResStuct(norigex, fold, nbssamples);
+                                %pmDayRes = createModelDayResStuct(ntestexamples, fold, nbssamples);
                                 
                                 if ismember(pmModelParams.ModelVer{mp}, {'vPM1', 'vPM4','vPM10', 'vPM11', 'vPM12', 'vPM13'})
                                     % train model
@@ -225,10 +239,14 @@ for fs = 1:nfeatureparamsets
                                     end
                                     
                                     fprintf('Test: ');
-                                    [foldhpTestQS, pmTestRes, pmAMPredUpd] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTestQS, pmTestFeatureIndex, ...
-                                                                pmTestNormFeatures, testlabels, fold, foldhpcomb, pmAMPred, ...
+                                    [foldhpTestQS, pmTestRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTestQS, pmTestFeatureIndex(origidx, :), ...
+                                                                pmTestNormFeatures(origidx, :), testlabels(origidx), fold, foldhpcomb, pmAMPred, ...
                                                                 pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
                                                                 lrval, ntrval, mlsval, mnsval, fvsval);
+                                    %[foldhpTestQS, pmTestRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTestQS, pmTestFeatureIndex, ...
+                                    %                            pmTestNormFeatures, testlabels, fold, foldhpcomb, pmAMPred, ...
+                                    %                            pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
+                                    %                            lrval, ntrval, mlsval, mnsval, fvsval);
                                     if plotbyfold == 1
                                         filename = sprintf('%s-Test-F%d', mbasefilename, fold);
                                         plotPRAndROCCurvesForPaper(pmTestRes, '', '', plotsubfolder, filename);
@@ -246,7 +264,8 @@ for fs = 1:nfeatureparamsets
                                 fprintf('Overall:\n');
                                 fprintf('Test: ');
                                 fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels, ntestexamples, pmAMPred, pmTestFeatureIndex, pmPatientSplit, epilen);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels(origidx), ntestexamples, pmAMPred, pmTestFeatureIndex(origidx, :), pmPatientSplit, epilen);
+                                %[pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels, ntestexamples, pmAMPred, pmTestFeatureIndex, pmPatientSplit, epilen);
 
                                 fprintf('\n');
 
@@ -267,9 +286,11 @@ for fs = 1:nfeatureparamsets
         
         if btmode == 1
             if runtype == 1
-                [pmDayRes] = calcBSQualScores(pmDayRes, trcvlabels, nbssamples, ntrcvexamples);
+                [pmDayRes] = calcBSQualScores(pmDayRes, trcvlabels(origidx), nbssamples, norigex);
+                %[pmDayRes] = calcBSQualScores(pmDayRes, trcvlabels, nbssamples, ntrcvexamples);
             else
-                [pmDayRes] = calcBSQualScores(pmDayRes, testlabels, nbssamples, ntestexamples);
+                [pmDayRes] = calcBSQualScores(pmDayRes, testlabels(origidx), nbssamples, norigidx);
+                %[pmDayRes] = calcBSQualScores(pmDayRes, testlabels, nbssamples, ntestexamples);
             end
         end
         

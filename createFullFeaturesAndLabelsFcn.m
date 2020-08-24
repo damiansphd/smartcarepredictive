@@ -80,7 +80,8 @@ pmNormFeatNames = [reshape(cellstr(cellstr('RM-' + string(measures.ShortName(log
                    reshape(        cellstr('DA-'                                                            + string(sum(datemask):-1:1))',                     [1                            sum(datemask)]             ), ...
                    reshape(        cellstr('DE-'                                                            + string(sum(demomask):-1:1))',                     [1                            sum(demomask)]             )];
 
-   
+
+fprintf('%d missing data points in features\n', sum(sum((pmNormFeatures == featureparamsrow.msconst))));
 
 end
 

@@ -8,7 +8,7 @@ function [pmFeatureIndex, pmMuIndex, pmSigmaIndex, pmRawMeasFeats, pmMSFeats, pm
             pmMuNormcube, pmSigmaNormcube, pmBuckMuNormcube, pmBuckSigmaNormcube, ...
             pmMucube, pmSigmacube, ...
             measures, nmeasures, npatients, maxdays, ...
-            maxfeatureduration, maxnormwindow, basefeatparamsrow, outrangeconst)
+            maxfeatureduration, maxnormwindow, basefeatparamsrow)
  
 % createBaseFeaturesAndLabelsFcn - function to create the base sets of features and
 % labels for each example in the overall data set - for all measures for a given 
@@ -204,7 +204,7 @@ sigmanorm      = duplicateMeasuresByFeatures(pmSigmaIndex, featureduration, nmea
 pmRawMeasFeats = (pmRawMeasFeats - munorm) ./ sigmanorm;
 
 % and set missing values to be -100 (out of range constant).
-pmRawMeasFeats(logical(pmMSFeats)) = outrangeconst;
+pmRawMeasFeats(logical(pmMSFeats)) = basefeatparamsrow.msconst;
 
 % pmMSFeats doesn't need normalising as it's a binary feature
 

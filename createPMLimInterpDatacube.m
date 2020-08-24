@@ -1,9 +1,8 @@
-function [pmLimInterpDatacube] = createPMLimInterpDatacube(pmPatients, pmRawDatacube, npatients, nmeasures)
+function [pmLimInterpDatacube] = createPMLimInterpDatacube(pmPatients, pmRawDatacube, npatients, nmeasures, maxgap)
 
 % createPMLimInterpDatacube - creates the data cube with limited interpolation (gap of 1-3 days),
 % and then replaces remaining missing data with zeros
 
-maxgap = 4;
 pmLimInterpDatacube = pmRawDatacube;
 
 for p = 1:npatients
