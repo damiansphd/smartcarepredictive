@@ -88,6 +88,7 @@ testlabels    = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTestIVLa
 %[trcvlabels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
 
 if plottype == 6
+    % nb patients used for paper are p1(scid23) and p64(scid139)
     % plot measures and predictions for a single patient
     [pnbr1, validresponse] = selectPatientNbr(testpatsplit.PatientNbr);
     if ~validresponse

@@ -14,12 +14,12 @@ for i = 1:size(pmAMPred, 1)
     exstart    = pmAMPred.Pred(i);
     treatstart = pmAMPred.IVScaledDateNum(i);
     
-    intrlabl = labels(featureindex.PatientNbr == pnbr & featureindex.CalcDatedn >= exstart & featureindex.CalcDatedn < treatstart);
+    intrlabl = labels(featureindex.PatientNbr == pnbr & featureindex.ScenType == 0 & featureindex.CalcDatedn >= exstart & featureindex.CalcDatedn < treatstart);
     if ~all(intrlabl)
         fprintf('**** Not all labels are 1 for intervention %3d:%3d:%3d ****\n', pnbr, exstart, treatstart);
     end
     
-    intrpred = pred(featureindex.PatientNbr == pnbr & featureindex.CalcDatedn >= exstart & featureindex.CalcDatedn < treatstart);
+    intrpred = pred(featureindex.PatientNbr == pnbr & featureindex.ScenType == 0 & featureindex.CalcDatedn >= exstart & featureindex.CalcDatedn < treatstart);
     
     if size(intrpred, 1) ~= 0
         triggeridx = find(intrpred >= thresh, 1, 'first');

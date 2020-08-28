@@ -50,7 +50,7 @@ pexstsdates = pexsts(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
     'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2', ...
     'Pred', 'RelLB1', 'RelUB1', 'RelLB2', 'RelUB2'});
 
-fidx = (testfeatidx.PatientNbr == patientnbr);
+fidx = (testfeatidx.PatientNbr == patientnbr & testfeatidx.ScenType == 0);
 pfeatindex = testfeatidx(fidx,:);
 ppred  = pmModelRes.pmNDayRes(labelidx).Pred(fidx);
 plabel = testlabels(fidx,labelidx);

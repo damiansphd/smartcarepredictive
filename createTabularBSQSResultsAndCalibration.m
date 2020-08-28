@@ -51,7 +51,7 @@ for i = 1:ncombinations
     mresultsfilename = sprintf('%s%s%s%s ModelResults', mbasefilename, hpsuffix, rtsuffix, btsuffix);
     modelparamsmatfile = sprintf('%s.mat', mresultsfilename);
     fprintf('Loading predictive model results for %s\n', mresultsfilename);
-    load(fullfile(basedir, subfolder, modelparamsmatfile), 'pmModelRes', ...
+    load(fullfile(basedir, subfolder, modelparamsmatfile), 'pmModelRes', 'pmTrCVFeatureIndex', 'pmTestFeatureIndex', ...
         'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels', ...
         'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels');
     % added for backward compatibility
@@ -63,9 +63,13 @@ for i = 1:ncombinations
     
     trainlabels   = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
     testlabels    = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTestIVLabels, pmTestExLabels, pmTestABLabels, pmTestExLBLabels, pmTestExABLabels, pmTestExABxElLabels);
+    
+    trainlabels = trainlabels(pmTrCVFeatureIndex.ScenType == 0, :);
+    testlabels = testlabels(pmTestFeatureIndex.ScenType == 0, :);
+    
     [~, ~, trainlabels, ~, ~, ~, testlabels, ~] = setTrainTestArraysForRunType([], [], trainlabels, [], ...
                                                         [], [], testlabels, [], otherrunparamsrow.runtype);
-                                     
+    
     %[trcvlabels] = setLabelsForLabelMethod(modelparamsrow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
 
     [resultrow, resultstring] = setBSQSTableDisplayRow(featureparamsrow, modelparamsrow, pmBSAllQS(i).NDayQS, measures, nmeasures);

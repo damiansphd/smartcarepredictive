@@ -94,7 +94,7 @@ end
 if pmFeatureParamsRow.augmethod == 1
     resultrow.AugMthd = {'1:Reg'};
 elseif pmFeatureParamsRow.augmethod >= 2
-    resultrow.AugMthd = {sprintf('%s:Aug',pmFeatureParamsRow.augmethod)};
+    resultrow.AugMthd = {sprintf('%d:Aug',pmFeatureParamsRow.augmethod)};
 end
 
 resultrow.MSConst = pmFeatureParamsRow.msconst;

@@ -95,7 +95,7 @@ for m = 1:nmeasures
 end
     
 % add prediction plots
-fidx = (pmTrCVFeatureIndex.PatientNbr == pnbr);
+fidx = (pmTrCVFeatureIndex.PatientNbr == pnbr & pmTrCVFeatureIndex.ScenType == 0);
 pfeatindex = pmTrCVFeatureIndex(fidx,:);
 ppred  = pmModelRes.pmNDayRes(labelidx).Pred(fidx);
 plabel = trcvlabels(fidx,labelidx);

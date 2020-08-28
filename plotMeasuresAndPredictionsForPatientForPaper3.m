@@ -119,7 +119,7 @@ pexstsdates2 = pexsts2(:, {'IVStartDate', 'IVDateNum', 'Offset', 'Ex_Start', ...
     'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2', ...
     'Pred', 'RelLB1', 'RelUB1', 'RelLB2', 'RelUB2'});
 
-fidx1 = (pmFeatureIndex.PatientNbr == patientnbr1);
+fidx1 = (pmFeatureIndex.PatientNbr == patientnbr1 & pmFeatureIndex.ScenType == 0);
 pfeatindex1 = pmFeatureIndex(fidx1,:);
 ppred1  = pmModelRes.pmNDayRes(labelidx).Pred(fidx1);
 plabel1 = trcvlabels(fidx1,labelidx);
@@ -131,7 +131,7 @@ for d = 1:size(ppred1,1)
     plabeldata1(pfeatindex1.CalcDatedn(d)) = plabel1(d);
 end
 
-fidx2 = (pmFeatureIndex.PatientNbr == patientnbr2);
+fidx2 = (pmFeatureIndex.PatientNbr == patientnbr2 & pmFeatureIndex.ScenType == 0);
 pfeatindex2 = pmFeatureIndex(fidx2,:);
 ppred2  = pmModelRes.pmNDayRes(labelidx).Pred(fidx2);
 plabel2 = trcvlabels(fidx2,labelidx);

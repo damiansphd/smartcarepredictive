@@ -32,7 +32,7 @@ for n = 1:predictionduration
     title('Predicted Treatment Starts by month');
     
     thisplot = thisplot + 1;
-    hdata = testfeatidx;
+    hdata = testfeatidx(testfeatidx.ScenType == 0, :);
     hdata.Month(:) = month(testfeatidx.CalcDate, 'shortname');
     hdata.Label = testlabels;
     hdata = hdata(:, {'Month', 'Label'});

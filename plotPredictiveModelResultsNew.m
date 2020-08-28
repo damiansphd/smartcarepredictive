@@ -168,8 +168,8 @@ elseif plottype == 10
     if ~validresponse
         return;
     end
-    [calcdatedn, validresponse] = selectCalcDate(min(testfeatidx.CalcDatedn(testfeatidx.PatientNbr == pnbr)), ...
-                                                 max(testfeatidx.CalcDatedn(testfeatidx.PatientNbr == pnbr)));
+    [calcdatedn, validresponse] = selectCalcDate(min(testfeatidx.CalcDatedn(testfeatidx.PatientNbr == pnbr & testfeatidx.ScenType == 0)), ...
+                                                 max(testfeatidx.CalcDatedn(testfeatidx.PatientNbr == pnbr & testfeatidx.ScenType == 0)));
     if ~validresponse
         return;
     end
