@@ -3,7 +3,7 @@ function [mdayresstruct] = trainPredModel(modelver, mdayresstruct, features, lab
 
 % trainPredModel - trains the predictive classifier model
 
-rng(2); % for reproducibility
+%rng(2); % for reproducibility
 
 if ismember(modelver, {'vPM1'})
     mdayresstruct.Folds(fold).Model = compact(fitglm(features, labels, ...
