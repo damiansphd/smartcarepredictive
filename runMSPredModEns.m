@@ -190,6 +190,8 @@ widthinch = 8.25;
 heightinch = 3;
 name = '';
 
+[thresh, threshidx] = calculateROCOpThresh(pmMSModelRes.FPR, pmMSModelRes.TPR, pmMSModelRes.PredSort);
+
 baseplotname1 = sprintf('%s-PRROC', basemsresultsfile);
 plotsubfolder = sprintf('Plots/MissPatQS');
 
@@ -227,12 +229,18 @@ annotation(p,   'textbox',  ...
                 'FontSize', axisfontsize);
 
 ax = subplot(1, 2, 2, 'Parent', p);
-        
+
+hold on;
 area(ax, pmMSModelRes.FPR, pmMSModelRes.TPR, ...
     'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
 
 line(ax, [0, 1], [0, 1], ...
     'Color', 'red', 'LineStyle', '-', 'LineWidth', 1.0);
+
+scatter(ax, pmMSModelRes.FPR(threshidx), pmMSModelRes.TPR(threshidx),  ...
+        24, 'filled', 'o', ...
+        'MarkerFaceColor', 'green', ...
+        'MarkerEdgeColor', 'black');
 
 ax.FontSize = axisfontsize; 
 ax.TickDir = 'out';      
@@ -253,10 +261,16 @@ annotation(p, 'textbox',  ...
                 'BackgroundColor', 'white', ...
                 'LineStyle', '-', ...
                 'FontSize', axisfontsize);
+hold off;
 
 basedir = setBaseDir();
 savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
 %savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
 close(f);
+
+% need to add correct vs incorrect colouring to the plot function
+plotMissingnessQSFcn(pmMSModelRes, pmTrCVMPArray, pmTrCVMPQS, trcvlabels, thresh, basemsresultsfile);
+
+
 beep on;
 beep;

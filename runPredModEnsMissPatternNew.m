@@ -25,23 +25,41 @@ basemodelresultsfile = strrep(basemodelresultsfile, ' ModelResults', '');
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-fprintf('Loading predictive model results data for %s\n', modelresultsfile);
+fprintf('Loading trained predictive model and run parameters for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), ...
+            'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamQS', 'pmOtherRunParams');
+toc
+fprintf('\n');
+
+if pmFeatureParamsRow.augmethod == 1
+    dataresultsfile = modelresultsfile;
+else
+    findaugtext = sprintf('-au%d', pmFeatureParamsRow.augmethod);
+    replaceaugtext = sprintf('-au1');
+    dataresultsfile = strrep(modelresultsfile, findaugtext, replaceaugtext);
+end
+
+tic
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+fprintf('Loading predictive model data set for %s\n', dataresultsfile);
+load(fullfile(basedir, subfolder, dataresultsfile), ...
             'pmTestFeatureIndex', 'pmTestMuIndex', 'pmTestSigmaIndex', 'pmTestNormFeatures', ...
             'pmTestIVLabels', 'pmTestExLabels', 'pmTestABLabels', 'pmTestExLBLabels', 'pmTestExABLabels', 'pmTestExABxElLabels', ...
             'pmTestPatientSplit', ...
             'pmTrCVFeatureIndex', 'pmTrCVMuIndex', 'pmTrCVSigmaIndex', 'pmTrCVNormFeatures', ...
             'pmTrCVIVLabels', 'pmTrCVExLabels', 'pmTrCVABLabels', 'pmTrCVExLBLabels', 'pmTrCVExABLabels', 'pmTrCVExABxElLabels',...
-            'pmTrCVPatientSplit', ...
-            'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamQS', 'pmOtherRunParams');
+            'pmTrCVPatientSplit');
+toc
+fprintf('\n');
 
-        % added for backward compatibility
+% added for backward compatibility
 if exist('pmTrCVExABxElLabels', 'var') ~= 1
     pmTrCVExABxElLabels = [];
 end
 
-if pmFeatureParamsRow.interpmethod ~= 1
-    fprintf('Missingness pattern script only works on fully interpolated data\n');
+if pmFeatureParamsRow.interpmethod ~= 0 && pmFeatureParamsRow.interpmethod ~= 1
+    fprintf('Missingness pattern script only works on data with either no or full interpolation\n');
     return
 end
 
@@ -109,14 +127,15 @@ randmpidx = randperm(ntrcvexamples, nmisspatts); % should this be number of over
 % add for loop here over number of missingness patterns required
 for mi = 1:nmisspatts
     
-    fprintf('%4d of %4d: Actual missingness from example %5d\n') 
+    fprintf('%4d of %4d: Actual missingness from example %5d\n', mi, nmisspatts, randmpidx(mi)) 
     % restore orig norm features to normfeatures
     pmTrCVNormFeatures = pmOrigNormFeatures;
 
     % apply missingness pattern at random (see augment function)
     [pmTrCVNormFeatures, pmMissPattIndex(mi, :), pmMissPattArray(mi, :)] = ...
         applyActMissPattToDataSet(pmTrCVNormFeatures, pmMissPattIndex(mi, :), ...
-            pmMSNormFeats, randmpidx(mi), nrawfeatures, pmFeatureParamsRow.msconst);
+            pmMSNormFeats, randmpidx(mi), nrawfeatures, pmFeatureParamsRow.featureduration, ...
+            pmFeatureParamsRow.msconst, pmFeatureParamsRow.interpmethod, pmFeatureParamsRow.missinterp);
     
     fprintf('%4d of %4d: Actual missingness from example %5d with overall missingness of %2.2f%%\n', mi, nmisspatts, randmpidx(mi), sum(pmMissPattArray(mi, :)) * 100 / nrawfeatures);
         

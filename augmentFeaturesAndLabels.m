@@ -14,7 +14,7 @@ norigexamples = size(pmFeatureIndex, 1);
 multiplier = basefeatparamsrow.augmethod;
 naugexamples  = norigexamples * multiplier;
 
-nmsscentypes = 4;
+nmsscentypes = 12;
 
 outrangeconst = basefeatparamsrow.msconst;
 
@@ -153,7 +153,7 @@ for i = (norigexamples + 1):naugexamples
             auRawMeasFeats(i, featidx) = outrangeconst;
             auFeatureIndex.Scenario{i} = 'Reuse Actual';
             auFeatureIndex.MSExample(i) = msex;
-        case 4
+        case {4, 5, 6, 7, 8, 9, 10, 11, 12}
             % remove all data points for one or more measures
             msmeas = randi([0 1], 1, nmeasures);
             nmrawfeat = nrawfeatures/nmeasures;
