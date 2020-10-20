@@ -90,11 +90,11 @@ clear('pmModelRes');
 
 % load feature index and normfeatures from uninterpolated data set to use
 % for actual missingness patterns
-featureparamsfile = generateFileNameFromFullFeatureParams(pmFeatureParamsRow);
+featureparamsfile = generateFileNameFromFullFeatureParamsNew(pmFeatureParamsRow);
 featureparamsfile = sprintf('%s.mat', featureparamsfile);
 mspatfeatfile = strrep(featureparamsfile, 'ip1', 'ip0');
 fprintf('Loading predictive model input data for %s\n', featureparamsfile);
-load(fullfile(basedir, subfolder, mspatfeatfile), 'pmFeatureIndex', 'pmNormFeatures', 'pmNormFeatNames', 'pmAMPred', 'measures', 'nmeasures');
+load(fullfile(basedir, subfolder, mspatfeatfile), 'pmFeatureIndex', 'pmNormFeatures', 'pmNormFeatNames', 'pmAMPred', 'measures', 'nmeasures', 'pmOverallStats');
 pmMSFeatIdx       = pmFeatureIndex;
 pmMSNormFeats     = pmNormFeatures;
 pmMSNormFeatNames = pmNormFeatNames;
@@ -123,6 +123,9 @@ nrawfeatures = sum(contains(pmMSNormFeatNames, {'RM'}));
 rng(2);
 [pmMissPattIndex, pmMissPattArray, pmMissPattQS] = createMissPattTables(nmisspatts, nrawfeatures);
 randmpidx = randperm(ntrcvexamples, nmisspatts); % should this be number of overall examples ? I think so
+randmpidx(1) = 1260;
+randmpidx(2) = 6880;
+
 
 % add for loop here over number of missingness patterns required
 for mi = 1:nmisspatts
@@ -133,7 +136,7 @@ for mi = 1:nmisspatts
 
     % apply missingness pattern at random (see augment function)
     [pmTrCVNormFeatures, pmMissPattIndex(mi, :), pmMissPattArray(mi, :)] = ...
-        applyActMissPattToDataSet(pmTrCVNormFeatures, pmMissPattIndex(mi, :), ...
+        applyActMissPattToDataSet(pmTrCVNormFeatures, pmTrCVMuIndex, pmTrCVSigmaIndex, pmOverallStats, pmMissPattIndex(mi, :), ...
             pmMSNormFeats, randmpidx(mi), nrawfeatures, pmFeatureParamsRow.featureduration, ...
             pmFeatureParamsRow.msconst, pmFeatureParamsRow.interpmethod, pmFeatureParamsRow.missinterp);
     
@@ -143,19 +146,8 @@ for mi = 1:nmisspatts
     %   calc pred qual scores
     %   store results in arrays - scenario description array, missingness pattern array and qual score
     %   array
-
-    [labels] = setLabelsForLabelMethod(pmModelParamsRow.labelmethod, pmTrCVIVLabels, pmTrCVExLabels, pmTrCVABLabels, pmTrCVExLBLabels, pmTrCVExABLabels, pmTrCVExABxElLabels);
-    trcvlabels = labels(:);
-
-    % for the 'Ex Start to Treatment' label, there is only one task.
-    % for the other label methods, use the predictionduration from the
-    % feature parameters record
-    if (pmModelParamsRow.labelmethod == 5 || pmModelParamsRow.labelmethod == 6)
-        predictionduration = 1;
-    else
-        fprintf('These models only support label method 5 and 6\n');
-        return;
-    end
+    
+    trcvlabels = pmTrCVExABxElLabels;
 
     [hyperparamQS, ~, foldhpCVQS, ~] = createHpQSTables(1, nfolds);
     lrval  = pmHyperParamQS.HyperParamQS.LearnRate;

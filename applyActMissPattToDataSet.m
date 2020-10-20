@@ -1,4 +1,4 @@
-function [normfeatures, mpidxrow, mparrayrow] = applyActMissPattToDataSet(normfeatures, ...
+function [normfeatures, mpidxrow, mparrayrow] = applyActMissPattToDataSet(normfeatures, muindex, sigmaindex, pmOverallStats, ...
     mpidxrow, pmMSNormFeats, msex, nrawfeatures, featureduration, outrangeconst, interpmethod, missinterp)
     
 % applyActMissPattToDataSet - choose an actual missingness pattern at random and apply
@@ -25,11 +25,11 @@ elseif interpmethod == 1
     nmeasures = nrawfeatures / featureduration;
     for m = 1:nmeasures
         mrawfeats = rawfeatures(:, ((m-1) * featureduration) + 1: (m * featureduration));
-        mmparrayrow = mparrayrow(((m-1) * featureduration) + 1: (m * featureduration));
+        %mmparrayrow = mparrayrow(((m-1) * featureduration) + 1: (m * featureduration));
         % interpolate first (requires at least 2 values per measure)
-        actx = find(~mmparrayrow)';
+        actx = find(~isnan(mrawfeats(1,:)))';
         if size(actx, 1) >= 2
-            acty = mrawfeats(:, logical(~mmparrayrow))';
+            acty = mrawfeats(:, ~isnan(mrawfeats(1,:)))';
             fullx = (1:featureduration)';
             fully = interp1(actx, acty, fullx, 'linear');
             rawfeatures(:, ((m-1) * featureduration) + 1: (m * featureduration)) = fully';
@@ -39,18 +39,22 @@ elseif interpmethod == 1
         actx = find(~isnan(mrawfeats(1, :)))';
         if size(actx, 1) < featureduration
             fprintf('Missing extremity value found\n');
+            if size(actx, 1) >= 2
+                acty = mrawfeats(:, ~isnan(mrawfeats(1,:)))';
+                fullx = (1:featureduration)';
+                fully = interp1(actx, acty, fullx, 'nearest', 'extrap');
+                rawfeatures(:, ((m-1) * featureduration) + 1: (m * featureduration)) = fully';
+            else
+                % not enough data points to extrapolate
+                fprintf('Default value used\n');
+                for i = 1:nexamples
+                    mrawfeats(i, isnan(mrawfeats(i, :))) = (pmOverallStats.Mean(m) - muindex(i, m)) / sigmaindex(i, m);
+                    rawfeatures(i, ((m-1) * featureduration) + 1: (m * featureduration)) = mrawfeats(i, :);
+                end
+                %mrawfeats(:, isnan(mrawfeats(1,:))) = outrangeconst;
+                %rawfeatures(:, ((m-1) * featureduration) + 1: (m * featureduration)) = mrawfeats;
+            end
         end
-        if size(actx, 1) >= 2
-            acty = mrawfeats(:, ~isnan(mrawfeats(1,:)))';
-            fullx = (1:featureduration)';
-            fully = interp1(actx, acty, fullx, 'nearest', 'extrap');
-            rawfeatures(:, ((m-1) * featureduration) + 1: (m * featureduration)) = fully';
-        else
-            % not enough data points to extrapolate
-            mrawfeats(:, isnan(mrawfeats(1,:))) = outrangeconst;
-            rawfeatures(:, ((m-1) * featureduration) + 1: (m * featureduration)) = mrawfeats;
-        end
-        
     end
     
     if missinterp == 1

@@ -55,8 +55,9 @@ pmHyperParams        = readtable(fullfile(basedir, subfolder, strcat(basehpparam
 
 % calculate labels for missingness dataset
 qsmeasure = 'AvgEPV';
-threshold = 0.9;
-labels = setLabelsForMSDataset(pmMissPattQS, pmBaselineQS, qsmeasure, threshold);
+qsthreshold = 0.9;
+[baselineqsthresh] = calcQCthresh(table2array(pmBaselineQS(1, {qsmeasure})), qsthreshold);
+labels = setLabelsForMSDataset(pmMissPattQS, qsmeasure, baselineqsthresh);
 
 lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
 
@@ -190,7 +191,7 @@ widthinch = 8.25;
 heightinch = 3;
 name = '';
 
-[thresh, threshidx] = calculateROCOpThresh(pmMSModelRes.FPR, pmMSModelRes.TPR, pmMSModelRes.PredSort);
+[rocthresh, rocthreshidx] = calculateROCOpThresh(pmMSModelRes.FPR, pmMSModelRes.TPR, pmMSModelRes.PredSort);
 
 baseplotname1 = sprintf('%s-PRROC', basemsresultsfile);
 plotsubfolder = sprintf('Plots/MissPatQS');
@@ -237,7 +238,7 @@ area(ax, pmMSModelRes.FPR, pmMSModelRes.TPR, ...
 line(ax, [0, 1], [0, 1], ...
     'Color', 'red', 'LineStyle', '-', 'LineWidth', 1.0);
 
-scatter(ax, pmMSModelRes.FPR(threshidx), pmMSModelRes.TPR(threshidx),  ...
+scatter(ax, pmMSModelRes.FPR(rocthreshidx), pmMSModelRes.TPR(rocthreshidx),  ...
         24, 'filled', 'o', ...
         'MarkerFaceColor', 'green', ...
         'MarkerEdgeColor', 'black');
@@ -269,7 +270,7 @@ savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
 close(f);
 
 % need to add correct vs incorrect colouring to the plot function
-plotMissingnessQSFcn(pmMSModelRes, pmTrCVMPArray, pmTrCVMPQS, trcvlabels, thresh, basemsresultsfile);
+plotMissingnessQSFcn(pmMSModelRes, pmTrCVMPArray, pmTrCVMPQS, trcvlabels, pmBaselineQS, qsthreshold, rocthresh, basemsresultsfile);
 
 
 beep on;
