@@ -10,7 +10,11 @@ modelcalibration = table('Size',[nbins, 6], ...
 results = [modeldaypred, testlabels, zeros(nexamples, 1)];
 
 for n = 1:nbins
-    idx = results(:,1) >= binedges(n) & results(:,1) < binedges(n + 1);
+    if n < nbins
+        idx = results(:,1) >= binedges(n) & results(:,1) < binedges(n + 1);
+    else
+        idx = results(:,1) >= binedges(n) & results(:,1) <= binedges(n + 1);
+    end
     results(idx, 3) = n;
 end
 

@@ -1,33 +1,69 @@
-function plotMissingnessQSFcn(pmMSModelRes, pmTrCVMPArray, pmTrCVMPQS, trcvlabels, pmBaselineQS, qsthreshold, thresh, basemsresultsfile)
+function plotMissingnessQSFcn(pmMSModelRes, pmMissPattIndex, pmMissPattQSPct, labels, qsthreshold, thresh, basemsresultsfile)
 
 % plotMissingnessQSFcn - plots the quality scores vs the %age of missing
 % data and also colour by correct vs incorrect result by the missingess
 % classifier
 
-widthinch = 8.25;
-heightinch = 7.5;
+basedir = setBaseDir();
+plotsubfolder = sprintf('Plots/MissPatQS');
+%mkdir(fullfile(basedir, plotsubfolder));
+
+widthinch = 5;
+heightinch = 5;
 name = '';
-plotsacross = 2;
-plotsdown = 3;
-thisplot = 1;
+plotsacross = 1;
+plotsdown = 1;
 labelfontsize = 8;
 qsarray = {'AvgEPV', 'PRAUC', 'ROCAUC', 'Acc', 'PosAcc'};
 
-truepred = pmMSModelRes.Pred >= thresh;
-xdata = 100 * sum(pmTrCVMPArray, 2) / size(pmTrCVMPArray, 2);
+tpidx = pmMSModelRes.Pred >= thresh & labels == 1;
+fpidx = pmMSModelRes.Pred >= thresh & labels == 0;
+tnidx = pmMSModelRes.Pred <  thresh & labels == 0;
+fnidx = pmMSModelRes.Pred <  thresh & labels == 1;
 
-baseplotname1 = sprintf('%s-QSC', basemsresultsfile);
-[f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);
+tpcol = 'green';
+fpcol = 'red';
+tncol = [0.5 0.5 0.5];
+fncol = 'blue';
+
+%truepred = pmMSModelRes.Pred >= thresh;
+xdata = pmMissPattIndex.MSPct;
+
+transparency = 0.2;
 
 for i = 1:size(qsarray, 2)
-    ax1 = subplot(plotsdown, plotsacross, i, 'Parent', p);
     qsmeasure = qsarray{i};
-    [baselineqsthresh] = calcQCthresh(table2array(pmBaselineQS(1, {qsmeasure})), qsthreshold);
-    ydata = table2array(pmTrCVMPQS(:, {qsmeasure}));
+    baseplotname1 = sprintf('%s-QSC-%s', basemsresultsfile, qsmeasure);
+    [f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);
+    ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
+    ydata = 100 * table2array(pmMissPattQSPct(:, {qsmeasure}));
     hold on;
-    scatter(ax1, xdata(truepred), ydata(truepred), 20, 'b', 'o', 'filled');
-    scatter(ax1, xdata(~truepred), ydata(~truepred), 20, 'r', 'o', 'filled');
-    line(ax1, [0 100], [baselineqsthresh baselineqsthresh], ...
+    scatter(ax1, xdata(tpidx), ydata(tpidx), 20, ...
+        'Marker', 'o', ...
+        'MarkerEdgeColor', tpcol, ...
+        'MarkerFaceColor', tpcol, ...
+        'Marker', 'o', ...
+        'MarkerEdgeAlpha', transparency, ...
+        'MarkerFaceAlpha', transparency);
+    scatter(ax1, xdata(tnidx), ydata(tnidx), 20, ...
+        'MarkerEdgeColor', tncol, ...
+        'MarkerFaceColor', tncol, ...
+        'Marker', 'o', ...
+        'MarkerEdgeAlpha', transparency, ...
+        'MarkerFaceAlpha', transparency);
+    scatter(ax1, xdata(fpidx), ydata(fpidx), 20, ...
+        'MarkerEdgeColor', fpcol, ...
+        'MarkerFaceColor', fpcol, ...
+        'Marker', 'o', ...
+        'MarkerEdgeAlpha', transparency, ...
+        'MarkerFaceAlpha', transparency);
+    scatter(ax1, xdata(fnidx), ydata(fnidx), 20, ...
+        'MarkerEdgeColor', fncol, ...
+        'MarkerFaceColor', fncol, ...
+        'Marker', 'o', ...
+        'MarkerEdgeAlpha', transparency, ...
+        'MarkerFaceAlpha', transparency);
+    line(ax1, [0 100], [qsthreshold qsthreshold], ...
         'Color', 'black', ...
         'LineStyle', '-', ...
         'LineWidth', 1, ...
@@ -35,17 +71,23 @@ for i = 1:size(qsarray, 2)
     hold off;
     set(gca,'fontsize',labelfontsize);
     title(qsmeasure,'FontSize', labelfontsize);
+    if i == 1
+        legend(sprintf('TP (%d)', sum(tpidx)), ...
+               sprintf('TN (%d)', sum(tnidx)), ...
+               sprintf('FP (%d)', sum(fpidx)), ...
+               sprintf('FN (%d)', sum(fnidx)), ...
+               'Location',  'east');
+    end
     xlabel('Percent Missing Points', 'FontSize', labelfontsize);
-    ylabel(qsmeasure, 'FontSize', labelfontsize);
+    ylabel(sprintf('%s %% baseline', qsmeasure), 'FontSize', labelfontsize);
+    
+    basedir = setBaseDir();
+    savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
+    close(f);
 end 
 
-basedir = setBaseDir();
-plotsubfolder = sprintf('Plots/MissPatQS');
-mkdir(fullfile(basedir, plotsubfolder));
 
-basedir = setBaseDir();
-savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
-close(f);
+
 
 end
 

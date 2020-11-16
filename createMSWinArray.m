@@ -2,7 +2,7 @@ function pmMSWinArray = createMSWinArray(datawinarray, nexamples, totalwin, nmea
 
 % createMSWinArray - creates Missingness Feature Array
 
-fprintf('Creating missingness features\n');
+fprintf('Creating missingness data window array\n');
 if modfeatparamsrow.missinterp == 1
     % calculate missingness features after populating missing values
     % i.e. missingness features always zero

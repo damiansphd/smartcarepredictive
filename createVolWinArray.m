@@ -12,8 +12,6 @@ for m = 1:nmeasures
         pmVolWinArray(:, :, m) = mvolfeats;
 end
 
-fprintf('\n');
-
 end
 
 

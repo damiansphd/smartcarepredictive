@@ -2,6 +2,7 @@ function [pmNormDataWinArray, pmMuIndex, pmSigmaIndex, pmPMeanWinArray] = create
             pmOverallStats, nexamples, measures, nmeasures, totalwin, normwin, study)
 
 % createNormDataWinArray - creates the normalised data window array
+fprintf('Normalising data window array\n');
 
 [~, pmNormDataWinArray, ~] = createDataWindowArrays(nexamples, nmeasures, totalwin); 
 pmMuIndex  = zeros(nexamples, nmeasures);

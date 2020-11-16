@@ -11,7 +11,6 @@ totalwin = datawin + normwin;
 volwin  = totalvolwin - normwin;
 
 % set measures masks for the particular feature combination requested
-tic
 fprintf('Creating feature arrays\n');
 pmRawMeasFeats = zeros(nexamples, nmeasures * datawin);
 pmMSFeats      = zeros(nexamples, nmeasures * datawin);
@@ -43,9 +42,6 @@ pmNormFeatNames = [reshape(cellstr(cellstr('RM-' + string(measures.ShortName(log
                    reshape(cellstr(cellstr('MS-' + string(measures.ShortName(logical(measures.MSMeas)))     + '-') + string(datawin:-1:1))', [1 sum(measures.MSMeas)     * datawin] ), ...
                    reshape(cellstr(cellstr('VO-' + string(measures.ShortName(logical(measures.Volatility))) + '-') + string(volwin :-1:1))', [1 sum(measures.Volatility) * volwin]  ), ...
                    reshape(        cellstr('PM-' + string(measures.ShortName(logical(measures.PMean)))      )',                              [1 sum(measures.PMean)]                )];
-
-toc
-fprintf('\n');
 
 end
 
