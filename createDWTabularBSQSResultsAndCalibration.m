@@ -1,7 +1,7 @@
-function [combtable, qsarray, calibtable] = createTabularBSQSResultsAndCalibrationNew(pmBSAllQS, ncombinations, nbssamples, ...
+function [combtable, qsarray, calibtable] = createDWTabularBSQSResultsAndCalibration(pmBSAllQS, ncombinations, nbssamples, ...
     qualmeasures, nqualmeas, basedir, subfolder, bsqsfile)
 
-% createTabularBSQSResultsAndCalibration - create table and sample arrays for bootstrap
+% createDWTabularBSQSResultsAndCalibration - create table and sample arrays for bootstrap
 % quality scores, along with an array for calibration results.
 
 combtable = [];

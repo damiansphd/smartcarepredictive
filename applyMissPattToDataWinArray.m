@@ -7,11 +7,28 @@ function [pmMSDataWinArray, mpidxrow, mpfeatsrow] = applyMissPattToDataWinArray(
 datawin = pmModFeatParamsRow.datawinduration;
 normwin = pmModFeatParamsRow.normwinduration;
 totalwin = datawin + normwin;
+nmsfeats = size(mpfeatsrow, 2);
 
 pmMSDataWinArray = pmDataWinArray;
 
 if mpidxrow.ScenType == 0
     fprintf('Baseline scenario - no missingness to apply\n');
+
+elseif mpidxrow.ScenType == 2
+    mspct = mpidxrow.Percentage;
+    nrem = ceil(nmsfeats * mspct / 100);
+    posarray = randperm(nmsfeats, nrem);
+    featidx = zeros(1, nmsfeats);
+    featidx(posarray) = 1;
+    mpfeatsrow = featidx;
+    measfeatsrow = reshape(mpfeatsrow', datawin, sum(measures.RawMeas))';
+    for m = 1:sum(measures.RawMeas)
+        pmMSDataWinArray(:, logical(measfeatsrow(m, :)), m) = nan;
+    end
+    mpidxrow.MSPct = sum(mpfeatsrow) * 100 / (datawin * sum(measures.RawMeas));
+    fprintf('Random percentage missingness with overall missingness of %2.2f%%\n', ...
+        mpidxrow.MSPct);
+    
 elseif mpidxrow.ScenType == 4
     msex = mpidxrow.MSExample;
     mc = 1;
@@ -27,9 +44,12 @@ elseif mpidxrow.ScenType == 4
     mpidxrow.MSPct = sum(mpfeatsrow) * 100 / (datawin * sum(measures.RawMeas));
     fprintf('Actual missingness from example %5d with overall missingness of %2.2f%%\n', ...
         msex, mpidxrow.MSPct);
+
 else
-    fprintf('Synthetic scenario - yet to be implemented\n');
+    fprintf('Scenario - yet to be implemented\n');
 end
 
+
+    
 end
 

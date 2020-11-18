@@ -1,125 +1,71 @@
-function plotQCModelWeights(pmQCModelRes, pmMissPattArray, measures, nmeasures, ...
-    featureparamsrow, mpmodelparamsrow, plotsubfolder, basemodelresultsfile)
+function plotQCModelWeights(pmQCModelRes, pmMissPattArray, ...
+    datawin, modelver, nqcfolds, plotsubfolder, basemodelresultsfile)
 
 % plotQCModelWeights - plots the model weights for the quality classifier
 
+if ~ismember(modelver, {'vPM1'})
+    fprintf('The model weights plot is only relevant for the linear model\n');
+    return
+end
+
+nnormfeatures = size(pmMissPattArray, 2);
+
+axisfontsize = 10;
+widthinch = 8.25;
+heightinch = 6;
+name = '';
 lcolor = [0.8, 0.8, 0.8];
 
-[featureduration, ~, datefeat, demofeat, ...
- nbuckets, navgseg, nvolseg, nbuckpmeas, nrawmeasures, nmsmeasures, nbucketmeasures, nrangemeasures, ...
- nvolmeasures, navgsegmeasures, nvolsegmeasures, ncchangemeasures, ...
- npmeanmeasures, npstdmeasures, nbuckpmeanmeasures, nbuckpstdmeasures, ...
- nrawfeatures, nmsfeatures, nbucketfeatures, nrangefeatures, nvolfeatures, navgsegfeatures, ...
- nvolsegfeatures, ncchangefeatures, npmeanfeatures, npstdfeatures, ...
- nbuckpmeanfeatures, nbuckpstdfeatures, ndatefeatures, ndemofeatures, ...
- nfeatures, nnormfeatures] = setNumMeasAndFeatures(featureparamsrow, measures, nmeasures);
+plotsacross = 1;
+plotsdown = max(nqcfolds,2);
 
-predictionduration = size(pmModelRes.pmNDayRes,2);
+name1 = sprintf('%s-QCWght', basemodelresultsfile);
+[f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);
+ax1 = gobjects(plotsacross * plotsdown,1);
 
-for n = 1:predictionduration
-    
-    nfolds = size(pmModelRes.pmNDayRes(n).Folds,2);
-
-    plotsacross = 1;
-    plotsdown = max(nfolds,4) + 2;
-    
-    name1 = sprintf('%s-%s-%dDFWght', basemodelresultsfile, lbdisplayname, n);
-    [f1, p1] = createFigureAndPanel(name1, 'Portrait', 'A4');
-    ax1 = gobjects(plotsacross * plotsdown,1);
-    
-    fwarray = zeros(nnormfeatures + 1, nfolds);
-    for fold = 1:nfolds
-        if ismember(mpmodelparamsrow.ModelVer(1), {'vPM1'})
-            fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.Coefficients.Estimate;
-        elseif ismember(mpmodelparamsrow.ModelVer(1), {'vPM2'})
-            fwarray(:, fold) = pmModelRes.pmNDayRes(n).Folds(fold).Model.w;
-        else
-            fprintf('Unsupported model version\n');
-            return;
-        end    
-    end
-    minval = 0; maxval = 0;
-    minval = min(minval, min(min(fwarray(2:end, :))));
-    maxval = max(maxval, max(max(fwarray(2:end, :))));
-    yl1 = [minval maxval];
-    
-    for fold = 1:nfolds
-        if ismember(mpmodelparamsrow.ModelVer(1), {'vPM1', 'vPM3', 'vPM4', 'vPM5'})
-            intercept      = fwarray(1, fold);
-            featureweights = fwarray(2:end, fold);
-        elseif ismember(mpmodelparamsrow.ModelVer(1), {'vPM2'})
-            featureweights = fwarray(1:end - 1, fold);
-            intercept      = fwarray(end, fold);
-        else
-            fprintf('Unsupported model version\n');
-            return;
-        end
-            
-        ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
-        
-        % plot feature weights for a given prediction day (labelidx)
-        bar(ax1(fold), (1:nnormfeatures), featureweights, 0.75, 'FaceColor', 'blue', 'EdgeColor', 'black');
-        
-        xl1 = [0 nnormfeatures];
-        ylim(ax1(fold), yl1);
-        
-        hold on;
-        nextfeat = 0.5;
-        [xl1, yl1, nextfeat] = plotFeatureDividers(ax1(fold), featureparamsrow, measures, nmeasures, xl1, yl1, nextfeat, lcolor);
-        hold off;
-        
-        set(gca,'fontsize',6);
-        title(ax1(fold), sprintf('Fold %d (Intercept %.2f)', fold, intercept),'FontSize', 6);
-        xlabel('Features', 'FontSize', 6);
-        ylabel('Feature Weights', 'FontSize', 6);  
-    end
-    
-    % plot std deviation of features
-    fold = fold + 1;
-    featurestd = std(pmMissPattArray,1);
-    ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
-    bar(ax1(fold), (1:nnormfeatures), featurestd, .75, 'FaceColor', 'green', 'EdgeColor', 'black');
-    xl1 = [0 nnormfeatures];
-    minval = 0; maxval = 0;
-    minval = min(minval, min(featurestd));
-    maxval = max(maxval, max(featurestd));
-    yl1 = [minval maxval * 1.1];
-    ylim(ax1(fold), yl1);
-    
-    hold on;
-    nextfeat = 0.5;
-    [xl1, yl1, nextfeat] = plotFeatureDividers(ax1(fold), featureparamsrow, measures, nmeasures, xl1, yl1, nextfeat, lcolor);
-    hold off;
-    set(gca,'fontsize',6);
-    title(ax1(fold), 'Feature Std Deviation','FontSize', 6);
-    xlabel('Features', 'FontSize', 6);
-    ylabel('Feature Std Dev', 'FontSize', 6);  
-    
-    % plot mean of features
-    fold = fold + 1;
-    featuremean = mean(pmMissPattArray,1);
-    ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p1);
-    bar(ax1(fold), (1:nnormfeatures), featuremean, .75, 'FaceColor', 'green', 'EdgeColor', 'black');
-    xl1 = [0 nnormfeatures];
-    minval = 0; maxval = 0;
-    minval = min(minval, min(featuremean));
-    maxval = max(maxval, max(featuremean));
-    yl1 = [minval maxval * 1.1];
-    ylim(ax1(fold), yl1);
-    
-    hold on;
-    nextfeat = 0.5;
-    [xl1, yl1, nextfeat] = plotFeatureDividers(ax1(fold), featureparamsrow, measures, nmeasures, xl1, yl1, nextfeat, lcolor);
-    hold off;
-    set(gca,'fontsize',6);
-    title(ax1(fold), 'Feature Mean','FontSize', 6);
-    xlabel('Features', 'FontSize', 6);
-    ylabel('Feature Mean', 'FontSize', 6);  
-    
-    basedir = setBaseDir();
-    savePlotInDir(f1, name1, basedir, plotsubfolder);
-    close(f1);
+fwarray = zeros(nnormfeatures + 1, nqcfolds);
+for fold = 1:nqcfolds
+    fwarray(:, fold) = pmQCModelRes.Folds(fold).Model.Coefficients.Estimate;    
 end
+
+minval = 0; maxval = 0;
+minval = min(minval, min(min(fwarray(2:end, :))));
+maxval = max(maxval, max(max(fwarray(2:end, :))));
+yl1 = [minval maxval];
+
+for fold = 1:nqcfolds
+    if ismember(modelver, {'vPM1'})
+        intercept      = fwarray(1, fold);
+        featureweights = fwarray(2:end, fold);
+    end
+
+    ax1(fold) = subplot(plotsdown, plotsacross, fold, 'Parent',p);
+
+    % plot feature weights for a given prediction day (labelidx)
+    bar(ax1(fold), (1:nnormfeatures), featureweights, 0.75, 'FaceColor', 'blue', 'EdgeColor', 'black');
+
+    xl1 = [0.5 nnormfeatures + 0.5];
+    ylim(ax1(fold), yl1);
+
+    hold on;
+    nmsmeasures = nnormfeatures/datawin;
+    for i = 1:nmsmeasures - 1
+        %nextfeat = nextfeat + datawin;
+        %[xl1, yl1] = plotVerticalLine(ax1(fold), nextfeat, xl1, yl1, lcolor, '-', 1);
+        [xl1, yl1] = plotVerticalLine(ax1(fold), 0.5 + (i * datawin), xl1, yl1, lcolor, '-', 1);
+    end
+
+    hold off;
+
+    set(gca,'fontsize', axisfontsize);
+    title(ax1(fold), sprintf('Fold %d (Intercept %.2f)', fold, intercept),'FontSize', axisfontsize);
+    xlabel('Features', 'FontSize', axisfontsize);
+    ylabel('Feature Weights', 'FontSize', axisfontsize);  
+end
+
+basedir = setBaseDir();
+savePlotInDir(f, name1, basedir, plotsubfolder);
+close(f);
 
 end
 

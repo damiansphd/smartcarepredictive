@@ -28,7 +28,7 @@ basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 fprintf('Loading quality classifier results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), ...
-        'pmQCModelRes', ...
+        'pmQCModelRes', 'pmQCFeatNames', ...
         'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
         'labels', 'qcsplitidx', 'nexamples', ...
         'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
@@ -41,7 +41,7 @@ fprintf('\n');
 plotsubfolder = sprintf('Plots/QC/%s', basemodelresultsfile);
 mkdir(fullfile(basedir, plotsubfolder));
 
-[plottype, validresponse] = selectPlotType;
+[plottype, validresponse] = selectQCPlotType;
 if ~validresponse
     return;
 end
@@ -49,19 +49,25 @@ end
 if plottype == 1
     % plot weights
     fprintf('Plotting Model Weights\n');
-    plotQCModelWeights(pmQCModelRes, pmMissPattArray, measures, nmeasures, ...
-        pmFeatureParamsRow, pmMPModelParamsRow, ...
+    plotQCModelWeights(pmQCModelRes, pmMissPattArray, ...
+        pmFeatureParamsRow.datawinduration, pmMPModelParamsRow.ModelVer, nqcfolds, ...
         plotsubfolder, basemodelresultsfile);
 elseif plottype == 2    
     % plot PR and ROC Curves
     fprintf('Plotting PR and ROC Curves\n');
-    plotPRAndROCCurves(pmModelRes, pmFeatureParamsRow, lbdisplayname, plotsubfolder, basemodelresultsfile);
+    plotQCPRAndROCCurves(pmQCModelRes, plotsubfolder, basemodelresultsfile)
 elseif plottype == 3
     % plot missingness vs qs
-    
+    [fpthreshold, validresponse] = selectThreshPercentage('False Positive', 0, qsthreshold);
+    if validresponse == 0
+        return;
+    end
+    [rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
+    plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
+        qsthreshold, fpthreshold, rocthresh, basemodelresultsfile, plotsubfolder);
 elseif plottype == 4
     % plot calibration curve
-    
+    calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, basemodelresultsfile, plotsubfolder);
 elseif plottype == 5
     % plot decision tree
     [fold, validresponse] = selectFold(size(pmQCModelRes.Folds, 2));
@@ -72,9 +78,9 @@ elseif plottype == 5
     if ~validresponse
         return;
     end
+    % **** add function in here ****
     
-    
-elseif plottype == 8
+elseif plottype == 6
     % plot analysis of examples by leaf
     
 end

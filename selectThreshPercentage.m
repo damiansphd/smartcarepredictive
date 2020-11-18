@@ -1,12 +1,12 @@
-function [pct, validresponse] = selectThreshPercentage()
+function [pct, validresponse] = selectThreshPercentage(type, minthresh, maxthresh)
 
 % selectTheshPercentage - select the percentage for the label threshold
 
-spct = input('Choose theshold percentage (0-100)? ', 's');
+spct = input(sprintf('Choose %s theshold percentage (%d-%d)? ', type, minthresh, maxthresh), 's');
 
 pct = str2double(spct);
 
-if (isnan(pct) || pct < 0 || pct > 100)
+if (isnan(pct) || pct < minthresh || pct > maxthresh)
     fprintf('Invalid choice\n');
     validresponse = false;
     pct = 0;

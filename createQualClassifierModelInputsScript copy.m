@@ -20,9 +20,7 @@ if validresponse == 0
 end
 [basemodelresultsfile] = selectModelResultsFile(fv1, lb1, rm1);
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
-qcbaselinefile = strrep(modelresultsfile, ' ModelResults', 'QCBaseline');
-
-qcdatasetfile = strrep(basemodelresultsfile, ' ModelResults', 'QCDataset');
+baseqcinputfile = strrep(basemodelresultsfile, ' ModelResults', 'QCDataset');
 
 tic
 basedir = setBaseDir();
@@ -62,44 +60,43 @@ load(fullfile(basedir, subfolder, psplitfile));
 toc
 fprintf('\n');
 
-tic
-fprintf('Loading baseline quality scores from file %s\n', qcbaselinefile);
-load(fullfile(basedir, subfolder, qcbaselinefile), 'pmBaselineIndex', 'pmBaselineQS');
-toc
-fprintf('\n');
-
 epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
 lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
 nqcfolds = 2; % number of folds for the nested cross validation for the quality classifier
-batchsize = 1000; % number of examples in each batch
+%batchsize = 1000; % number of examples in each batch
+basebatchsize = 10; % temporary small number to test logic
 
 npcexamples = size(pmFeatureIndex, 1);
 nrawmeasures = sum(measures.RawMeas);
 
-[qcinputfiles, nbatchfiles] = getQCBatchInputFiles(qcdatasetfile, batchsize);
+[qcinputfiles, nbatchfiles] = getQCBatchInputFiles(baseqcinputfile);
 if nbatchfiles > 0
-    lastbatch = getQCLastBatchFile(qcinputfiles, qcdatasetfile, nbatchfiles, batchsize);
+    nlastbatch = getQCLastBatchFile(qcinputfiles, baseqcinputfile, nbatchfiles, basebatchsize);
 else
-    lastbatch = 0;
+    nlastbatch = 0;
 end
-[batchto, validresponse] = selectBatchNbr('finish', lastbatch + 1, lastbatch + 100);
+[nbatchto, validresponse] = selectBatchNbr('finish', nlastbatch + 1, nlastbatch + 100);
 if validresponse == 0
     return;
 end
 fprintf('\n');
 
-mpfrom = (lastbatch * batchsize) + 1;
-mpto   = (batchto   * batchsize)    ;
+if nlastbatch == 0 
+    mpfrom = (nlastbatch * basebatchsize) + 1;
+else
+    mpfrom = (nlastbatch * basebatchsize) + nqcfolds + 1;
+end
+mpto   = (nbatchto   * basebatchsize) + nqcfolds;
 nmptotal = mpto;
 nmpthisrun = mpto - mpfrom + 1;
-if nmptotal > npcexamples
+if nmptotal > npcexamples + nqcfolds
     nactmisspatts = npcexamples;
-    nsynmisspatts = nmptotal - nactmisspatts;
+    nsynmisspatts = nmptotal - nactmisspatts - nqcfolds;
 else
-    nactmisspatts = nmptotal;
+    nactmisspatts = nmptotal - nqcfolds;
     nsynmisspatts = 0;
 end
-fprintf('Running for batch size %d from batch %d to %d\n', batchsize, lastbatch + 1, batchto);
+fprintf('Running for batch size %d from batch %d to %d\n', basebatchsize, nlastbatch + 1, nbatchto);
 fprintf('\n');
 
 [pmMissPattIndexThisRun, ~, ~, ~] ... 
@@ -108,12 +105,19 @@ fprintf('\n');
 rng(2);
 [pmMissPattIndexThisRun] = createDWMissScenarios(pmMissPattIndexThisRun, npcexamples, nqcfolds, nactmisspatts, nsynmisspatts, mpfrom, mpto);
 
-for ba = 1:(batchto - lastbatch)
+for ba = 1:(nbatchto - nlastbatch)
     
-    thisbatch = lastbatch + ba;
+    thisbatch = nlastbatch + ba;
+    if thisbatch == 1
+        batchsize = basebatchsize + nqcfolds;
+        offset    = 0;
+    else
+        batchsize = basebatchsize;
+        offset    = nqcfolds;
+    end
     
     % extract the relevant rows for this batch
-    pmMissPattIndex = pmMissPattIndexThisRun(((ba - 1) * batchsize) + 1:(ba * batchsize), :);
+    pmMissPattIndex = pmMissPattIndexThisRun(((ba - 1) * batchsize) + offset + 1:(ba * batchsize) + offset, :);
     [~, pmMissPattArray, pmMissPattQS, pmMissPattQSPct] = createDWMissPattTables(batchsize, nrawmeasures, pmFeatureParamsRow.datawinduration);
 
     % create the mapping of pred classifier folds to quality classifier folds
@@ -151,6 +155,18 @@ for ba = 1:(batchto - lastbatch)
             epilen, lossfunc);
     end
 
+    % save baseline QS scores by fold
+    if thisbatch == 1
+        pmBaselineIndex = pmMissPattIndex(1:nqcfolds, :);
+        pmBaselineQS    = pmMissPattQS(1:nqcfolds, :);
+        pmMissPattIndex(1:nqcfolds, :) = [];
+        pmMissPattArray(1:nqcfolds, :) = [];
+        pmMissPattQS(1:nqcfolds, :)    = [];
+        pmMissPattQSPct(1:nqcfolds, :) = [];
+    else
+        % need to load in baseline QS from batch 1 file
+    end
+
     % populate the relative percentage QS table
     for i = 1:nqcfolds
         bidx = pmBaselineIndex.QCFold == i;
@@ -172,12 +188,12 @@ for ba = 1:(batchto - lastbatch)
     pmOtherRunParams.epilen     = epilen;
     pmOtherRunParams.lossfunc   = lossfunc;
     pmOtherRunParams.nqcfolds   = nqcfolds;
-    pmOtherRunParams.batchsize  = batchsize;
+    pmOtherRunParams.batchsize  = basebatchsize;
 
     tic
     basedir = setBaseDir();
     subfolder = 'MatlabSavedVariables';
-    outputfilename = sprintf('%sB%d-%d.mat', qcdatasetfile, batchsize, thisbatch);
+    outputfilename = sprintf('%sB%d-%d.mat', baseqcinputfile, basebatchsize, thisbatch);
     fprintf('Saving model output variables to file %s\n', outputfilename);
     save(fullfile(basedir, subfolder, outputfilename), ...
         'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
