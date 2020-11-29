@@ -5,6 +5,7 @@ function lastbatchfile = getQCLastBatchFile(qcinputfiles, baseqcinputfile, nbatc
 batchfilenbrs = zeros(nbatchfiles, 1);
 
 for i = 1:nbatchfiles
+    qcinputfiles{i} = strrep(qcinputfiles{i}, sprintf('.mat'), '');
     qcinputfiles{i} = strrep(qcinputfiles{i}, sprintf('%sB%d-', baseqcinputfile, batchsize), '');
     batchfilenbrs(i) = str2double(cell2mat(qcinputfiles(i)));
 end

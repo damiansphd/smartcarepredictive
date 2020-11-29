@@ -20,9 +20,6 @@ if validresponse == 0
 end
 [basemodelresultsfile] = selectModelResultsFile(fv1, lb1, rm1);
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
-qcbaselinefile = strrep(modelresultsfile, ' ModelResults', 'QCBaseline');
-
-qcdatasetfile = strrep(basemodelresultsfile, ' ModelResults', 'QCDataset');
 
 tic
 basedir = setBaseDir();
@@ -37,6 +34,10 @@ if pmFeatureParamsRow.interpmethod ~= 0 && pmFeatureParamsRow.interpmethod ~= 1
     fprintf('Missingness pattern script only works on data with either no or full interpolation\n');
     return
 end
+
+basemodelresultsfile = shortenQCFileName(basemodelresultsfile, pmHyperParamQS.HyperParamQS);
+qcbaselinefile       = strrep(basemodelresultsfile, ' ModelResults', 'QCBaseline');
+qcdatasetfile        = strrep(basemodelresultsfile, ' ModelResults', 'QCDataset');
 
 pmModelByFold = pmModelRes.pmNDayRes.Folds;
 clear('pmModelRes');
@@ -64,7 +65,7 @@ fprintf('\n');
 
 tic
 fprintf('Loading baseline quality scores from file %s\n', qcbaselinefile);
-load(fullfile(basedir, subfolder, qcbaselinefile), 'pmBaselineIndex', 'pmBaselineQS');
+load(fullfile(basedir, subfolder, sprintf('%s.mat', qcbaselinefile)), 'pmBaselineIndex', 'pmBaselineQS');
 toc
 fprintf('\n');
 
@@ -88,25 +89,27 @@ if validresponse == 0
 end
 fprintf('\n');
 
-mpfrom = (lastbatch * batchsize) + 1;
-mpto   = (batchto   * batchsize)    ;
-nmptotal = mpto;
-nmpthisrun = mpto - mpfrom + 1;
-if nmptotal > npcexamples
-    nactmisspatts = npcexamples;
-    nsynmisspatts = nmptotal - nactmisspatts;
-else
-    nactmisspatts = nmptotal;
-    nsynmisspatts = 0;
-end
-fprintf('Running for batch size %d from batch %d to %d\n', batchsize, lastbatch + 1, batchto);
-fprintf('\n');
+%mpfrom = (lastbatch * batchsize) + 1;
+%mpto   = (batchto   * batchsize)    ;
+%nmptotal = mpto;
+%nmpthisrun = mpto - mpfrom + 1;
+%if nmptotal > npcexamples
+%    nactmisspatts = npcexamples;
+%    nsynmisspatts = nmptotal - nactmisspatts;
+%else
+%    nactmisspatts = nmptotal;
+%    nsynmisspatts = 0;
+%end
+%fprintf('Running for batch size %d from batch %d to %d\n', batchsize, lastbatch + 1, batchto);
+%fprintf('\n');
 
-[pmMissPattIndexThisRun, ~, ~, ~] ... 
-    = createDWMissPattTables(nmptotal, nrawmeasures, pmFeatureParamsRow.datawinduration);
+%[pmMissPattIndexThisRun, ~, ~, ~] ... 
+%    = createDWMissPattTables(nmptotal, nrawmeasures, pmFeatureParamsRow.datawinduration);
 
-rng(2);
-[pmMissPattIndexThisRun] = createDWMissScenarios(pmMissPattIndexThisRun, npcexamples, nqcfolds, nactmisspatts, nsynmisspatts, mpfrom, mpto);
+%rng(2);
+%[pmMissPattIndexThisRun] = createDWMissScenarios(pmMissPattIndexThisRun, npcexamples, nqcfolds, nactmisspatts, nsynmisspatts, mpfrom, mpto);
+
+[pmMissPattIndexThisRun] = createDWMissScenarios(lastbatch, batchto, batchsize, npcexamples, nqcfolds, nrawmeasures, pmFeatureParamsRow.datawinduration);
 
 for ba = 1:(batchto - lastbatch)
     

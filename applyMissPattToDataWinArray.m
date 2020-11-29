@@ -7,7 +7,6 @@ function [pmMSDataWinArray, mpidxrow, mpfeatsrow] = applyMissPattToDataWinArray(
 datawin = pmModFeatParamsRow.datawinduration;
 normwin = pmModFeatParamsRow.normwinduration;
 totalwin = datawin + normwin;
-nmsfeats = size(mpfeatsrow, 2);
 
 pmMSDataWinArray = pmDataWinArray;
 
@@ -15,23 +14,28 @@ if mpidxrow.ScenType == 0
     fprintf('Baseline scenario - no missingness to apply\n');
 
 elseif mpidxrow.ScenType == 2
-    mspct = mpidxrow.Percentage;
-    nrem = ceil(nmsfeats * mspct / 100);
-    posarray = randperm(nmsfeats, nrem);
-    featidx = zeros(1, nmsfeats);
+    mspct      = mpidxrow.Percentage;
+    ndwarrayel = totalwin * nmeasures;
+    nmsfeats   = size(mpfeatsrow, 2);
+    nrem       = ceil(ndwarrayel * mspct / 100);
+    posarray   = randperm(ndwarrayel, nrem);
+    featidx    = zeros(1, ndwarrayel);
     featidx(posarray) = 1;
-    mpfeatsrow = featidx;
-    measfeatsrow = reshape(mpfeatsrow', datawin, sum(measures.RawMeas))';
-    for m = 1:sum(measures.RawMeas)
-        pmMSDataWinArray(:, logical(measfeatsrow(m, :)), m) = nan;
+    measfeats = reshape(featidx', totalwin, nmeasures)';
+    % need to fix this - loop over all measures and check if rawmeas == 1
+    % etc
+    for m = 1:nmeasures
+        pmMSDataWinArray(:, logical(measfeats(m, :)), m) = nan;
     end
+    rmmeasfeats = measfeats(logical(measures.RawMeas), normwin+1:totalwin);
+    mpfeatsrow  = reshape(rmmeasfeats', nmsfeats, 1)';
     mpidxrow.MSPct = sum(mpfeatsrow) * 100 / (datawin * sum(measures.RawMeas));
     fprintf('Random percentage missingness with overall missingness of %2.2f%%\n', ...
         mpidxrow.MSPct);
     
 elseif mpidxrow.ScenType == 4
     msex = mpidxrow.MSExample;
-    mc = 1;
+    mc   = 1;
     for m = 1:nmeasures
         mmsidx = isnan(pmDataWinArray(msex, :, m));
         pmMSDataWinArray(:, mmsidx, m) = nan;

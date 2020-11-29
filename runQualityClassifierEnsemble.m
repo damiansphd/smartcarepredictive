@@ -18,26 +18,43 @@ end
 if validresponse == 0
     return;
 end
-filetext = ' QCDataset';
 
-[baseqcinputfile] = selectQCInputFile(fv1, lb1, rm1, filetext);
-qcresultsfile = sprintf('%s.mat', baseqcinputfile);
-baseqcinputfile = strrep(baseqcinputfile, filetext, '');
+filetext  = 'QCDataset';
+batchsize = 1000;
+
+[basemodelresultsfile] = selectModelResultsFile(fv1, lb1, rm1);
+modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
+tic
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+fprintf('Loading hyperparameters for %s\n', modelresultsfile);
+load(fullfile(basedir, subfolder, modelresultsfile), 'pmHyperParamQS');
+toc
+fprintf('\n');
+
+basemodelresultsfile = shortenQCFileName(basemodelresultsfile, pmHyperParamQS.HyperParamQS);
+qcbaselinefile       = strrep(basemodelresultsfile, ' ModelResults', 'QCBaseline');
+qcdatasetfile        = strrep(basemodelresultsfile, ' ModelResults', filetext);
 
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-fprintf('Loading qualiy classifier input data for %s\n', qcresultsfile);
-load(fullfile(basedir, subfolder, qcresultsfile), ...
-    'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
+fprintf('Loading baseline quality scores from file %s\n', qcbaselinefile);
+load(fullfile(basedir, subfolder, sprintf('%s.mat', qcbaselinefile)), ...
     'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', 'measures', 'nmeasures');
+toc
+fprintf('\n');
 
 if pmFeatureParamsRow.interpmethod ~= 1
     fprintf('Missingness pattern classifier only works on fully interpolated data\n');
     return
 end
 nfeatureparamsets = 1;
+
+[qcinputfiles, nbatchfiles] = getQCBatchInputFiles(qcdatasetfile, batchsize);
+[pmMissPattIndex, pmMissPattArray, pmMissPattQS, pmMissPattQSPct] = concatenateQCInputBatchFiles(qcinputfiles, nbatchfiles);
+
 
 [basemodelparamfile, ~, ~, validresponse] = selectModelRunParameters();
 if validresponse == 0
@@ -68,7 +85,10 @@ end
 
 % calculate labels for missingness dataset
 qsmeasure = 'AvgEPV';
-labels = setLabelsForMSDataset(pmMissPattQSPct, qsmeasure, qsthreshold/100);
+fprintf('Label Threshold\n');
+labels   = setLabelsForMSDataset(pmMissPattQSPct, qsmeasure, qsthreshold/100);
+fprintf('Bad False Positive Threshold\n');
+fplabels = setLabelsForMSDataset(pmMissPattQSPct, qsmeasure, fpthreshold/100);
 
 lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
 
@@ -108,7 +128,7 @@ for lr = 1:nlr
 
                     fprintf('%2d of %2d Hyperparameter combinations\n', hpcomb, nhpcomb);
 
-                    pmQCModelRes = createQCModelResStuct(nexamples, nqcfolds);
+                    pmQCModelRes = createQCModelResStruct(nexamples, nqcfolds);
 
                     for fold = 1:nqcfolds
 
@@ -141,12 +161,17 @@ for lr = 1:nlr
 
                     end
 
+                    %pmQCModelRes = calcModelQualityScores(pmQCModelRes, labels, nexamples);
+                    pmQCModelRes = calcQCModelQualityScores(pmQCModelRes, labels, fplabels, nexamples);
+                    
                     fprintf('Overall:\n');
                     fprintf('CV: ');
                     fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                    pmQCModelRes = calcModelQualityScores(pmQCModelRes, labels, nexamples);
-
-                    fprintf('\n');
+                    fprintf('PR = %.3f%%, ROC = %.3f%%, Acc = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
+                        pmQCModelRes.PRAUC, pmQCModelRes.ROCAUC, pmQCModelRes.Acc, pmQCModelRes.PosAcc, pmQCModelRes.NegAcc);
+                    fprintf('CV: ');
+                    fprintf('QCCost = %.6f, IdxOp = %d TPROp = %.3f%%, FPROp = %.3f%%, PrecOp = %.3f%%, RecallOp = %.3f%%\n', ...
+                        pmQCModelRes.QCCostOp, pmQCModelRes.IdxOp, pmQCModelRes.TPROp, pmQCModelRes.FPROp, pmQCModelRes.PrecisionOp, pmQCModelRes.RecallOp);
 
                     toc
                     fprintf('\n');
@@ -172,34 +197,41 @@ mphptext = sprintf('lr%.2fnt%dml%dns%dfv%.2f', pmMPHyperParamsRow.learnrate, pmM
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-baseqcinputfile = sprintf('%s%s%sth%s%d', baseqcinputfile, mpmodeltext, mphptext, qsmeasure, qsthreshold);
-outputfilename = sprintf('%sQCResults.mat', baseqcinputfile);
+baseqcdatasetfile = strrep(qcdatasetfile, filetext, '');
+baseqcdatasetfile = sprintf('%s-n%d%s%sth%s%dfp%d', baseqcdatasetfile, nexamples, mpmodeltext, mphptext, qsmeasure, qsthreshold, fpthreshold);
+outputfilename = sprintf('%sQCResults.mat', baseqcdatasetfile);
 fprintf('Saving model output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder, outputfilename), ...
     'pmQCModelRes', 'pmQCFeatNames', ...
     'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
-    'labels', 'qcsplitidx', 'nexamples', ...
+    'labels', 'fplabels', 'qcsplitidx', 'nexamples', ...
     'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
     'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', ...
-    'qsmeasure', 'qsthreshold');
+    'qsmeasure', 'qsthreshold', 'fpthreshold');
 toc
 fprintf('\n');
 
-plotsubfolder = sprintf('Plots/QC/%s', baseqcinputfile);
+plotsubfolder = sprintf('Plots/QC/%s', baseqcdatasetfile);
 mkdir(fullfile(basedir, plotsubfolder));
 
 % plot PR and ROC curves
-plotQCPRAndROCCurves(pmQCModelRes, plotsubfolder, baseqcinputfile)
+plotQCPRAndROCCurves(pmQCModelRes, plotsubfolder, baseqcdatasetfile)
 
 % plot calibration curve
 calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, ...
-    baseqcinputfile, plotsubfolder);
+    baseqcdatasetfile, plotsubfolder);
 
 % plot QS vs Missingness
-[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
+%[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
 plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthreshold, rocthresh, baseqcinputfile, plotsubfolder);
+    qsthreshold, fpthreshold, pmQCModelRes.PredOp, baseqcdatasetfile, plotsubfolder);
+
+plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+    qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
+
+plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+    qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
 
 beep on;
 beep;

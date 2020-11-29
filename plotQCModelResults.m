@@ -33,7 +33,7 @@ load(fullfile(basedir, subfolder, modelresultsfile), ...
         'labels', 'qcsplitidx', 'nexamples', ...
         'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
         'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
-        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', 'qsmeasure', 'qsthreshold');
+        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', 'qsmeasure', 'qsthreshold', 'fpthreshold');
 
 toc
 fprintf('\n');
@@ -57,18 +57,24 @@ elseif plottype == 2
     fprintf('Plotting PR and ROC Curves\n');
     plotQCPRAndROCCurves(pmQCModelRes, plotsubfolder, basemodelresultsfile)
 elseif plottype == 3
-    % plot missingness vs qs
-    [fpthreshold, validresponse] = selectThreshPercentage('False Positive', 0, qsthreshold);
-    if validresponse == 0
-        return;
-    end
-    [rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
+    % plot missingness vs qs by type of quality measure
+    %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
     plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
-        qsthreshold, fpthreshold, rocthresh, basemodelresultsfile, plotsubfolder);
+        qsthreshold, fpthreshold, pmQCModelRes.PredOp, basemodelresultsfile, plotsubfolder);
 elseif plottype == 4
+    % plot missingness vs qs by measure
+    %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
+    plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+        qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV');
+elseif plottype == 5
+    % plot missingness vs qs by model outcome
+    %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
+    plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+        qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV');
+elseif plottype == 6
     % plot calibration curve
     calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, basemodelresultsfile, plotsubfolder);
-elseif plottype == 5
+elseif plottype == 7
     % plot decision tree
     [fold, validresponse] = selectFold(size(pmQCModelRes.Folds, 2));
     if ~validresponse
@@ -80,7 +86,7 @@ elseif plottype == 5
     end
     % **** add function in here ****
     
-elseif plottype == 6
+elseif plottype == 8
     % plot analysis of examples by leaf
     
 end

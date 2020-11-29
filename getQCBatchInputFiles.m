@@ -10,7 +10,7 @@ qcinputfilelisting = dir(fullfile(basedir, subfolder, matchstring));
 
 qcinputfiles = cell(size(qcinputfilelisting,1),1);
 for a = 1:size(qcinputfiles,1)
-    qcinputfiles{a} = strrep(qcinputfilelisting(a).name, '.mat', '');
+    qcinputfiles{a} = qcinputfilelisting(a).name;
 end
 
 nbatchfiles = size(qcinputfiles,1);

@@ -26,7 +26,5 @@ fpridx  = find(fpr > fprthresh, 1, 'first');
 threshidx = fpridx - 1;
 thresh    = predsort(threshidx);
 
-fprintf('Inflexion point is at index point %d with FPR %.6f TPR %.6f with operating threshold %.20f\n', threshidx, fpr(threshidx), tpr(threshidx), thresh);
-
 end
 

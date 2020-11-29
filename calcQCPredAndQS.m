@@ -5,7 +5,7 @@ function pmRes = calcQCPredAndQS(mdl, features, labels, modelver, lossfunc, ...
 % metrics for the quality classifier
 
 nexamples = size(features, 1);
-pmRes     = createMSModelResStuct(nexamples, 1);
+pmRes     = createQCModelResStruct(nexamples, 1);
 
 % create predictions
 pmRes     = predictPredModel(pmRes, mdl, features, labels, modelver, lossfunc);
