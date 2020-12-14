@@ -1,5 +1,5 @@
 function plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthreshold, thresh, measures, datawin, baseqcdatasetfile, plotsubfolder, qsmeasure)
+    qsthreshold, fpthresh, opthresh, measures, datawin, baseqcdatasetfile, plotsubfolder, qsmeasure)
 
 % plotMissingnessQSFcn - plots the quality scores vs the %age of missing
 % data and also colour by correct vs incorrect result by the missingess
@@ -14,26 +14,20 @@ plotsdown = 1;
 
 measarray = [{'Overall'};measures.DisplayName(logical(measures.RawMeas))];
 fnmeasarray = [{'Ov'};measures.ShortName(logical(measures.RawMeas))];
-
-%if size(measarray, 1) > plotsacross * plotsdown
-%    fprintf('Need to increase the number of subplots for the number of measures used in this model run\n');
-%    return
-%end
+outcome = 'All';
+showlegend = true;
 
 ydata = 100 * table2array(pmMissPattQSPct(:, {qsmeasure}));
 
-tpidx  = pmQCModelRes.Pred >= thresh & labels == 1;
-fp1idx = pmQCModelRes.Pred >= thresh & labels == 0 & table2array(pmMissPattQSPct(:, {qsmeasure})) >= fpthreshold / 100;
-fp2idx = pmQCModelRes.Pred >= thresh & labels == 0 & table2array(pmMissPattQSPct(:, {qsmeasure})) <  fpthreshold / 100;
-tnidx  = pmQCModelRes.Pred <  thresh & labels == 0;
-fnidx  = pmQCModelRes.Pred <  thresh & labels == 1;
+[tpidx, ~, fp1idx, fp2idx, tnidx, fnidx] = getIndicesForAllOutcomes(pmQCModelRes.Pred, ...
+            labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh);
 
 for m = 1:size(measarray, 1)
 
     meas = measarray{m};
     fnmeas = fnmeasarray{m};
 
-    baseplotname = sprintf('%sfp%d%s%s', baseqcdatasetfile, fpthreshold, qsmeasure, fnmeas);
+    baseplotname = sprintf('%s%s%s', baseqcdatasetfile, qsmeasure, fnmeas);
     [f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);
     ax = subplot(plotsdown, plotsacross, 1, 'Parent', p);
 
@@ -46,8 +40,8 @@ for m = 1:size(measarray, 1)
         xdata = sum(pmMissPattArray(:,(((m-2) * datawin) + 1):((m-1) * datawin)), 2) * 100 / datawin;
     end
 
-    plotMissQSByMeasPlotFcn(ax, xdata, ydata, qsthreshold, fpthreshold, ...
-        qsmeasure, meas, tpidx, fp1idx, fp2idx, tnidx, fnidx); 
+    plotMissQSByMeasPlotFcn(ax, xdata, ydata, qsthreshold, fpthresh, ...
+        qsmeasure, meas, tpidx, fp1idx, fp2idx, tnidx, fnidx, outcome, showlegend); 
 
     basedir = setBaseDir();
     savePlotInDir(f, baseplotname, basedir, plotsubfolder);

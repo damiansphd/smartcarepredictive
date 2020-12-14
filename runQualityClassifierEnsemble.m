@@ -198,7 +198,7 @@ tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 baseqcdatasetfile = strrep(qcdatasetfile, filetext, '');
-baseqcdatasetfile = sprintf('%s-n%d%s%sth%s%dfp%d', baseqcdatasetfile, nexamples, mpmodeltext, mphptext, qsmeasure, qsthreshold, fpthreshold);
+baseqcdatasetfile = sprintf('%s-n%d%s%sth%s%dfp%dcf%.4f', baseqcdatasetfile, nexamples, mpmodeltext, mphptext, qsmeasure, qsthreshold, fpthreshold, pmQCModelRes.QCCostOp);
 outputfilename = sprintf('%sQCResults.mat', baseqcdatasetfile);
 fprintf('Saving model output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder, outputfilename), ...

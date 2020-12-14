@@ -41,7 +41,8 @@ if ismember({outcome}, {'TP', 'FN'})
 else
     anmisspattarray = pmMissPattArray(anidx, :);
 end
-    anmisspattqspct = pmMissPattQSPct(anidx, :);
+
+anmisspattqspct = pmMissPattQSPct(anidx, :);
 
 for m = 1:nmeas
     mfrom = (m - 1) * datawin + 1;

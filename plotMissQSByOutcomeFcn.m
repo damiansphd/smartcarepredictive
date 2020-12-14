@@ -1,5 +1,5 @@
 function plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthreshold, thresh, measures, datawin, baseqcdatasetfile, plotsubfolder, qsmeasure)
+    qsthreshold, fpthresh, opthresh, measures, datawin, baseqcdatasetfile, plotsubfolder, qsmeasure)
 
 % plotMissingnessQSFcn - plots the quality scores vs the %age of missing
 % data and also colour by correct vs incorrect result by the missingess
@@ -8,6 +8,7 @@ function plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, 
 widthinch = 8.5;
 heightinch = 11;
 name = '';
+showlegend = false;
 
 plotsacross = 2;
 plotsdown = 3;
@@ -19,26 +20,29 @@ ydata = 100 * table2array(pmMissPattQSPct(:, {qsmeasure}));
 
 for oc = 1:size(ocarray, 2)
     outcome = ocarray{oc};
+    %ocidx = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh / 100, outcome);
+    
 
     tpidx  = false(size(labels, 1), 1);
     fp1idx = false(size(labels, 1), 1);
     fp2idx = false(size(labels, 1), 1);
     tnidx  = false(size(labels, 1), 1);
     fnidx  = false(size(labels, 1), 1);
+    
     switch outcome
         case 'TP'
-            tpidx  = pmQCModelRes.Pred >= thresh & labels == 1;
+            tpidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh / 100, 'TP');
         case 'FP1'
-            fp1idx = pmQCModelRes.Pred >= thresh & labels == 0 & table2array(pmMissPattQSPct(:, {qsmeasure})) >= fpthreshold / 100;
+            fp1idx = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh / 100, 'FP1');
         case 'FP2'
-            fp2idx = pmQCModelRes.Pred >= thresh & labels == 0 & table2array(pmMissPattQSPct(:, {qsmeasure})) <  fpthreshold / 100;
+            fp2idx = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh / 100, 'FP2');
         case 'TN'
-            tnidx  = pmQCModelRes.Pred <  thresh & labels == 0;
+            tnidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh / 100, 'TN');
         case 'FN'
-            fnidx  = pmQCModelRes.Pred <  thresh & labels == 1;
+            fnidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh / 100, 'FN');
     end
     
-    baseplotname = sprintf('%sfp%d%s%s', baseqcdatasetfile, fpthreshold, qsmeasure, outcome);
+    baseplotname = sprintf('%s%s%s', baseqcdatasetfile, qsmeasure, outcome);
     [f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);
 
     for m = 1:size(measarray, 1)
@@ -55,8 +59,8 @@ for oc = 1:size(ocarray, 2)
             xdata = sum(pmMissPattArray(:,(((m-2) * datawin) + 1):((m-1) * datawin)), 2) * 100 / datawin;
         end
 
-        plotMissQSByMeasPlotFcn(ax, xdata, ydata, qsthreshold, fpthreshold, ...
-            qsmeasure, meas, tpidx, fp1idx, fp2idx, tnidx, fnidx); 
+        plotMissQSByMeasPlotFcn(ax, xdata, ydata, qsthreshold, fpthresh, ...
+            qsmeasure, meas, tpidx, fp1idx, fp2idx, tnidx, fnidx, outcome, showlegend); 
 
     end
 

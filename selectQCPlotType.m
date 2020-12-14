@@ -10,12 +10,13 @@ fprintf(' 3. QS vs Missingness by type of quality measure\n');
 fprintf(' 4. QS vs Missingness by type of measurement\n');
 fprintf(' 5. QS vs Missingness by model outcome\n');
 fprintf(' 6. Model Calibration\n');
-fprintf(' 7. Decision Tree\n');
-fprintf(' 8. Tree leaf analysis\n');
+fprintf(' 7. Missingness Analysis by model outcome\n');
+fprintf(' 8. Decision Tree\n');
+fprintf(' 9. Tree leaf analysis\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
-nplots = 8;
+nplots = 9;
 plottype = str2double(splottype);
 
 if (isnan(plottype) || plottype < 1 || plottype > nplots)

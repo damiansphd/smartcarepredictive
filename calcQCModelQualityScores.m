@@ -5,9 +5,9 @@ function [mdlres] = calcQCModelQualityScores(mdlres, labels, fplabels, nexamples
 
 TPCost  = 0;
 TNCost  = 0;
-FP1Cost = 0;
+FP1Cost = 1;
 FP2Cost = 10;
-FNCost  = 1;
+FNCost  = 2;
 
 [mdlres.PredSort, sortidx] = sort(mdlres.Pred, 'descend');
 mdlres.LabelSort   = labels(sortidx);

@@ -75,6 +75,11 @@ elseif plottype == 6
     % plot calibration curve
     calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, basemodelresultsfile, plotsubfolder);
 elseif plottype == 7
+    % plot missingness analysis by outcome
+    nexanal = 10; % number of examples to analysis
+    plotMissPattAnalysis(pmQCModelRes, pmMissPattIndex, pmMissPattArray, pmMissPattQSPct, labels, ...
+        pmQCModelRes.PredOp, qsthreshold, fpthreshold, nexanal, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV')
+elseif plottype == 8
     % plot decision tree
     [fold, validresponse] = selectFold(size(pmQCModelRes.Folds, 2));
     if ~validresponse
@@ -86,7 +91,7 @@ elseif plottype == 7
     end
     % **** add function in here ****
     
-elseif plottype == 8
+elseif plottype == 9
     % plot analysis of examples by leaf
     
 end
