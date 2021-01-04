@@ -83,6 +83,11 @@ if validresponse == 0
     return;
 end
 
+[mpruntype, rtsuffix, validresponse] = selectRunMode();
+if validresponse == 0
+    return;
+end
+
 % calculate labels for missingness dataset
 qsmeasure = 'AvgEPV';
 fprintf('Label Threshold\n');
@@ -127,55 +132,78 @@ for lr = 1:nlr
                     hpcomb = ((lr - 1) * ntr * nmls * nmns * nfvs) + ((tr - 1) * nmls * nmns * nfvs) + ((mls - 1) * nmns * nfvs) + ((mns - 1) * nfvs) + fvs;
 
                     fprintf('%2d of %2d Hyperparameter combinations\n', hpcomb, nhpcomb);
+                    
+                    if mpruntype == 1
 
-                    pmQCModelRes = createQCModelResStruct(nexamples, nqcfolds);
+                        pmQCModelRes = createQCModelResStruct(nexamples, nqcfolds);
 
-                    for fold = 1:nqcfolds
+                        for fold = 1:nqcfolds
 
-                        foldhpcomb = fold;
+                            foldhpcomb = fold;
 
-                        fprintf('Fold %d: ', fold);
+                            fprintf('Fold %d: ', fold);
 
-                        [~, pmTrMPArray, ~, trlabels, ...
-                         ~, pmCVMPArray, ~, cvlabels, cvidx] ...
-                            = splitTrCVQCFeats(pmMissPattIndex, pmMissPattArray, pmMissPattQS, labels, qcsplitidx, fold); 
+                            [~, pmTrMPArray, ~, trlabels, ...
+                             ~, pmCVMPArray, ~, cvlabels, cvidx] ...
+                                = splitTrCVQCFeats(pmMissPattIndex, pmMissPattArray, pmMissPattQS, labels, qcsplitidx, fold); 
 
+                            fprintf('Training...');
+                            [pmQCModelRes] = trainPredModel(pmModelParams.ModelVer{mp}, pmQCModelRes, pmTrMPArray, trlabels, ...
+                                                pmQCFeatNames, nnormfeatures, fold, mmethod, lrval, ntrval, mlsval, mnsval, fvsval);
+                            fprintf('Done\n');
+
+                            % calculate predictions and quality scores on training data
+                            fprintf('Tr: ');
+                            [~] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmTrMPArray, trlabels, pmModelParams.ModelVer{mp}, lossfunc, ...
+                                            lrval, ntrval, mlsval, mnsval, fvsval);
+
+                            % calculate predictions and quality scores on cv data
+                            fprintf('CV: ');
+                            [pmCVRes] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmCVMPArray, cvlabels, pmModelParams.ModelVer{mp}, lossfunc, ...
+                                            lrval, ntrval, mlsval, mnsval, fvsval);
+
+                            % also store results on overall model results structure
+                            pmQCModelRes.Pred(cvidx) = pmCVRes.Pred;
+                            pmQCModelRes.Loss(fold)  = pmCVRes.Loss;
+
+                        end
+
+                        %pmQCModelRes = calcModelQualityScores(pmQCModelRes, labels, nexamples);
+                        pmQCModelRes = calcQCModelQualityScores(pmQCModelRes, labels, fplabels, nexamples);
+
+                        fprintf('Overall:\n');
+                        fprintf('CV: ');
+                        fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
+                        fprintf('PR = %.3f%%, ROC = %.3f%%, Acc = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
+                            pmQCModelRes.PRAUC, pmQCModelRes.ROCAUC, pmQCModelRes.Acc, pmQCModelRes.PosAcc, pmQCModelRes.NegAcc);
+                        fprintf('CV: ');
+                        fprintf('QCCost = %.6f, IdxOp = %d TPROp = %.3f%%, FPROp = %.3f%%, PrecOp = %.3f%%, RecallOp = %.3f%%\n', ...
+                            pmQCModelRes.QCCostOp, pmQCModelRes.IdxOp, pmQCModelRes.TPROp, pmQCModelRes.FPROp, pmQCModelRes.PrecisionOp, pmQCModelRes.RecallOp);
+                    
+                    elseif mpruntype == 2
+                        
+                        pmQCModelRes = createQCModelResStruct(nexamples, 1);
+                        fold = 1;
+                        foldhpcomb = 1;
+                        nqcfolds = 1;
                         fprintf('Training...');
-                        [pmQCModelRes] = trainPredModel(pmModelParams.ModelVer{mp}, pmQCModelRes, pmTrMPArray, trlabels, ...
+                        [pmQCModelRes] = trainPredModel(pmModelParams.ModelVer{mp}, pmQCModelRes, pmMissPattArray, labels, ...
                                             pmQCFeatNames, nnormfeatures, fold, mmethod, lrval, ntrval, mlsval, mnsval, fvsval);
                         fprintf('Done\n');
-
                         % calculate predictions and quality scores on training data
+                        % comment this out once checked this runtype works
+                        % ok
                         fprintf('Tr: ');
-                        [~] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmTrMPArray, trlabels, pmModelParams.ModelVer{mp}, lossfunc, ...
-                                        lrval, ntrval, mlsval, mnsval, fvsval);
-
-                        % calculate predictions and quality scores on cv data
-                        fprintf('CV: ');
-                        [pmCVRes] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmCVMPArray, cvlabels, pmModelParams.ModelVer{mp}, lossfunc, ...
-                                        lrval, ntrval, mlsval, mnsval, fvsval);
-
-                        % also store results on overall model results structure
-                        pmQCModelRes.Pred(cvidx) = pmCVRes.Pred;
-                        pmQCModelRes.Loss(fold)  = pmCVRes.Loss;
-
+                        [~] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmMissPattArray, labels, pmModelParams.ModelVer{mp}, lossfunc, ...
+                                            lrval, ntrval, mlsval, mnsval, fvsval);
+                        
+                    else
+                        fprintf('**** Unknown run type ****\n');
                     end
-
-                    %pmQCModelRes = calcModelQualityScores(pmQCModelRes, labels, nexamples);
-                    pmQCModelRes = calcQCModelQualityScores(pmQCModelRes, labels, fplabels, nexamples);
                     
-                    fprintf('Overall:\n');
-                    fprintf('CV: ');
-                    fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                    fprintf('PR = %.3f%%, ROC = %.3f%%, Acc = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
-                        pmQCModelRes.PRAUC, pmQCModelRes.ROCAUC, pmQCModelRes.Acc, pmQCModelRes.PosAcc, pmQCModelRes.NegAcc);
-                    fprintf('CV: ');
-                    fprintf('QCCost = %.6f, IdxOp = %d TPROp = %.3f%%, FPROp = %.3f%%, PrecOp = %.3f%%, RecallOp = %.3f%%\n', ...
-                        pmQCModelRes.QCCostOp, pmQCModelRes.IdxOp, pmQCModelRes.TPROp, pmQCModelRes.FPROp, pmQCModelRes.PrecisionOp, pmQCModelRes.RecallOp);
-
                     toc
                     fprintf('\n');
- 
+                    
                 end
             end
         end
@@ -193,12 +221,16 @@ pmMPHyperParamsRow.maxnumsplits = mnsval;
 pmMPHyperParamsRow.fracvarssamp = fvsval;
 mphptext = sprintf('lr%.2fnt%dml%dns%dfv%.2f', pmMPHyperParamsRow.learnrate, pmMPHyperParamsRow.numtrees, ...
     pmMPHyperParamsRow.minleafsize, pmMPHyperParamsRow.maxnumsplits, pmMPHyperParamsRow.fracvarssamp);
+
+pmMPOtherRunParams              = struct();
+pmMPOtherRunParams.runtype      = mpruntype;
+mpoptext = sprintf('rt%d', pmMPOtherRunParams.runtype);
                     
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
 baseqcdatasetfile = strrep(qcdatasetfile, filetext, '');
-baseqcdatasetfile = sprintf('%s-n%d%s%sth%s%dfp%dcf%.4f', baseqcdatasetfile, nexamples, mpmodeltext, mphptext, qsmeasure, qsthreshold, fpthreshold, pmQCModelRes.QCCostOp);
+baseqcdatasetfile = sprintf('%sne%d%s%s%sth%s%dfp%dcf%.4f', baseqcdatasetfile, nexamples, mpmodeltext, mphptext, mpoptext, qsmeasure, qsthreshold, fpthreshold, pmQCModelRes.QCCostOp);
 outputfilename = sprintf('%sQCResults.mat', baseqcdatasetfile);
 fprintf('Saving model output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder, outputfilename), ...
@@ -207,31 +239,36 @@ save(fullfile(basedir, subfolder, outputfilename), ...
     'labels', 'fplabels', 'qcsplitidx', 'nexamples', ...
     'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
     'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
-    'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', ...
+    'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'pmMPOtherRunParams', 'measures', 'nmeasures', ...
     'qsmeasure', 'qsthreshold', 'fpthreshold');
 toc
 fprintf('\n');
 
-plotsubfolder = sprintf('Plots/QC/%s', baseqcdatasetfile);
-mkdir(fullfile(basedir, plotsubfolder));
 
-% plot PR and ROC curves
-plotQCPRAndROCCurves(pmQCModelRes, plotsubfolder, baseqcdatasetfile)
+if mpruntype == 1
+    
+    plotsubfolder = sprintf('Plots/QC/%s', baseqcdatasetfile);
+    mkdir(fullfile(basedir, plotsubfolder));
 
-% plot calibration curve
-calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, ...
-    baseqcdatasetfile, plotsubfolder);
+    % plot PR and ROC curves
+    plotQCPRAndROCCurves(pmQCModelRes, plotsubfolder, baseqcdatasetfile)
 
-% plot QS vs Missingness
-%[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
-plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthreshold, pmQCModelRes.PredOp, baseqcdatasetfile, plotsubfolder);
+    % plot calibration curve
+    calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, ...
+        baseqcdatasetfile, plotsubfolder);
 
-plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
+    % plot QS vs Missingness
+    %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
+    plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
+        qsthreshold, fpthreshold, pmQCModelRes.PredOp, baseqcdatasetfile, plotsubfolder);
 
-plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
+    plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+        qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
 
+    plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+        qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
+
+end
+    
 beep on;
 beep;

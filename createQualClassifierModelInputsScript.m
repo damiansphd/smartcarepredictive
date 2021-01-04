@@ -89,26 +89,7 @@ if validresponse == 0
 end
 fprintf('\n');
 
-%mpfrom = (lastbatch * batchsize) + 1;
-%mpto   = (batchto   * batchsize)    ;
-%nmptotal = mpto;
-%nmpthisrun = mpto - mpfrom + 1;
-%if nmptotal > npcexamples
-%    nactmisspatts = npcexamples;
-%    nsynmisspatts = nmptotal - nactmisspatts;
-%else
-%    nactmisspatts = nmptotal;
-%    nsynmisspatts = 0;
-%end
-%fprintf('Running for batch size %d from batch %d to %d\n', batchsize, lastbatch + 1, batchto);
-%fprintf('\n');
-
-%[pmMissPattIndexThisRun, ~, ~, ~] ... 
-%    = createDWMissPattTables(nmptotal, nrawmeasures, pmFeatureParamsRow.datawinduration);
-
-%rng(2);
-%[pmMissPattIndexThisRun] = createDWMissScenarios(pmMissPattIndexThisRun, npcexamples, nqcfolds, nactmisspatts, nsynmisspatts, mpfrom, mpto);
-
+rng(2);
 [pmMissPattIndexThisRun] = createDWMissScenarios(lastbatch, batchto, batchsize, npcexamples, nqcfolds, nrawmeasures, pmFeatureParamsRow.datawinduration);
 
 for ba = 1:(batchto - lastbatch)
@@ -125,9 +106,6 @@ for ba = 1:(batchto - lastbatch)
     else
         fprintf('**** Number of predictive classifier folds must be a multiple of the number of quality classifier folds ****\n');
     end
-
-    %rng(2);
-    %[pmMissPattIndex] = createDWMissScenarios(pmMissPattIndex, npcexamples, nqcfolds, nactmisspatts, nsynmisspatts, mpfrom, mpto);
 
     % loop over the number of missingness patterns required
     for mi = 1:batchsize
