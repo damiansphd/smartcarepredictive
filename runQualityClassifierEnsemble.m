@@ -194,8 +194,11 @@ for lr = 1:nlr
                         % comment this out once checked this runtype works
                         % ok
                         fprintf('Tr: ');
-                        [~] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmMissPattArray, labels, pmModelParams.ModelVer{mp}, lossfunc, ...
+                        [pmTrRes] = calcQCPredAndQS(pmQCModelRes.Folds(fold).Model, pmMissPattArray, labels, pmModelParams.ModelVer{mp}, lossfunc, ...
                                             lrval, ntrval, mlsval, mnsval, fvsval);
+                        pmQCModelRes.Pred       = pmTrRes.Pred;
+                        pmQCModelRes.Loss(fold) = pmTrRes.Loss;
+                        pmQCModelRes = calcQCModelQualityScores(pmQCModelRes, labels, fplabels, nexamples);
                         
                     else
                         fprintf('**** Unknown run type ****\n');
@@ -245,7 +248,7 @@ toc
 fprintf('\n');
 
 
-if mpruntype == 1
+%if mpruntype == 1
     
     plotsubfolder = sprintf('Plots/QC/%s', baseqcdatasetfile);
     mkdir(fullfile(basedir, plotsubfolder));
@@ -268,7 +271,7 @@ if mpruntype == 1
     plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
         qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, datawin, baseqcdatasetfile, plotsubfolder, 'AvgEPV');
 
-end
+%end
     
 beep on;
 beep;

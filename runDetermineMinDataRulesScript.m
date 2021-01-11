@@ -39,25 +39,97 @@ load(fullfile(basedir, subfolder, modelresultsfile), ...
 toc
 fprintf('\n');
 
-datawin = pmFeatureParamsRow.datawinduration;
-weekwin = 7;
-nrawmeasures = sum(measures.RawMeas);
+tpidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), pmQCModelRes.PredOp, fpthreshold / 100, 'TP');
 
-% 1) Pick a starting pattern e.g. no missingness, or a true positive.
-%       a. The pattern will be 25-days for non-cycling or 7-days for cycling on a weekly period.
-[pmQCDRIndex, pmQCDRArray, ~, ~] = createDWMissPattTables(1, nrawmeasures, pmFeatureParamsRow.datawinduration);
+% rng(2);
+% test = find(tpidx);
+% test(randperm(size(test,1), 10));
 
-% 2) Consider all possible moves from that pattern - each gives a new pattern.  Optionally, remove cyclic duplicates.
-%		a. You can define the moves - a simple move is flip one point from observed to missing.
-%       b. Other possible moves would be to flip a point from missing to observed, or a shift (left or right) of a missing point 
+% populate run parameters
+dwdur     = pmFeatureParamsRow.datawinduration;
+mpdur     = 7; % add this as a selection choice
+mpstartex = 27366; % 0 = no missingness start, otherwise TP chosen at random
+if mpdur < dwdur
+    iscyclic  = 'Y';
+    cyclicdur = mpdur;
+else
+    iscyclic  = 'N';
+    cyclicdur = 1;
+end
+nrawmeas     = sum(measures.RawMeas);
+qcdrmeasures = measures(logical(measures.RawMeas), :);
+qcdrmeasures.Index(:) = 1:nrawmeas;
 
-% 3) For each new pattern, determine if it is green.
-%		a. In the cyclic case, you will need to ensure all days are green by taking 25-day windows of the 7-day pattern repeating.
+[pmQCDRIndex]    = createQCDRTables(0);
+pmQCDRMissPatt   = [];
+pmQCDRDataWin    = [];
+pmQCDRFeatures   = [];
+pmQCDRCyclicPred = [];
 
-% 4) For green moves, pick the 'best' according to some metric and go back to step 1.
-%		a. In the cyclic case, this could be the move which gives the least worst score.
+iteration = 0;
+somegoodmoves = true;
 
-% 5) If no green moves, stop and output the pattern.
+while somegoodmoves
+    
+    if iteration == 0
+        if mpstartex == 0
+            fprintf('Iteration %d: Setting up initial pattern with no missingness\n', iteration);
+        else
+            fprintf('Iteration %d: Setting up initial pattern from example %d (TP)\n', iteration, mpstartex);
+        end
+        [mvsetindex, mvsetmp3D] = setInitialMP(mpstartex, pmMissPattArray, nrawmeas, mpdur, dwdur, iteration);
+    else
+        [mvsetindex, mvsetmp3D] = createAllMovesSet(currmp3D, nrawmeas, mpdur, iteration);
+        fprintf('Iteration %d: Added %d possible moves\n', iteration, size(mvsetindex, 1));
+    end
+    
+    for i = 1:size(mvsetindex, 1)
+        fprintf('.');
+        [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred] = ...
+            calcCyclicPredsForMP(pmQCModelRes, pmMPModelParamsRow.ModelVer, ...
+                    pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
+                    mvsetindex(i, :), mvsetmp3D(i, :, :), mpdur, dwdur, nrawmeas, cyclicdur, iscyclic);
+    end
+    fprintf('\n');
+    
+    % choose best move (out of the moves for this iteration that were accepted)
+    % and set that as row with move type 0 for next iteration
+    if iteration == 0
+        maxiterpred = max(pmQCDRIndex.SelPred(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.MoveType == 0 & pmQCDRIndex.MoveAccepted));
+        fprintf('%d of %d acceptable moves - ', sum(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.MoveType == 0 & pmQCDRIndex.MoveAccepted), size(mvsetindex, 1));
+    else
+        maxiterpred = max(pmQCDRIndex.SelPred(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.MoveType ~= 0 & pmQCDRIndex.MoveAccepted));
+        fprintf('%d of %d acceptable moves - ', sum(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.MoveType ~= 0 & pmQCDRIndex.MoveAccepted), size(mvsetindex, 1));
+    end
+    
+    if size(maxiterpred, 1) == 0
+        % no acceptable moves from this iteration, so revert back to
+        % baseline for this iteration (ie best result from last iteration)
+        somegoodmoves = false;
+        idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.MoveType == 0, 1, 'last');
+        fprintf('finished\n');
+        
+    else
+        % add best move from this iteration as the baseline for the next
+        % iteration
+        idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'last'); % need to add logic if more than one matches
+        
+        iteration                = iteration + 1;
+        currindexrow             = pmQCDRIndex(idx, :);
+        currindexrow.Iteration   = iteration;
+        currindexrow.MoveType    = 0;
+        currindexrow.MoveDesc{1} = setMoveDescForType(currindexrow.MoveType);
 
-% 6) Repeat from different starting patterns.
+        currmp3D     = pmQCDRMissPatt(idx, :, :);
+
+        [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred] = ...
+            addQCDRRows(pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
+                currindexrow, currmp3D, pmQCDRDataWin(idx, :, :), pmQCDRFeatures(idx, :), pmQCDRCyclicPred(idx, :));
+            
+        fprintf('best move: %d %s | Measure %d | Index %d | Pred %.4f\n', pmQCDRIndex.MoveType(idx, :), ...
+            pmQCDRIndex.MoveDesc{idx, :}, pmQCDRIndex.Measure(idx, :), pmQCDRIndex.MPIndex(idx, :), pmQCDRIndex.SelPred(idx, :));
+    end
+
+    fprintf('\n');
+end
 

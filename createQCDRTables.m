@@ -1,14 +1,21 @@
-function [pmQCDRIndex, pmQCDRArray, pmQCDRPred] = createQCDRTables(nrows, nfeats)
+function [pmQCDRIndex] = createQCDRTables(nrows)
 
 % createQCDRTables - creates the missingness pattern tables
 
-pmQCDRIndex = table('Size',[nrows, 8], ...
-    'VariableTypes', {'double', 'cell', 'cell', 'double', 'double', 'double', 'double', 'double'}, ...
-    'VariableNames', {'Iteration', 'MoveType', 'MoveDesc', 'Measure', 'Frequency', 'Percentage', 'MSExample', 'MSPct', 'QCFold'});
+pmQCDRIndex = table('Size',[nrows, 7], ...
+    'VariableTypes', {'double',    'double',   'cell',     'double',  'double',  'double',  'logical'}, ...
+    'VariableNames', {'Iteration', 'MoveType', 'MoveDesc', 'Measure', 'MPIndex', 'SelPred', 'MoveAccepted'});
 
-pmQCDRArray = zeros(nrows, nfeats);
-
-pmQCDRPred  = zeros(nrows, 1);
+%if nrows == 1
+%    pmQCDRMissPatt    = zeros(nrawmeas, mpdur);
+%    pmQCDRDataWin     = zeros(nrawmeas, dwdur);
+%else
+%    pmQCDRMissPatt    = zeros(nrows, nrawmeas, mpdur);
+%    pmQCDRDataWin     = zeros(nrows, nrawmeas, dwdur);
+%end
+%
+%pmQCDRFeatures     = zeros(nrows, nrawmeas * dwdur);
+%pmQCDRCyclicPred   = zeros(nrows, cyclicdur);
 
 end
 
