@@ -113,9 +113,9 @@ for ba = 1:(batchto - lastbatch)
         fprintf('Batch %d: %d of %d: Qual Classifier fold %d, Pred Classifier folds ', thisbatch, mi, batchsize, qcfold);
         fprintf('%d ', pcfolds(qcfold, :));
         fprintf('\n');
-        % apply missingness pattern at random (see augment function)
+        % apply missingness pattern to dataset (see augment function)
         [pmMSDataWinArray, pmMissPattIndex(mi, :), pmMissPattArray(mi, :)] = applyMissPattToDataWinArray(pmDataWinArray, ...
-                pmMissPattIndex(mi, :), pmMissPattArray(mi, :), measures, nmeasures, pmFeatureParamsRow);
+                pmMissPattIndex(mi, :), pmMissPattArray(mi, :), measures, nmeasures, pmFeatureParamsRow, []);
 
         [pmNormFeatures, pmNormFeatNames, pmMuIndex, pmSigmaIndex, ~, ~, ~, ~, ~, ~, ~, ~] = ...
             createModFeaturesFromDWArrays(pmMSDataWinArray, pmOverallStats, npcexamples, measures, nmeasures, pmModFeatParamsRow);

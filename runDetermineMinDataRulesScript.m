@@ -34,21 +34,41 @@ load(fullfile(basedir, subfolder, modelresultsfile), ...
         'labels', 'qcsplitidx', 'nexamples', ...
         'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
         'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
-        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', 'qsmeasure', 'qsthreshold', 'fpthreshold');
+        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'pmMPOtherRunParams', ...
+        'measures', 'nmeasures', 'qsmeasure', 'qsthreshold', 'fpthreshold');
 
 toc
 fprintf('\n');
 
-tpidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), pmQCModelRes.PredOp, fpthreshold / 100, 'TP');
+% populate run parameters
+dwdur     = pmFeatureParamsRow.datawinduration;
 
+% choose missingness pattern duration
+[mpdur, validresponse] = selectMissPatDuration();
+if validresponse == 0
+    return;
+end
+
+
+% choose the operating threshold for the quality classifier
+[qcopthres, validresponse] = selectFromArrayByIndex('Operating Threshold', [pmQCModelRes.PredOp; 0.7; 0.8; 0.9; 0.95]);
+if validresponse == 0
+    return;
+end
+qcopthres = pmQCModelRes.PredOp;
+%qcopthres = 0.95;
+
+tpidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, table2array(pmMissPattQSPct(:, {qsmeasure})), qcopthres, fpthreshold / 100, 'TP');
 % rng(2);
 % test = find(tpidx);
 % test(randperm(size(test,1), 10));
 
-% populate run parameters
-dwdur     = pmFeatureParamsRow.datawinduration;
-mpdur     = 7; % add this as a selection choice
-mpstartex = 27366; % 0 = no missingness start, otherwise TP chosen at random
+% 0 = no missingness start, otherwise TP chosen at random
+mpstartex = 0;
+%mpstartex = 27366; % Linear Model, Pred Op Thresh
+%mpstartex = 40000; % Linear Model, 0.95 Thresh
+%mpstartex = 28536; % Non-Linear Model, 0.95 Thresh
+
 if mpdur < dwdur
     iscyclic  = 'Y';
     cyclicdur = mpdur;
@@ -78,6 +98,7 @@ while somegoodmoves
             fprintf('Iteration %d: Setting up initial pattern from example %d (TP)\n', iteration, mpstartex);
         end
         [mvsetindex, mvsetmp3D] = setInitialMP(mpstartex, pmMissPattArray, nrawmeas, mpdur, dwdur, iteration);
+        printMissPattFcn(mvsetindex, mvsetmp3D, qcdrmeasures, nrawmeas, mpdur);
     else
         [mvsetindex, mvsetmp3D] = createAllMovesSet(currmp3D, nrawmeas, mpdur, iteration);
         fprintf('Iteration %d: Added %d possible moves\n', iteration, size(mvsetindex, 1));
@@ -88,7 +109,7 @@ while somegoodmoves
         [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred] = ...
             calcCyclicPredsForMP(pmQCModelRes, pmMPModelParamsRow.ModelVer, ...
                     pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
-                    mvsetindex(i, :), mvsetmp3D(i, :, :), mpdur, dwdur, nrawmeas, cyclicdur, iscyclic);
+                    mvsetindex(i, :), mvsetmp3D(i, :, :), mpdur, dwdur, nrawmeas, cyclicdur, iscyclic, qcopthres);
     end
     fprintf('\n');
     
@@ -125,11 +146,41 @@ while somegoodmoves
         [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred] = ...
             addQCDRRows(pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
                 currindexrow, currmp3D, pmQCDRDataWin(idx, :, :), pmQCDRFeatures(idx, :), pmQCDRCyclicPred(idx, :));
+        
+        if pmQCDRIndex.Measure(idx) == 0
+            shortname = 'N/A';
+            measidx   = 0;
+        else
+            shortname = qcdrmeasures.ShortName{pmQCDRIndex.Measure(idx)};
+            measidx   = pmQCDRIndex.MPIndex(idx) - (pmQCDRIndex.Measure(idx) - 1) * mpdur;
+        end
             
-        fprintf('best move: %d %s | Measure %d | Index %d | Pred %.4f\n', pmQCDRIndex.MoveType(idx, :), ...
-            pmQCDRIndex.MoveDesc{idx, :}, pmQCDRIndex.Measure(idx, :), pmQCDRIndex.MPIndex(idx, :), pmQCDRIndex.SelPred(idx, :));
+        fprintf('best move: %d %s | Measure %d (%s) | Index %d | Pred %.4f\n', pmQCDRIndex.MoveType(idx), ...
+            pmQCDRIndex.MoveDesc{idx}, pmQCDRIndex.Measure(idx), shortname, ...
+            measidx, pmQCDRIndex.SelPred(idx));
     end
 
     fprintf('\n');
 end
+
+printMissPattFcn(pmQCDRIndex(idx, :), pmQCDRMissPatt(idx, :), qcdrmeasures, nrawmeas, mpdur);
+
+
+tic
+basedir = setBaseDir();
+subfolder = 'MatlabSavedVariables';
+outputfilename = sprintf('%smd%dex%dot%.2fQCDRResults.mat', basemodelresultsfile, mpdur, mpstartex, qcopthres);
+fprintf('Saving model output variables to file %s\n', outputfilename);
+save(fullfile(basedir, subfolder, outputfilename), ...
+    'pmQCModelRes', 'pmQCFeatNames', ...
+    'pmQCDRIndex', 'pmQCDRMissPatt', 'pmQCDRDataWin', 'pmQCDRFeatures', 'pmQCDRCyclicPred', ...
+    'qcdrmeasures', 'nrawmeas', 'dwdur', 'mpdur', 'mpstartex', 'iscyclic', 'cyclicdur', 'idx', ...
+    'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
+    'labels', 'qcsplitidx', 'nexamples', 'tpidx', ...
+    'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
+    'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
+    'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'pmMPOtherRunParams', ...
+    'measures', 'nmeasures', 'qsmeasure', 'qsthreshold', 'fpthreshold');
+toc
+fprintf('\n');
 

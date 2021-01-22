@@ -1,5 +1,5 @@
 function [pmMSDataWinArray, mpidxrow, mpfeatsrow] = applyMissPattToDataWinArray(pmDataWinArray, ...
-            mpidxrow, mpfeatsrow, measures, nmeasures, pmModFeatParamsRow)
+            mpidxrow, mpfeatsrow, measures, nmeasures, pmModFeatParamsRow, qcdrtw2Dam)
         
 % applyMissPattToDataWinArray - applies a particular missingness pattern to
 % the Data Window Array
@@ -49,11 +49,23 @@ elseif mpidxrow.ScenType == 4
     fprintf('Actual missingness from example %5d with overall missingness of %2.2f%%\n', ...
         msex, mpidxrow.MSPct);
 
+elseif mpidxrow.ScenType == 8
+    mc   = 1;
+    for m = 1:nmeasures
+        mmsidx = logical(qcdrtw2Dam(m, :));
+        pmMSDataWinArray(:, mmsidx, m) = nan;
+        
+        if measures.RawMeas(m) == 1
+            mpfeatsrow( (((mc - 1) * datawin) + 1): (mc * datawin) ) = mmsidx((normwin + 1):totalwin);
+            mc = mc + 1;
+        end
+    end
+    mpidxrow.MSPct = sum(mpfeatsrow) * 100 / (datawin * sum(measures.RawMeas));
+    fprintf('Min Data rules missingness with overall missingness of %2.2f%%\n', ...
+        mpidxrow.MSPct);
 else
     fprintf('Scenario - yet to be implemented\n');
 end
-
-
-    
+  
 end
 

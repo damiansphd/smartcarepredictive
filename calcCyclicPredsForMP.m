@@ -1,6 +1,6 @@
 function [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred] = ...
     calcCyclicPredsForMP(qcmdlres, qcmdlver, pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
-        qcdrindexrow, qcdrmp, mpdur, dwdur, nrawmeas, cyclicdur, iscyclic)
+        qcdrindexrow, qcdrmp, mpdur, dwdur, nrawmeas, cyclicdur, iscyclic, qcopthres)
 
 % calcCyclicPredsForMP - run the quality classifier for a given
 % missingness pattern and all cyclic versions and returns the results
@@ -33,7 +33,7 @@ for c = 1:cyclicdur
 end
 
 qcdrindexrow.SelPred = min(qcdrcycpredrow);
-if qcdrindexrow.SelPred < qcmdlres.PredOp
+if qcdrindexrow.SelPred < qcopthres
     qcdrindexrow.MoveAccepted = false;
 else
     qcdrindexrow.MoveAccepted = true;

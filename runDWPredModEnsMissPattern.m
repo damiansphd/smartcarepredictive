@@ -103,7 +103,7 @@ for mi = 1:nmisspatts
     
     % apply missingness pattern at random (see augment function)
     [pmMSDataWinArray, pmMissPattIndex(mi, :), pmMissPattArray(mi, :)] = applyMissPattToDataWinArray(pmDataWinArray, ...
-            pmMissPattIndex(mi, :), pmMissPattFeats(mi, :), randmpidx(mi), measures, nmeasures, pmFeatureParamsRow);
+            pmMissPattIndex(mi, :), pmMissPattFeats(mi, :), randmpidx(mi), measures, nmeasures, pmFeatureParamsRow, []);
     
     fprintf('%4d of %4d: Actual missingness from example %5d with overall missingness of %2.2f%%\n', ...
         mi, nmisspatts, randmpidx(mi), sum(pmMissPattArray(mi, :)) * 100 / (pmFeatureParamsRow.datawinduration * sum(measures.RawMeas)));
