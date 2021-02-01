@@ -10,7 +10,6 @@ movedesc = setMoveDescForType(movetype);
 mprow = reshape(currmp3D, [nrawmeas, mpdur]);
 mprow = reshape(mprow', [1, nrawmeas * mpdur]);
 
-%mprow = reshape(currmp3D, [1, nrawmeas * mpdur]);
 datapts = find(~mprow);
 nmoves = size(datapts, 2);
 
@@ -23,7 +22,6 @@ for m = 1:nmoves
     mvsetindex.MoveType(m)     = movetype;
     mvsetindex.MoveDesc{m}     = movedesc;
     mvsetindex.Measure(m)      = ceil(datapts(m)/mpdur);
-%   mvsetindex.MPIndex(m)      = mod(datapts(m) - 1, mpdur) + 1;
     mvsetindex.MPIndex(m)      = datapts(m);
     mvsetindex.SelPred(m)      = 0;
     mvsetindex.MoveAccepted(m) = false;
