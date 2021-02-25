@@ -1,4 +1,5 @@
-function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(featidx, pmModelRes, labels, pmAMPred, plotsubfolder, basefilename, epilen, randmode)
+function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred] = plotModelQualityScoresForPaper2(featidx, ...
+    pmModelRes, labels, pmAMPred, plotsubfolder, basefilename, epilen, randmode, fpropthresh)
 
 % plotModelQualityScoresForPaper - calculates model quality scores at
 % episode level and also how much earlier predictions are vs current
@@ -7,7 +8,7 @@ function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untr
 patients = unique(featidx.PatientNbr);
 pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 
-[epiindex, epilabl, epipred] = convertResultsToEpisodesNew(featidx, labels, pmModelRes.pmNDayRes(1).Pred, epilen);
+[~, epilabl, epipred, epilablsort, epipredsort] = convertResultsToEpisodesNew(featidx, labels, pmModelRes.pmNDayRes(1).Pred, epilen);
 
 if randmode
     epilabl = epilabl(randperm(size(epilabl, 1)));
@@ -16,8 +17,8 @@ else
     randtext = '';
 end
 
-[epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
-[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipred);
+[epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilablsort, epipredsort);
+[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
 
 % use these for label method 5/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm5
 %chosenpt10pc = 203;
@@ -34,16 +35,15 @@ chosenpt15pc = 279;
 %chosenpt20pc  = 327; % actually 22% use for just we
 %chosenpt20pc  = 305; % actually 22% use for just lu
 
-chosenpt20pc = find(epifpr < 0.221, 1, 'last');
+chosenpt20pc = find(epifpr < fpropthresh, 1, 'last');
 
 chosenpt33pc = 530;
 
-tempthresh = sort(epipred, 'descend');
-[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, tempthresh(chosenpt20pc));
+[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(chosenpt20pc));
 untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
-
+fprintf('\n');
 fprintf('At %.1f%% FPR (pt %d), the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
-            100 * epifpr(chosenpt20pc), chosenpt20pc, 100 * trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
+            100 * epifpr(chosenpt20pc), chosenpt20pc, trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
 
 % estimate for current clinical delay
 %currclindelay = 2;
@@ -135,15 +135,15 @@ for i = 1:(ntitles + nplots)
                     
         ax = subplot(1, 1, 1, 'Parent', sp(i));
         
-        area(ax, 100 * epifpr, 100 * trigintrtpr, ...
+        area(ax, 100 * epifpr, trigintrtpr, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
-        line(ax, [0, 100 * epifpr(chosenpt20pc)], [100 * trigintrtpr(chosenpt20pc), 100 * trigintrtpr(chosenpt20pc)], ...
+        line(ax, [0, 100 * epifpr(chosenpt20pc)], [trigintrtpr(chosenpt20pc), trigintrtpr(chosenpt20pc)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
-        line(ax, [100 * epifpr(chosenpt20pc), 100 * epifpr(chosenpt20pc)], [0, 100 * trigintrtpr(chosenpt20pc)], ...
+        line(ax, [100 * epifpr(chosenpt20pc), 100 * epifpr(chosenpt20pc)], [0, trigintrtpr(chosenpt20pc)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
         
         hold on;
-        scatter(ax, 100 * epifpr(chosenpt20pc), 100 * trigintrtpr(chosenpt20pc), 'Marker', 'o', ...
+        scatter(ax, 100 * epifpr(chosenpt20pc), trigintrtpr(chosenpt20pc), 'Marker', 'o', ...
             'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
         hold off;
         
@@ -155,7 +155,7 @@ for i = 1:(ntitles + nplots)
         xlabel(ax, 'False Positive Rate (%)');
         ylabel(ax, 'True Positive Rate (%)');
         
-        auc = 100 * trapz(epifpr, trigintrtpr);
+        auc = trapz(epifpr, trigintrtpr);
         roctext = sprintf('AUC = %.1f%%', auc);
         annotation(sp(i), 'textbox',  ...
                         'String', roctext, ...

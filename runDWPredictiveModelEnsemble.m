@@ -52,6 +52,7 @@ nbssamples = 50; % temporary hardcoding - replace with model parameter when have
 epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
 lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
 plotbyfold = 0; % set to 1 if you want to print the pr & roc curves by fold
+fpropthresh = 0.221; % set the operating threshold as the acceptable max of false positives
 
 pmBSAllQS = struct('FeatureParams', [], 'ModelParams', [], 'OtherRunParams', [], 'hpsuffix', [], 'rtsuffix', [], 'btsuffix', []);
 
@@ -170,7 +171,7 @@ for fs = 1:nfeatureparamsets
                                         [foldhpTrQS, pmTrRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTrQS, pmTrFeatureIndex, ...
                                                             pmTrNormFeatures, trlabels, fold, foldhpcomb, pmAMPred, ...
                                                             pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
-                                                            lrval, ntrval, mlsval, mnsval, fvsval);
+                                                            lrval, ntrval, mlsval, mnsval, fvsval, fpropthresh);
                                         if plotbyfold == 1
                                             filename = sprintf('%s-Tr-F%d', mbasefilename, fold);
                                             plotPRAndROCCurvesForPaper(pmTrRes, [] , 'na', plotsubfolder, filename);
@@ -181,7 +182,7 @@ for fs = 1:nfeatureparamsets
                                         [foldhpCVQS, pmCVRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpCVQS, pmTrCVFeatureIndex(origcvidx, :), ...
                                                                     pmTrCVNormFeatures(origcvidx, :), trcvlabels(origcvidx), fold, foldhpcomb, pmAMPred, ...
                                                                     pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
-                                                                    lrval, ntrval, mlsval, mnsval, fvsval);
+                                                                    lrval, ntrval, mlsval, mnsval, fvsval, fpropthresh);
                                         if plotbyfold == 1
                                             filename = sprintf('%s-CV-F%d', mbasefilename, fold);
                                             plotPRAndROCCurvesForPaper(pmCVRes, '', '', plotsubfolder, filename);
@@ -199,7 +200,7 @@ for fs = 1:nfeatureparamsets
                                 fprintf('Overall:\n');
                                 fprintf('CV: ');
                                 fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels(origidx), norigex, pmAMPred, pmTrCVFeatureIndex(origidx, :), pmPatientSplit, epilen);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, trcvlabels(origidx), norigex, pmAMPred, pmTrCVFeatureIndex(origidx, :), pmPatientSplit, epilen, fpropthresh);
                                 
                                 fprintf('\n');
 
@@ -229,7 +230,7 @@ for fs = 1:nfeatureparamsets
                                     [foldhpTrQS, pmTrRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTrQS, pmTrCVFeatureIndex, ...
                                                         pmTrCVNormFeatures, trcvlabels, fold, foldhpcomb, pmAMPred, ...
                                                         pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
-                                                        lrval, ntrval, mlsval, mnsval, fvsval);
+                                                        lrval, ntrval, mlsval, mnsval, fvsval, fpropthresh);
                                     if plotbyfold == 1
                                         filename = sprintf('%s-Tr-F%d', mbasefilename, fold);
                                         plotPRAndROCCurvesForPaper(pmTrRes, [] , 'na', plotsubfolder, filename);
@@ -239,7 +240,7 @@ for fs = 1:nfeatureparamsets
                                     [foldhpTestQS, pmTestRes] = calcPredAndQS(pmDayRes.Folds(fold).Model, foldhpTestQS, pmTestFeatureIndex(origidx, :), ...
                                                                 pmTestNormFeatures(origidx, :), testlabels(origidx), fold, foldhpcomb, pmAMPred, ...
                                                                 pmPatientSplit, pmModelParams.ModelVer{mp}, epilen, lossfunc, ...
-                                                                lrval, ntrval, mlsval, mnsval, fvsval);
+                                                                lrval, ntrval, mlsval, mnsval, fvsval, fpropthresh);
                                     if plotbyfold == 1
                                         filename = sprintf('%s-Test-F%d', mbasefilename, fold);
                                         plotPRAndROCCurvesForPaper(pmTestRes, '', '', plotsubfolder, filename);
@@ -257,7 +258,7 @@ for fs = 1:nfeatureparamsets
                                 fprintf('Overall:\n');
                                 fprintf('Test: ');
                                 fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels(origidx), ntestexamples, pmAMPred, pmTestFeatureIndex(origidx, :), pmPatientSplit, epilen);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels(origidx), ntestexamples, pmAMPred, pmTestFeatureIndex(origidx, :), pmPatientSplit, epilen, fpropthresh);
                                 fprintf('\n');
 
                                 hyperparamQS(hpcomb, :) = setHyperParamQSrow(hyperparamQS(hpcomb, :), lrval, ntrval, mlsval, mnsval, fvsval, pmDayRes);
@@ -307,11 +308,12 @@ for fs = 1:nfeatureparamsets
         pmModelParamsRow   = pmModelParams(mp,:);
         
         pmOtherRunParams = struct();
-        pmOtherRunParams.btmode     = btmode;
-        pmOtherRunParams.runtype    = runtype;
-        pmOtherRunParams.nbssamples = nbssamples;
-        pmOtherRunParams.epilen     = epilen;
-        pmOtherRunParams.lossfunc   = lossfunc;
+        pmOtherRunParams.btmode      = btmode;
+        pmOtherRunParams.runtype     = runtype;
+        pmOtherRunParams.nbssamples  = nbssamples;
+        pmOtherRunParams.epilen      = epilen;
+        pmOtherRunParams.lossfunc    = lossfunc;
+        pmOtherRunParams.fpropthresh = fpropthresh;
         
         pmBSAllQS(combnbr).FeatureParams  = pmFeatureParamsRow;
         pmBSAllQS(combnbr).ModelParams    = pmModelParamsRow;

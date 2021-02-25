@@ -1,5 +1,5 @@
-function plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
-    qsthreshold, fpthresh, opthresh, basemsresultsfile, plotsubfolder)
+function plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, fplabels, ...
+    pmQSConstr, opthresh, basemsresultsfile, plotsubfolder)
 
 % plotMissingnessQSFcn - plots the quality scores vs the %age of missing
 % data and also colour by correct vs incorrect result by the missingess
@@ -11,21 +11,23 @@ name = '';
 plotsacross = 1;
 plotsdown = 1;
 
-qsarray = {'AvgEPV', 'PRAUC', 'ROCAUC', 'Acc', 'PosAcc'};
 meas = 'Overall';
 outcome = 'All';
 showlegend = true;
 
 xdata = pmMissPattIndex.MSPct;
 
-for i = 1:size(qsarray, 2)
+for i = 1:size(pmQSConstr.qsmeasure, 1)
     
-    qsmeasure = qsarray{i};
+    qsmeasure   = pmQSConstr.qsmeasure{i};
+    qsshortname = pmQSConstr.qsshortname{i};
+    qsthreshold = pmQSConstr.qsthresh(i);
+    fpthresh    = pmQSConstr.fpthresh(i);
     
     [tpidx, ~, fp1idx, fp2idx, tnidx, fnidx] = getIndicesForAllOutcomes(pmQCModelRes.Pred, ...
-            labels, table2array(pmMissPattQSPct(:, {qsmeasure})), opthresh, fpthresh);
+            labels, fplabels, opthresh);
     
-    baseplotname1 = sprintf('%s%s', basemsresultsfile, qsmeasure);
+    baseplotname1 = sprintf('%s%s%.3f', basemsresultsfile, qsshortname, opthresh);
     [f, p] = createFigureAndPanelForPaper(name, widthinch, heightinch);
     ax = subplot(plotsdown, plotsacross, 1, 'Parent', p);
     

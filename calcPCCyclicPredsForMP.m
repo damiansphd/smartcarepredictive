@@ -47,8 +47,7 @@ for c = 1:cyclicdur
 
     [mpqs] = calcPCMPPredictAndQS(mpqs, pmModelByFold, pmTrCVFeatureIndex, ...
         pmTrCVNormFeatures, trcvlabels, pmPatientSplit, pmAMPred, ...
-        qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams, ...
-        pmOtherRunParams.epilen, pmOtherRunParams.lossfunc);
+        qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams);
 
     mpqspct(1, :) = array2table(table2array(mpqs) ./ mean(table2array(pmBaselineQS)));
     

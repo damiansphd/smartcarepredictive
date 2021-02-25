@@ -1,7 +1,6 @@
 function [misspattqsrow] = calcPCMPPredictAndQS(misspattqsrow, pmModelByFold, pmTrCVFeatureIndex, ...
     pmTrCVNormFeatures, trcvlabels, pmPatientSplit, pmAMPred, ...
-    qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams, ...
-    epilen, lossfunc)
+    qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams)
 
 % calcPCMPPredictAndQS - function runs the nested cross validation for the
 % trained predictive classifier on data-set with missingness pattern
@@ -52,8 +51,8 @@ if pmOtherRunParams.runtype == 1
         fprintf('CV: ');
         [foldhpCVQS, pmCVRes] = calcPredAndQS(pmModelByFold(pcfolds(qcfold, fold)).Model, foldhpCVQS, foldfeatindex(qcpcfoldidx(:, fold), :), ...
                                     foldnormfeats(qcpcfoldidx(:, fold), :), foldlabels(qcpcfoldidx(:, fold)), fold, foldhpcomb, pmAMPred, ...
-                                    pmPatientSplit, pmModelParamsRow.ModelVer{1}, epilen, lossfunc, ...
-                                    lrval, ntrval, mlsval, mnsval, fvsval);
+                                    pmPatientSplit, pmModelParamsRow.ModelVer{1}, pmOtherRunParams.epilen, pmOtherRunParams.lossfunc, ...
+                                    lrval, ntrval, mlsval, mnsval, fvsval, pmOtherRunParams.fpropthresh);
 
         % also store results on overall model results structure
         pmMSRes.Pred(qcpcfoldidx(:, fold)) = pmCVRes.Pred;
@@ -64,8 +63,8 @@ if pmOtherRunParams.runtype == 1
     fprintf('Overall:\n');
     fprintf('CV: ');
     fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-    %[pmMSRes, pmAMPredUpd] = calcAllQualScores(pmMSRes, foldlabels, nfoldexamples , pmAMPred, foldfeatindex, pmPatientSplit, epilen);
-    [pmMSRes, ~] = calcAllQualScores(pmMSRes, foldlabels, nfoldexamples , pmAMPred, foldfeatindex, pmPatientSplit, epilen);
+    [pmMSRes, ~] = calcAllQualScores(pmMSRes, foldlabels, nfoldexamples , pmAMPred, foldfeatindex, ...
+        pmPatientSplit, pmOtherRunParams.epilen, pmOtherRunParams.fpropthresh);
     
     fprintf('\n');
 
@@ -80,9 +79,10 @@ if pmOtherRunParams.runtype == 1
     misspattqsrow.Acc         = pmMSRes.Acc;
     misspattqsrow.PosAcc      = pmMSRes.PosAcc;
     misspattqsrow.NegAcc      = pmMSRes.NegAcc;
-
-    %hyperparamQS(1, :) = setHyperParamQSrow(hyperparamQS(1, :), lrval, ntrval, mlsval, mnsval, fvsval, pmMSRes);
-
+    misspattqsrow.TrigDelay   = pmMSRes.TrigDelay;
+    misspattqsrow.EarlyWarn   = pmMSRes.EarlyWarn;
+    misspattqsrow.TrigIntrTPR = pmMSRes.TrigIntrTPR;
+    
     toc
     fprintf('\n');
 

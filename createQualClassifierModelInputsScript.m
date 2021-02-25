@@ -69,8 +69,8 @@ load(fullfile(basedir, subfolder, sprintf('%s.mat', qcbaselinefile)), 'pmBaselin
 toc
 fprintf('\n');
 
-epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
-lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
+%epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
+%lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
 nqcfolds = 2; % number of folds for the nested cross validation for the quality classifier
 batchsize = 1000; % number of examples in each batch
 
@@ -128,8 +128,7 @@ for ba = 1:(batchto - lastbatch)
 
         [pmMissPattQS(mi, :)] = calcPCMPPredictAndQS(pmMissPattQS(mi, :), pmModelByFold, pmTrCVFeatureIndex, ...
             pmTrCVNormFeatures, trcvlabels, pmPatientSplit, pmAMPred, ...
-            qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams, ...
-            epilen, lossfunc);
+            qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams);
     end
 
     % populate the relative percentage QS table
@@ -146,14 +145,13 @@ for ba = 1:(batchto - lastbatch)
     pmHyperParamsRow.maxnumsplit = pmHyperParamQS.HyperParamQS.MaxNumSplit;
     pmHyperParamsRow.fracvarsamp = pmHyperParamQS.HyperParamQS.FracVarsToSample;
 
-    
     pmOtherRunParams.btmode     = 2;
-    % no need to update runtype
     pmOtherRunParams.nbssamples = 0;
-    pmOtherRunParams.epilen     = epilen;
-    pmOtherRunParams.lossfunc   = lossfunc;
     pmOtherRunParams.nqcfolds   = nqcfolds;
     pmOtherRunParams.batchsize  = batchsize;
+    % no need to update runtype, epilen, lossfunc, fpropthresh
+    %pmOtherRunParams.epilen     = epilen;
+    %pmOtherRunParams.lossfunc   = lossfunc;
 
     tic
     basedir = setBaseDir();

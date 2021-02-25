@@ -7,10 +7,10 @@ function plotModelQualityScoresForPaper(pmTrCVFeatureIndex, pmModelRes, pmTrCVEx
 %[avgdelayreduction] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred);
 %[~, ~, ~, fpr, ~, ~] = calcQualScores(pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred);
 
-[epiindex, epilabl, epipred] = convertResultsToEpisodes(pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epilen);
+[~, epilabl, epipred, epilablsort, epipredsort] = convertResultsToEpisodes(pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epilen);
 
-[epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilabl, epipred);
-[epiavgdelayreduction] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epipred);
+[epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilablsort, epipredsort);
+[epiavgdelayreduction] = calcAvgDelayReduction(pmAMPred, pmTrCVFeatureIndex, pmTrCVExABLabels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
 
 titlefontsize = 14;
 labelfontsize = 12;

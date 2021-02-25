@@ -18,6 +18,14 @@ hyperparamqsrow.NegAcc           = mdlres.NegAcc;
 hyperparamqsrow.AvgEpiTPred      = mdlres.AvgEpiTPred;
 hyperparamqsrow.AvgEpiFPred      = mdlres.AvgEpiFPred;
 hyperparamqsrow.AvgEPV           = mdlres.AvgEPV;
+hyperparamqsrow.TrigDelay        = mdlres.TrigDelay;
+hyperparamqsrow.EarlyWarn        = mdlres.EarlyWarn;
+hyperparamqsrow.TrigIntrTPR      = mdlres.TrigIntrTPR;
+hyperparamqsrow.EpiFPROp         = mdlres.EpiFPROp;
+hyperparamqsrow.EpiPredOp        = mdlres.EpiPredOp;
+hyperparamqsrow.IdxOp            = mdlres.IdxOp;
+hyperparamqsrow.IntrCount        = mdlres.IntrCount;
+hyperparamqsrow.IntrTrig         = mdlres.IntrTrig;
 
 end
 

@@ -35,6 +35,9 @@ if pmFeatureParamsRow.interpmethod ~= 0 && pmFeatureParamsRow.interpmethod ~= 1
     return
 end
 
+basemodelresultsfile = shortenQCFileName(basemodelresultsfile, pmHyperParamQS.HyperParamQS);
+qcbaselinefile = strrep(basemodelresultsfile, ' ModelResults', 'QCBaseline');
+
 pmModelByFold = pmModelRes.pmNDayRes.Folds;
 clear('pmModelRes');
 
@@ -59,21 +62,42 @@ load(fullfile(basedir, subfolder, psplitfile));
 toc
 fprintf('\n');
 
-%epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
-%lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
+tic
+fprintf('Loading baseline quality scores from file %s\n', qcbaselinefile);
+load(fullfile(basedir, subfolder, sprintf('%s.mat', qcbaselinefile)), 'pmBaselineIndex', 'pmBaselineQS');
+toc
+fprintf('\n');
+
+
 nqcfolds = 2; % number of folds for the nested cross validation for the quality classifier
 
 npcexamples = size(pmFeatureIndex, 1);
 nrawmeasures = sum(measures.RawMeas);
 
-[pmBaselineIndex, ~, pmBaselineQS, pmBaselineQSPct] ... 
-    = createDWMissPattTables(nqcfolds, nrawmeasures, pmFeatureParamsRow.datawinduration);
+[pmSingleExIndex, pmSingleExArray, pmSingleExQS, ~] ... 
+    = createDWMissPattTables(1, nrawmeasures, pmFeatureParamsRow.datawinduration);
 
-for n = 1:nqcfolds
-    pmBaselineIndex.ScenType(n) = 0;
-    pmBaselineIndex.Scenario{n} = 'None';
-    pmBaselineIndex.QCFold(n)   = n;
-end
+n = 1;
+% Populate single example index with details of the single scenario to run for
+%pmSingleExIndex.ScenType(n) = 0;
+%pmSingleExIndex.Scenario{n} = 'Baseline';
+%pmSingleExIndex.MSExample(n) = 0;
+%pmSingleExIndex.QCFold(n)   = 1;
+
+%pmSingleExIndex.ScenType(n) = 4;
+%pmSingleExIndex.Scenario{n} = 'Actual';
+%pmSingleExIndex.MSExample(n) = 1275;
+%pmSingleExIndex.QCFold(n)   = 2;
+
+pmSingleExIndex.ScenType(n) = 4;
+pmSingleExIndex.Scenario{n} = 'Actual';
+pmSingleExIndex.MSExample(n) = 434;
+pmSingleExIndex.QCFold(n)   = 1;
+
+%pmSingleExIndex.ScenType(n) = 4;
+%pmSingleExIndex.Scenario{n} = 'Actual';
+%pmSingleExIndex.MSExample(n) = 431;
+%pmSingleExIndex.QCFold(n)   = 2;
 
 % create the mapping of pred classifier folds to quality classifier folds
 if ceil((nsplits - 1) / nqcfolds) == (nsplits - 1) / nqcfolds
@@ -83,25 +107,28 @@ else
 end
 
 % loop over the number of missingness patterns required
-for mi = 1:nqcfolds
-    qcfold = pmBaselineIndex.QCFold(mi);
-    fprintf('Baseline: %d of %d: Qual Classifier fold %d, Pred Classifier folds ', mi, nqcfolds, qcfold);
-    fprintf('%d ', pcfolds(qcfold, :));
-    fprintf('\n');
+mi = 1;
+qcfold = pmSingleExIndex.QCFold(mi);
+fprintf('Single Example: Qual Classifier fold %d, Pred Classifier folds ', qcfold);
+fprintf('%d ', pcfolds(qcfold, :));
+fprintf('\n');
+
+% apply missingness pattern to dataset (see augment function)
+[pmMSDataWinArray, pmSingleExIndex(mi, :), pmSingleExArray(mi, :)] = applyMissPattToDataWinArray(pmDataWinArray, ...
+        pmSingleExIndex(mi, :), pmSingleExArray(mi, :), measures, nmeasures, pmFeatureParamsRow, []);
     
-    [pmNormFeatures, pmNormFeatNames, pmMuIndex, pmSigmaIndex, ~, ~, ~, ~, ~, ~, ~, ~] = ...
-        createModFeaturesFromDWArrays(pmDataWinArray, pmOverallStats, npcexamples, measures, nmeasures, pmModFeatParamsRow);
+[pmNormFeatures, pmNormFeatNames, pmMuIndex, pmSigmaIndex, ~, ~, ~, ~, ~, ~, ~, ~] = ...
+        createModFeaturesFromDWArrays(pmMSDataWinArray, pmOverallStats, npcexamples, measures, nmeasures, pmModFeatParamsRow);
 
-    % separate out test data and keep aside
-    [~, ~, ~, ~, ~, ~, pmTrCVFeatureIndex, ~, ~, pmTrCVNormFeatures, ...
-        trcvlabels, ~, npcfolds] = splitTestFeaturesNew(pmFeatureIndex, ...
-        pmMuIndex, pmSigmaIndex, pmNormFeatures, ...
-        pmExABxElLabels, pmPatientSplit, nsplits);
+% separate out test data and keep aside
+[~, ~, ~, ~, ~, ~, pmTrCVFeatureIndex, ~, ~, pmTrCVNormFeatures, ...
+    trcvlabels, ~, npcfolds] = splitTestFeaturesNew(pmFeatureIndex, ...
+    pmMuIndex, pmSigmaIndex, pmNormFeatures, ...
+    pmExABxElLabels, pmPatientSplit, nsplits);
 
-    [pmBaselineQS(mi, :)] = calcPCMPPredictAndQS(pmBaselineQS(mi, :), pmModelByFold, pmTrCVFeatureIndex, ...
-        pmTrCVNormFeatures, trcvlabels, pmPatientSplit, pmAMPred, ...
-        qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams);
-end
+[pmSingleExQS(mi, :)] = calcPCMPPredictAndQS(pmSingleExQS(mi, :), pmModelByFold, pmTrCVFeatureIndex, ...
+    pmTrCVNormFeatures, trcvlabels, pmPatientSplit, pmAMPred, ...
+    qcfold, nqcfolds, npcfolds, pcfolds, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams);
 
 
 pmHyperParamsRow = struct();
@@ -119,20 +146,6 @@ pmOtherRunParams.nqcfolds   = nqcfolds;
 %pmOtherRunParams.epilen     = epilen;
 %pmOtherRunParams.lossfunc   = lossfunc;
 
-
-tic
-basedir = setBaseDir();
-subfolder = 'MatlabSavedVariables';
-basemodelresultsfile = shortenQCFileName(basemodelresultsfile, pmHyperParamQS.HyperParamQS);
-qcbaselinefile = strrep(basemodelresultsfile, ' ModelResults', 'QCBaseline');
-outputfilename = sprintf('%s.mat', qcbaselinefile);
-fprintf('Saving baseline quality scores to file %s\n', outputfilename);
-save(fullfile(basedir, subfolder, outputfilename), ...
-    'pmBaselineIndex', 'pmBaselineQS', 'pmModelByFold', 'nqcfolds', ...
-    'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
-    'measures', 'nmeasures');
-toc
-fprintf('\n');
 
 beep on;
 beep;

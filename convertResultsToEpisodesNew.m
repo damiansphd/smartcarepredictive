@@ -1,4 +1,4 @@
-function [epiindex, epilabl, epipred] = convertResultsToEpisodesNew(featureindex, labels, pred, epilen)
+function [epiindex, epilabl, epipred, epilablsort, epipredsort] = convertResultsToEpisodesNew(featureindex, labels, pred, epilen)
 
 % convertResultsToEpisodesNew - takes daily labels and predictions and
 % converts them to episodes
@@ -132,5 +132,8 @@ end
 epiindex(epinbr:end,:) = [];
 epilabl(epinbr:end,:) = [];
 epipred(epinbr:end,:) = [];
+
+[epipredsort, sortidx] = sort(epipred, 'descend');
+epilablsort = epilabl(sortidx);
 
 end

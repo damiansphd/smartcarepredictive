@@ -1,5 +1,5 @@
 function [foldhptable, pmRes, ampredupd] = calcPredAndQS(mdl, foldhptable, featidx, features, labels, fold, foldhpcomb, ampred, ...
-                        patientsplit, modelver, epilen,  lossfunc, lrval, ntrval, mlsval, mnsval, fvsval)
+                        patientsplit, modelver, epilen,  lossfunc, lrval, ntrval, mlsval, mnsval, fvsval, fpropthresh)
 
 % calcPredAndQS - wrapper function to create predictions and quality
 % metrics
@@ -12,7 +12,7 @@ fprintf('LR: %.2f NT: %3d MLS: %3d MNS: %3d FVS: %.2f- ', lrval, ntrval, mlsval,
 fprintf('Loss: %.6f ', pmRes.Loss);
 
 % calculate training set quality scores
-[pmRes, ampredupd] = calcAllQualScores(pmRes, labels, nexamples, ampred, featidx, patientsplit, epilen);
+[pmRes, ampredupd] = calcAllQualScores(pmRes, labels, nexamples, ampred, featidx, patientsplit, epilen, fpropthresh);
 foldhptable.Fold(foldhpcomb) = fold;
 foldhptable(foldhpcomb, :)   = setHyperParamQSrow(foldhptable(foldhpcomb, :), lrval, ntrval, mlsval, mnsval, fvsval, pmRes);
 if ~ismember(modelver, {'vPM1'})
