@@ -73,21 +73,10 @@ end
 
 pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys', {'SmartCareID'}, 'LeftVariables', {'PatientNbr', 'Study', 'ID'});
 
-%pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys', {'SmartCareID'}, 'LeftVariables', {'PatientNbr', 'Study', 'ID', 'FirstMeasdn'});
-%pmAMPred.Ex_Start(:) = ex_start;
-%pmAMPred.Pred   = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.Offset      - (pmAMPred.FirstMeasdn - 1);
-%pmAMPred.RelLB1 = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.LowerBound1 - (pmAMPred.FirstMeasdn - 1);
-%pmAMPred.RelUB1 = pmAMPred.IVDateNum + pmAMPred.Ex_Start + pmAMPred.UpperBound1 - (pmAMPred.FirstMeasdn - 1);
-%pmAMPred.RelLB2(:) = -1;
-%pmAMPred.RelUB2(:) = -1;
-%pmAMPred.RelLB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerBound2 ~= -1) ...
-%        + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.LowerBound2(pmAMPred.LowerBound2 ~= -1) ...
-%        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
-%pmAMPred.RelUB2(pmAMPred.LowerBound2 ~= -1) = pmAMPred.IVDateNum(pmAMPred.LowerBound2 ~= -1) ...
-%        + pmAMPred.Ex_Start(pmAMPred.LowerBound2 ~= -1) + pmAMPred.UpperBound2(pmAMPred.LowerBound2 ~= -1) ...
-%        - (pmAMPred.FirstMeasdn(pmAMPred.LowerBound2 ~= -1) - 1);
-%pmAMPred.FirstMeasdn = [];
-%
+% a hangover from before the elective treatments were captured in the
+% alignment model interventions table. Leaving here as it does give a
+% little extra flexibility - but intention is to have the override table
+% match the same electives as the original table has.
 pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
 pmAMPred.ElectiveTreatment = [];
 pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});

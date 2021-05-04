@@ -9,8 +9,8 @@ for a = 1:nstudies
     study = pmStudyInfo.Study{a};
     [datamatfile, clinicalmatfile, ~] = getRawDataFilenamesForStudy(study);
     [physdata, offset] = loadAndHarmoniseMeasVars(datamatfile, subfolder, study);
-    [cdPatient, ~, cdAntibiotics, ~, ~, ~, ...
-        ~, ~, ~, ~] = loadAndHarmoniseClinVars(clinicalmatfile, subfolder, study);
+    [cdPatient, ~, ~, cdAntibiotics, ~, ~, ~, ...
+        ~, ~, ~, ~, ~, ~, ~] = loadAndHarmoniseClinVars(clinicalmatfile, subfolder, study);
     
     fprintf('Loading alignment model prediction results\n');
     load(fullfile(basedir, subfolder, pmStudyInfo.AMPredMatFile{a}), 'amInterventions', 'ex_start');
