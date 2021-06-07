@@ -85,7 +85,7 @@ fontname = 'Arial';
 
 outputfilename = strrep(bsqsfile, '.mat', '');
 
-plottypes = {'Fig4E' ; 'Missingness Interp' ; 'Interp Range'};
+plottypes = {'Fig4E' ; 'Missingness Interp' ; 'Interp Range' ; 'Fig4E'};
 
 [type, doplot] = setTypeForQSCombPlot(outputfilename);
 

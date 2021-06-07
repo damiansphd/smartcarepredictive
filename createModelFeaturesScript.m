@@ -1,6 +1,9 @@
 clear; close all; clc;
 
 basedir = setBaseDir();
+tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
+addpath(tempdir);
+
 subfolder = 'DataFiles';
 [fv1name, validresponse] = selectFeatVer();
 if ~validresponse

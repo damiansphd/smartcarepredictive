@@ -22,7 +22,7 @@ for rp = 1:size(pmDataWinParams,1)
     pmDataWinParamsRow = pmDataWinParams(rp,:);
     
     datawinfilename = generateFileNameFromDataWinParams(pmDataWinParamsRow);
-    fprintf('%2d. Generating features and lables for %s\n', rp, datawinfilename);
+    fprintf('%2d. Generating features and labels for %s\n', rp, datawinfilename);
     fprintf('-------------------------------------------------------------------------------\n');
     
     % load model inputs

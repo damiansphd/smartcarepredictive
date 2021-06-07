@@ -12,7 +12,7 @@ if smfunction > 0
     for i = 1:nexamples
         for m = 1:nmeasures
             mfeatsrow = features(i, ((m-1) * nmfeats) + 1: (m * nmfeats));
-            mfeatsrow = applySmoothMethodToInterpRow(mfeatsrow, smfunction, smwindow, smlength, m, mfev1idx);
+            mfeatsrow = applySmoothMethodToInterpRow(mfeatsrow, smfunction, smwindow, smlength, measures.Index(m), mfev1idx);
             features(i, ((m-1) * nmfeats) + 1: (m * nmfeats)) = mfeatsrow;
         end
     end

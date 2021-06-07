@@ -19,10 +19,12 @@ fprintf('12. Model Calibration plot\n');
 fprintf('13. Plot Decision Tree\n');
 fprintf('14. Plot Predictor Importance\n');
 fprintf('15. Plot Train vs CV quality scores\n');
+fprintf('16. Proj Breathe: Select Measures + Prediction by patient/period\n');
+fprintf('17. Proj Breathe: Measures density by patient/period\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
-nplots = 15;
+nplots = 17;
 plottype = str2double(splottype);
 
 if (isnan(plottype) || plottype < 1 || plottype > nplots)

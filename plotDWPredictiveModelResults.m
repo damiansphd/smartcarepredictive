@@ -209,6 +209,30 @@ elseif plottype == 14
     plotPredictorImportance(pmFeatureParamsRow, pmHyperParamQS, measures, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
 elseif plottype == 15
     plotTrVsCVQualScores(pmHyperParamQS, pmModelRes.pmNDayRes, plotsubfolder, basemodelresultsfile);
+elseif plottype == 16
+    % plot select measures and predictions for all relevant patients
+    % only use for project breathe
+    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
+    npatients = size(testpatsplit,1);
+    for p = 1:npatients
+        pnbr = testpatsplit.PatientNbr(p);
+        fprintf('Plotting results for patient %d\n', pnbr);
+        plotDWMeasuresAndPredictionsForPatient(pmPatients(pnbr, :), ...
+            pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= 1 & pmAntibiotics.RelStartdn <= pmPatients.RelLastMeasdn(pnbr), :), ...
+            pmAMPred(pmAMPred.PatientNbr == pnbr, :), ...
+            pmRawDatacube(pnbr, :, smidx), pmInterpDatacube(pnbr, :, smidx), pmInterpVolcube(pnbr, :, smidx), ...
+            testfeatidx, testlabels, pmModelRes, ...
+            pmOverallStats, pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr, :), ...
+            measures(smidx, :), sum(smidx), mvolstats, labelidx, pmFeatureParamsRow, lbdisplayname, ...
+            plotsubfolder, basemodelresultsfile);
+    end
+elseif plottype == 17
+    % plot measures completeness for all relevant patients
+    % only use for project breathe
+    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
+    fprintf('Plotting data completeness for all patients\n');
+    [gooddays, totdays, dailytotal] = plotDWMeasuresCompletenessForPatient(pmPatients, pmAntibiotics, pmAMPred, pmRawDatacube(:, :, smidx), ...
+        measures(smidx, :), sum(smidx), pmFeatureParamsRow, plotsubfolder, basemodelresultsfile);
 end
 
 

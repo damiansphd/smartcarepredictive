@@ -23,6 +23,9 @@ typetext = 'QCResults';
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
 basemodelresultsfile = strrep(basemodelresultsfile, typetext, '');
 
+
+% **** this needs updating to use pmQCConstr and also update the calls to
+% the plot functions below
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';

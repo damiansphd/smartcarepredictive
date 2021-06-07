@@ -266,6 +266,27 @@ switch meascomb
     case 122
         fprintf('Set for Cough, FEV1, MinsAsleep, O2Saturation, RestingHR, Temperature, Wellness\n');
         idx = ismember(measures.DisplayName,{'Cough', 'FEV1', 'MinsAsleep', 'O2Saturation', 'RestingHR', 'Temperature', 'Wellness'});
+    case 123
+        fprintf('Set for Cough, Wellness, FEV1, O2 Saturation, Pulse Rate\n');
+        idx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'FEV1', 'O2Saturation', 'PulseRate'});
+    case 124
+        fprintf('Set for Cough, Wellness, FEV1, O2 Saturation, RestingHR\n');
+        idx = ismember(measures.DisplayName,{'Cough', 'Wellness', 'FEV1', 'O2Saturation', 'RestingHR'});
+    case 125
+        fprintf('Set for FEV1, O2 Saturation, Pulse Rate\n');
+        idx = ismember(measures.DisplayName,{'FEV1', 'O2Saturation', 'PulseRate'});
+    case 126
+        fprintf('Set for FEV1, O2 Saturation, RestingHR\n');
+        idx = ismember(measures.DisplayName,{'FEV1', 'O2Saturation', 'RestingHR'});
+    case 127
+        fprintf('Set for O2 Saturation, Pulse Rate, Wellness\n');
+        idx = ismember(measures.DisplayName,{'O2Saturation', 'PulseRate', 'Wellness'});
+    case 128
+        fprintf('Set for O2 Saturation, RestingHR, Wellness\n');
+        idx = ismember(measures.DisplayName,{'O2Saturation', 'RestingHR', 'Wellness'});
+    case 129
+        fprintf('Set for Cough, FEV1, O2Saturation, RestingHR, Temperature, Wellness\n');
+        idx = ismember(measures.DisplayName,{'Cough', 'FEV1', 'O2Saturation', 'RestingHR', 'Temperature', 'Wellness'});
     case 201
         fprintf('Set for Activity\n');
         idx = ismember(measures.DisplayName,{'Activity'});

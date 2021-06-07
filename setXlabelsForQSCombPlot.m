@@ -2,7 +2,7 @@ function [xlabel] = setXlabelsForQSCombPlot(bsqstablerow, filename, type)
 
 % setXlabelsForQSCombPlot - sets the xlabel for the QS Comb plot
 
-if type == 1
+if type == 1 || type == 4
     if contains(filename, '-MS')
         tempstring = split(bsqstablerow.MSMeas{1}, ':');
     else

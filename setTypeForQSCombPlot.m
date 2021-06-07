@@ -11,6 +11,9 @@ elseif contains(filename, {'ScenM1.1', 'ScenM2.1', 'ScenM3.1', 'ScenM3.2'})
 elseif contains(filename, {'ScenM3.4', 'ScenM3.5', 'ScenM3.6'})
     type = 3;
     doplot = true;
+elseif contains(filename, {'BR1.4-Fig4E'})
+    type = 4;
+    doplot = true;
 else
     type = -1;
     doplot = false;

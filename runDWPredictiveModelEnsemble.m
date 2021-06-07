@@ -258,7 +258,7 @@ for fs = 1:nfeatureparamsets
                                 fprintf('Overall:\n');
                                 fprintf('Test: ');
                                 fprintf('LR: %.2f LC: %3d MLS: %3d MNS: %3d - Qual Scores: ', lrval, ntrval, mlsval, mnsval);
-                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels(origidx), ntestexamples, pmAMPred, pmTestFeatureIndex(origidx, :), pmPatientSplit, epilen, fpropthresh);
+                                [pmDayRes, pmAMPredUpd] = calcAllQualScores(pmDayRes, testlabels(origidx), norigex, pmAMPred, pmTestFeatureIndex(origidx, :), pmPatientSplit, epilen, fpropthresh);
                                 fprintf('\n');
 
                                 hyperparamQS(hpcomb, :) = setHyperParamQSrow(hyperparamQS(hpcomb, :), lrval, ntrval, mlsval, mnsval, fvsval, pmDayRes);

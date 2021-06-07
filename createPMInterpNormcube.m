@@ -17,7 +17,7 @@ if smfunction > 0
     for p = 1:npatients
         pmaxdays = pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1;
         for m = 1:nmeasures
-            pmSmoothInterpNormcube(p,1:pmaxdays,m) = applySmoothMethodToInterpRow(pmInterpNormcube(p,1:pmaxdays,m), smfunction, smwindow, smlength, m, mfev1idx);
+            pmSmoothInterpNormcube(p,1:pmaxdays,m) = applySmoothMethodToInterpRow(pmInterpNormcube(p,1:pmaxdays,m), smfunction, smwindow, smlength, measures.Index(m), mfev1idx);
         end
     end
 end

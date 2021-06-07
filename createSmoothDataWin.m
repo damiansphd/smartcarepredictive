@@ -12,7 +12,7 @@ if smfunction > 0
     for i = 1:nexamples
         for m = 1:nmeasures
             mfeatsrow = datawinarray(i, :, m);
-            mfeatsrow = applySmoothMethodToInterpRow(mfeatsrow, smfunction, smwindow, smlength, m, mfev1idx);
+            mfeatsrow = applySmoothMethodToInterpRow(mfeatsrow, smfunction, smwindow, smlength, measures.Index(m), mfev1idx);
             datawinarray(i, :, m) = mfeatsrow;
         end
     end
