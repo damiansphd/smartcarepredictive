@@ -48,10 +48,6 @@ featureparamfile     = strcat(mfbasefeatureparamfile, '.xlsx');
 pmThisFeatureParams  = readtable(fullfile(basedir, subfolder, featureparamfile));
 nfeatureparamsets = size(pmThisFeatureParams,1);
 
-% Choose train or test segments of the data to run on
-% **** actually default this in the code based on study for models and study for
-% data
-
 % load trained predictive classifier
 tic
 basedir = setBaseDir();
@@ -87,7 +83,8 @@ if validresponse == 0
     return;
 end
 
-pmTrModNewDataResTable = createTrModNewDataResTable(nfeatureparamsets * 2);
+nrows = 20;
+pmTrModNewDataResTable = createTrModNewDataResTable(nrows); % hardcode for now, increase as necessary
 row = 1;
 
 for fs = 1:nfeatureparamsets
@@ -105,7 +102,7 @@ for fs = 1:nfeatureparamsets
         'studynbr', 'studydisplayname', 'pmStudyInfo', ...
         'pmFeatureIndex', 'pmDataWinArray', 'pmExABxElLabels', ...
         'measures', 'nmeasures', 'pmModFeatParamsRow', ...
-        'pmNormFeatures');
+        'pmNormFeatures', 'pmNormFeatNames');
     psplitfile = sprintf('%spatientsplit.mat', pmThisFeatureParams.StudyDisplayName{fs});
     fprintf('Loading patient splits from file %s\n', psplitfile);
     load(fullfile(basedir, subfolder, psplitfile));
@@ -184,7 +181,7 @@ for fs = 1:nfeatureparamsets
     daysscope  = 'All';
     pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), pmFeatureParamsRow, ...
             pcmodelresultsfile, qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
-            datascope, daysscope, nexamples, nexamples, pmAllPCRes);
+            datascope, daysscope, nexamples, nexamples, sum(labels(origidx, :)), pmAllPCRes);
     row = row + 1;
     fprintf('\n');
     
@@ -214,13 +211,101 @@ for fs = 1:nfeatureparamsets
     daysscope  = 'Safe';
     pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), pmFeatureParamsRow, ...
             pcmodelresultsfile, qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
-            datascope, daysscope, nsafedays, nexamples, pmSafePCRes);
+            datascope, daysscope, nsafedays, nexamples, sum(labels(unionidx, :)), pmSafePCRes);
     row = row + 1;
     fprintf('\n');
     
     toc
     fprintf('\n');
     
+    
+    % train new model on safe days
+    if ~ismember(pmFeatureParamsRow.StudyDisplayName, pmModFeatParamsRow.StudyDisplayName)
+        
+        sfdatawinarray = pmDataWinArray(safeidx, :, :);
+        nsfexamples    = sum(safeidx);
+        nfolds         = 1;
+        nnormfeatures  = size(pmNormFeatures, 2);
+        
+        [testfeatindex, ~, ~, testnormfeatures, ...
+        testlabels, testpatsplit, ... 
+        trcvfeatindex, ~, ~, trcvnormfeatures, ...
+        trcvlabels, trcvpatsplit, ~, testidx] ...
+             = splitTestFeaturesNew(pmFeatureIndex(safeidx, :), zeros(nsfexamples, 1), zeros(nsfexamples, 1), pmNormFeatures(safeidx, :), ...
+                                    pmExABxElLabels(safeidx), pmPatientSplit, nsplits);
+                                
+        trcvdatawinarray = sfdatawinarray(~testidx, :, :);
+        
+        fprintf('\n');
+        fprintf('Training predictive classifier on new data set - safe days\n');
+        
+        pcmodelver = pmModelParamsRow.ModelVer{1};
+        [modeltype, mmethod] = setModelTypeAndMethod(pcmodelver);
+        lrval  = pmHyperParamQS.HyperParamQS.LearnRate(1);
+        ntrval = pmHyperParamQS.HyperParamQS.NumTrees(1);
+        mlsval = pmHyperParamQS.HyperParamQS.MinLeafSize(1);
+        mnsval = pmHyperParamQS.HyperParamQS.MaxNumSplit(1);
+        fvsval = pmHyperParamQS.HyperParamQS.FracVarsToSample(1);
+        pclossfunc = pmOtherRunParams.lossfunc;
+        
+        fold  = 1;
+        foldhpcomb = 1;
+        origidx = testfeatindex.ScenType == 0;
+        norigex = sum(origidx);
+        pmNewSfDayRes = createModelDayResStuct(norigex, fold, 0);
+
+        if ismember(pmModelParamsRow.ModelVer{1}, {'vPM1', 'vPM4','vPM10', 'vPM11', 'vPM12', 'vPM13'})
+            % train model
+            fprintf('Training...');
+            [pmNewSfDayRes] = trainPredModel(pcmodelver, pmNewSfDayRes, trcvnormfeatures, trcvlabels, ...
+                                pmNormFeatNames, nnormfeatures, fold, mmethod, lrval, ntrval, mlsval, mnsval, fvsval);
+            fprintf('Done\n');
+
+            % calculate predictions and quality scores on training data
+            fprintf('Tr: ');
+            pmTrRes = createModelDayResStuct(size(trcvfeatindex, 1), fold, 0);
+            pmTrRes = predictPredModel(pmTrRes, pmNewSfDayRes.Folds(fold).Model, trcvnormfeatures, trcvlabels, pcmodelver, pclossfunc);
+            pmTrRes = calcModelQualityScores(pmTrRes, trcvlabels, size(trcvfeatindex, 1));
+            datascope  = 'Train';
+            daysscope  = 'Safe';
+            tempfeatparams = pmFeatureParamsRow;
+            tempfeatparams.StudyDisplayName = pmModFeatParamsRow.StudyDisplayName;
+            pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), tempfeatparams, ...
+                'N/A', qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
+                datascope, daysscope, size(trcvfeatindex, 1), size(trcvfeatindex, 1), sum(trcvlabels), pmTrRes);
+            row = row + 1;
+            fprintf('\n');
+
+            fprintf('Test: ');
+            pmTestRes = createModelDayResStuct(norigex, fold, 0);
+            pmTestRes = predictPredModel(pmTestRes, pmNewSfDayRes.Folds(fold).Model, testnormfeatures(origidx, :), testlabels(origidx, :), pcmodelver, pclossfunc);
+            pmTestRes = calcModelQualityScores(pmTestRes, testlabels(origidx, :), norigex);
+            datascope  = 'Test';
+            daysscope  = 'Safe';
+            pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), tempfeatparams, ...
+                'N/A', qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
+                datascope, daysscope, size(testfeatindex, 1), size(testfeatindex, 1), sum(testlabels(origidx, :)), pmTestRes);
+            row = row + 1;
+            fprintf('\n');
+            
+            % also store results on overall model results structure
+            pmNewSfDayRes.Pred = pmTestRes.Pred;
+            pmNewSfDayRes.Loss(fold) = pmTestRes.Loss;
+
+        else
+            fprintf('Unsupported model version\n');
+            return;
+        end
+        
+    end
+        
+    % save individual results ?
+    
+end
+
+% remove unused rows
+if row <= nrows
+    pmTrModNewDataResTable(row:end, :) = [];
 end
 
 tic
