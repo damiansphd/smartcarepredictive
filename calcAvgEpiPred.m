@@ -19,8 +19,18 @@ end
 
 mdlres.AvgEPV      = mdlres.AvgEpiTPred - mdlres.AvgEpiFPred;
 
-[~, ~, ~, epifpr, ~, ~] = calcQualScores(epilablsort, epipredsort);
-mdlres.IdxOp     = find(epifpr < fpropthresh, 1, 'last');
+%[~, ~, ~, epifpr, ~, ~] = calcQualScores(epilablsort, epipredsort);
+%mdlres.IdxOp     = find(epifpr < fpropthresh, 1, 'last');
+
+% choose the best operating point - first find the max point that meets the
+% fpr threshold, then find the first point that has the same tpr as this
+% point.
+[~, ~, epitpr, epifpr, ~, ~] = calcQualScores(epilablsort, epipredsort);
+maxidxpt     = find(epifpr < fpropthresh, 1, 'last');
+mdlres.IdxOp = find(epitpr == epitpr(maxidxpt), 1, 'first');
+
+% add logic to traverse back to first one where epifpr is the same as at
+% the threshold
 mdlres.EpiFPROp  = 100 * epifpr(mdlres.IdxOp);
 mdlres.EpiPredOp = epipredsort(mdlres.IdxOp);
 

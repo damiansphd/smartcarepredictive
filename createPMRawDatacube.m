@@ -14,9 +14,15 @@ for a = 1:nstudies
     
     fprintf('Loading alignment model prediction results\n');
     load(fullfile(basedir, subfolder, pmStudyInfo.AMPredMatFile{a}), 'amInterventions', 'ex_start');
-    fprintf('Loading elective treatments\n');
-    pmElectiveTreatments = readtable(fullfile(basedir, 'DataFiles', pmStudyInfo.ElectiveTrFile{a}));
-
+    % now we store elective treatment info in the alignment model results,
+    % so for project breathe, no need for the override file
+    if ~ismember(study, {'BR'})
+        fprintf('Loading elective treatments\n');
+        pmElectiveTreatments = readtable(fullfile(basedir, 'DataFiles', pmStudyInfo.ElectiveTrFile{a}));
+    else
+        pmElectiveTreatments = [];
+    end
+        
     % store the study offset in pmStudyInfo table
     pmStudyInfo.Offset(a) = offset;
     

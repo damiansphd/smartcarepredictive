@@ -37,7 +37,6 @@ if exist('pmTrCVExABxElLabels', 'var') ~= 1
     pmTestExABxElLabels = [];
 end
 
-
 featureparamsfile = generateFileNameFromModFeatureParams(pmFeatureParamsRow);
 featureparamsmatfile = sprintf('%s.mat', featureparamsfile);
 fprintf('Loading predictive model input data for %s\n', featureparamsfile);
@@ -73,7 +72,7 @@ fprintf(' 9: Paper Figure 8 - Comparison to Current Clinical Practice - Random c
 fprintf('10: Paper Figure 6 Appendix - Example All Measures And Prediction\n');
 fprintf('11: Old Paper Figure 6 - Example Measures And Prediction for Single Participant\n');
 
-splottype = input('Choose function (6-9): ', 's');
+splottype = input('Choose function (6-11): ', 's');
 plottype = str2double(splottype);
 
 if (isnan(plottype) || plottype < 6 || plottype > 11)
@@ -87,7 +86,7 @@ testlabels    = pmTestExABxElLabels;
 [trainfeatidx, trainfeatures, trainlabels, trainpatsplit, testfeatidx, testfeatures, testlabels, testpatsplit] = ...
             setTrainTestArraysForRunType(pmTrCVFeatureIndex, pmTrCVNormFeatures, trainlabels, pmTrCVPatientSplit, ...
                                          pmTestFeatureIndex, pmTestNormFeatures, testlabels, pmTestPatientSplit, ...
-                                         pmOtherRunParams.runtype);
+                                         pmOtherRunParams.runtype);           
                                      
 if plottype == 6
     % nb patients used for paper are p1(scid23) and p64(scid139)
@@ -123,7 +122,8 @@ elseif plottype == 8
     randmode = false;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl] = plotModelQualityScoresForPaper2(testfeatidx, pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epipredsort, epilablsort] = plotModelQualityScoresForPaper2(testfeatidx, ...
+        pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
 elseif plottype == 9
     % Comparison to Current Clinical Practice - random classifier mode
     epilen = 7;
@@ -131,7 +131,8 @@ elseif plottype == 9
     randmode = true;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl] = plotModelQualityScoresForPaper2(testfeatidx, pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epipredsort, epilablsort] = plotModelQualityScoresForPaper2(testfeatidx, ...
+        pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
 elseif plottype == 10
     % plot measures and predictions for a single patient - version with all
     % measures for appendix

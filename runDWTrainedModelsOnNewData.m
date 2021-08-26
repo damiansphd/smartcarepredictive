@@ -21,6 +21,7 @@ end
 if validresponse == 0
     return;
 end
+
 % Choose predictive classifier version for above choices
 fprintf('Choose the trained predictive classifier version to run\n');
 typetext = ' ModelResults';

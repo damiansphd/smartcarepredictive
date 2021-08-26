@@ -77,10 +77,13 @@ pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys
 % alignment model interventions table. Leaving here as it does give a
 % little extra flexibility - but intention is to have the override table
 % match the same electives as the original table has.
-pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
-pmAMPred.ElectiveTreatment = [];
-pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
-pmAMPred(isnan(pmAMPred.PatientNbr), :) = [];
+% **** no need for the override for project breathe
+if ~ismember(study, {'BR'})
+    pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
+    pmAMPred.ElectiveTreatment = [];
+    pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
+    pmAMPred(isnan(pmAMPred.PatientNbr), :) = [];
+end
 
 pmDatacube = NaN(npatients, maxdays, nmeasures);
 

@@ -1,4 +1,4 @@
-function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl] = plotModelQualityScoresForPaper2(featidx, ...
+function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epipredsort, epilablsort] = plotModelQualityScoresForPaper2(featidx, ...
     pmModelRes, labels, pmAMPred, plotsubfolder, basefilename, epilen, randmode, fpropthresh)
 
 % plotModelQualityScoresForPaper - calculates model quality scores at
@@ -11,10 +11,11 @@ pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 [~, epilabl, epipred, epilablsort, epipredsort] = convertResultsToEpisodesNew(featidx, labels, pmModelRes.pmNDayRes(1).Pred, epilen);
 
 if randmode
-    epilabl = epilabl(randperm(size(epilabl, 1)));
-    randtext = 'Random';
+    epilabl     = epilabl(randperm(size(epilabl, 1)));
+    epilablsort = epilablsort(randperm(size(epilablsort, 1)));
+    randtext    = 'Random';
 else
-    randtext = '';
+    randtext    = '';
 end
 
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilablsort, epipredsort);
@@ -26,8 +27,6 @@ end
 %chosenpt20pc = 352;
 %chosenpt33pc = 535;
 % use these for label method 6/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm6
-chosenpt10pc = 202;
-chosenpt15pc = 279;
 %chosenpt20pc = 346;
 %chosenpt20pc = 383; %actually 22.5%
 %chosenpt20pc  = 326; % actually 22% use for best combination
@@ -35,15 +34,19 @@ chosenpt15pc = 279;
 %chosenpt20pc  = 327; % actually 22% use for just we
 %chosenpt20pc  = 305; % actually 22% use for just lu
 
-chosenpt20pc = find(epifpr < fpropthresh, 1, 'last');
+%chosenpt20pc = find(epifpr < fpropthresh, 1, 'last');
 
-chosenpt33pc = 530;
+% choose the best operating point - first find the max point that meets the
+% fpr threshold, then find the first point that has the same tpr as this
+% point.
+maxidxpt = find(epifpr < fpropthresh, 1, 'last');
+bestidxpt = find(epitpr == epitpr(maxidxpt), 1, 'first');
 
-[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(chosenpt20pc));
+[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt));
 untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
 fprintf('\n');
 fprintf('At %.1f%% FPR (pt %d), the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
-            100 * epifpr(chosenpt20pc), chosenpt20pc, trigintrtpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), avgtrigdelay(chosenpt20pc));
+            100 * epifpr(bestidxpt), bestidxpt, trigintrtpr(bestidxpt), epiavgdelayreduction(bestidxpt), avgtrigdelay(bestidxpt));
 
 % estimate for current clinical delay
 %currclindelay = 2;
@@ -62,7 +65,6 @@ halfhght = singlehght * 0.5;
 doublehght = singlehght * 2;
 twoandhalfhght = singlehght * 2.5;
 triplehght = singlehght * 3;
-
 
 ntitles = 1;
 nplots = 3;
@@ -137,13 +139,13 @@ for i = 1:(ntitles + nplots)
         
         area(ax, 100 * epifpr, trigintrtpr, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
-        line(ax, [0, 100 * epifpr(chosenpt20pc)], [trigintrtpr(chosenpt20pc), trigintrtpr(chosenpt20pc)], ...
+        line(ax, [0, 100 * epifpr(bestidxpt)], [trigintrtpr(bestidxpt), trigintrtpr(bestidxpt)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
-        line(ax, [100 * epifpr(chosenpt20pc), 100 * epifpr(chosenpt20pc)], [0, trigintrtpr(chosenpt20pc)], ...
+        line(ax, [100 * epifpr(bestidxpt), 100 * epifpr(bestidxpt)], [0, trigintrtpr(bestidxpt)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
         
         hold on;
-        scatter(ax, 100 * epifpr(chosenpt20pc), trigintrtpr(chosenpt20pc), 'Marker', 'o', ...
+        scatter(ax, 100 * epifpr(bestidxpt), trigintrtpr(bestidxpt), 'Marker', 'o', ...
             'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
         hold off;
         
@@ -178,13 +180,13 @@ for i = 1:(ntitles + nplots)
         
         area(ax, 100 * epifpr, epiavgdelayreduction, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
-        line(ax, [0, 100 * epifpr(chosenpt20pc)], [epiavgdelayreduction(chosenpt20pc), epiavgdelayreduction(chosenpt20pc)], ...
+        line(ax, [0, 100 * epifpr(bestidxpt)], [epiavgdelayreduction(bestidxpt), epiavgdelayreduction(bestidxpt)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
-        line(ax, [100 * epifpr(chosenpt20pc), 100 * epifpr(chosenpt20pc)], [0, epiavgdelayreduction(chosenpt20pc)], ...
+        line(ax, [100 * epifpr(bestidxpt), 100 * epifpr(bestidxpt)], [0, epiavgdelayreduction(bestidxpt)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
         hold on;
         
-        scatter(ax, 100 * epifpr(chosenpt20pc), epiavgdelayreduction(chosenpt20pc), 'Marker', 'o', ...
+        scatter(ax, 100 * epifpr(bestidxpt), epiavgdelayreduction(bestidxpt), 'Marker', 'o', ...
             'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
         
         ax.FontSize = axisfontsize; 
@@ -225,13 +227,13 @@ for i = 1:(ntitles + nplots)
         
         area(ax, 100 * epifpr, avgtrigdelay, ...
             'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
-        line(ax, [0, 100 * epifpr(chosenpt20pc)], [avgtrigdelay(chosenpt20pc), avgtrigdelay(chosenpt20pc)], ...
+        line(ax, [0, 100 * epifpr(bestidxpt)], [avgtrigdelay(bestidxpt), avgtrigdelay(bestidxpt)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
-        line(ax, [100 * epifpr(chosenpt20pc), 100 * epifpr(chosenpt20pc)], [0, avgtrigdelay(chosenpt20pc)], ...
+        line(ax, [100 * epifpr(bestidxpt), 100 * epifpr(bestidxpt)], [0, avgtrigdelay(bestidxpt)], ...
             'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
         hold on;
         
-        scatter(ax, 100 * epifpr(chosenpt20pc), avgtrigdelay(chosenpt20pc), 'Marker', 'o', ...
+        scatter(ax, 100 * epifpr(bestidxpt), avgtrigdelay(bestidxpt), 'Marker', 'o', ...
             'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
         
         ax.FontSize = axisfontsize; 

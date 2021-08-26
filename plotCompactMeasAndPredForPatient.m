@@ -6,11 +6,11 @@ function plotCompactMeasAndPredForPatient(pmpatientrow, pabs, pmampredrow, pmRaw
 % plotCompactMeasAndPredForPatient- compact plots of measures and
 % prediction for a patient
 
-featureduration = featureparamsrow.featureduration;
+datawinduration = featureparamsrow.datawinduration;
 smfn = featureparamsrow.smfunction;
 smwin = featureparamsrow.smwindow;
 smln = featureparamsrow.smlength;
-normwindow = featureparamsrow.normwindow;
+normwinduration = featureparamsrow.normwinduration;
 
 plotsperpat = nmeasures + npred;
 plotsdown   = ceil(plotsperpat / plotsacross);
@@ -49,22 +49,24 @@ mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
 ax1 = gobjects(plotsdown * plotsacross,1);
     
 for m = 1:nmeasures
-        
+    
+    midx       = measures.Index(m);
     mrawdata  = pmRawDatacube(pnbr, dfrom:dto, m);
     mdata     = pmInterpDatacube(pnbr, dfrom:dto, m);
     interppts = mdata;
     interppts(~isnan(mrawdata)) = nan;
-    [combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setPlotColorsAndText(measures(m, :));
+    %[combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setPlotColorsAndText(measures(m, :));
+    [combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setDWPlotColorsAndText(measures(m, :));
     xl = [dfrom dto];
 
     % set min/max y display range to be mean +/- 1 stddev (using patient/
     % measure level stats where they exist, otherwise overall study level
     % stats
-    if size(pmeasstats.Mean(pmeasstats.MeasureIndex == m), 1) == 0
-        yl = [(pmOverallStats.Mean(m) - pmOverallStats.StdDev(m)) (pmOverallStats.Mean(m) + pmOverallStats.StdDev(m))];
+    if size(pmeasstats.Mean(pmeasstats.MeasureIndex == midx), 1) == 0
+        yl = [(pmOverallStats.Mean(midx) - pmOverallStats.StdDev(midx)) (pmOverallStats.Mean(midx) + pmOverallStats.StdDev(midx))];
     else
-        yl = [(pmeasstats.Mean(pmeasstats.MeasureIndex == m) - pmeasstats.StdDev(pmeasstats.MeasureIndex == m)) ...
-              (pmeasstats.Mean(pmeasstats.MeasureIndex == m) + pmeasstats.StdDev(pmeasstats.MeasureIndex == m))];
+        yl = [(pmeasstats.Mean(pmeasstats.MeasureIndex == midx) - pmeasstats.StdDev(pmeasstats.MeasureIndex == midx)) ...
+              (pmeasstats.Mean(pmeasstats.MeasureIndex == midx) + pmeasstats.StdDev(pmeasstats.MeasureIndex == midx))];
     end
         
     ax1(m) = subplot(plotsdown, plotsacross, m, 'Parent', sp);
@@ -88,8 +90,8 @@ for m = 1:nmeasures
     for ab = 1:size(pivabsdates,1)
         plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
     end
-    if dfrom < (featureduration + normwindow)
-        plotFillArea(ax1(m), dfrom, (featureduration + normwindow), yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
+    if dfrom < (datawinduration + normwinduration)
+        plotFillArea(ax1(m), dfrom, (datawinduration + normwinduration), yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
     end
     hold off;
 end
@@ -132,8 +134,8 @@ end
 for ab = 1:size(pivabsdates,1)
     plotFillArea(ax1(m), pivabsdates.RelStartdn(ab), pivabsdates.RelStopdn(ab), yl(1), yl(2), 'red', 0.1, 'none');
 end
-if dfrom < (featureduration + normwindow)
-    plotFillArea(ax1(m), dfrom, (featureduration + normwindow), yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
+if dfrom < (datawinduration + normwinduration)
+    plotFillArea(ax1(m), dfrom, (datawinduration + normwinduration), yl(1), yl(2), [0.4, 0.4, 0.4], 0.1, 'none');
 end
 hold off;
 

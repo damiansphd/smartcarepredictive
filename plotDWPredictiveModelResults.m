@@ -212,7 +212,7 @@ elseif plottype == 15
 elseif plottype == 16
     % plot select measures and predictions for all relevant patients
     % only use for project breathe
-    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
+    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'LungFunction', 'MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
     npatients = size(testpatsplit,1);
     for p = 1:npatients
         pnbr = testpatsplit.PatientNbr(p);
@@ -229,10 +229,35 @@ elseif plottype == 16
 elseif plottype == 17
     % plot measures completeness for all relevant patients
     % only use for project breathe
-    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
+    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'LungFunction','MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
     fprintf('Plotting data completeness for all patients\n');
     [gooddays, totdays, dailytotal] = plotDWMeasuresCompletenessForPatient(pmPatients, pmAntibiotics, pmAMPred, pmRawDatacube(:, :, smidx), ...
         measures(smidx, :), sum(smidx), pmFeatureParamsRow, plotsubfolder, basemodelresultsfile);
+elseif plottype == 18
+    % visualise the best and worst results for select measures
+    smidx = ismember(measures.DisplayName, {'Cough', 'FEV1', 'LungFunction', 'MinsAsleep', 'O2Saturation', 'PulseRate', 'RestingHR', 'Temperature', 'Wellness'});
+    [pmAMPredTest] = plotBestAndWorstPred(pmPatients, pmAntibiotics, ...
+        pmAMPred(ismember(pmAMPred.PatientNbr, testpatsplit.PatientNbr),:), ...
+        pmRawDatacube(:, :, smidx), pmInterpDatacube(:, :, smidx), testpatsplit, ...
+        testfeatidx, testlabels, pmModelRes, ...
+        pmOverallStats, pmPatientMeasStats, ...
+        measures(smidx, :), sum(smidx), labelidx, pmFeatureParamsRow, ...
+        lbdisplayname, plotsubfolder, basemodelresultsfile);
+elseif plottype == 19
+    % analyse the model prediction components
+    [pnbr, validresponse] = selectPatientNbr(testpatsplit.PatientNbr);
+    if ~validresponse
+        return;
+    end
+    [calcdatedn, validresponse] = selectCalcDate(min(testfeatidx.CalcDatedn(testfeatidx.PatientNbr == pnbr & testfeatidx.ScenType == 0)), ...
+                                                 max(testfeatidx.CalcDatedn(testfeatidx.PatientNbr == pnbr & testfeatidx.ScenType == 0)));
+    if ~validresponse
+        return;
+    end
+    analyseDWModelPrediction(pmPatients(pnbr,:), calcdatedn, ...
+        testfeatidx, testfeatures, testlabels, testpatsplit, pmModelRes, ...
+        measures, nmeasures, labelidx, pmFeatureParamsRow, lbdisplayname, ...
+        plotsubfolder, basemodelresultsfile);
 end
 
 

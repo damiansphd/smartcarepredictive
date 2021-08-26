@@ -21,10 +21,12 @@ fprintf('14. Plot Predictor Importance\n');
 fprintf('15. Plot Train vs CV quality scores\n');
 fprintf('16. Proj Breathe: Select Measures + Prediction by patient/period\n');
 fprintf('17. Proj Breathe: Measures density by patient/period\n');
+fprintf('18. Proj Breathe: Best and Worst Predictions - select measures only plotted\n');
+fprintf('19. Proj Breathe: Analyse model prediction components\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
-nplots = 17;
+nplots = 19;
 plottype = str2double(splottype);
 
 if (isnan(plottype) || plottype < 1 || plottype > nplots)
