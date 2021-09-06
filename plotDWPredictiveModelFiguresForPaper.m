@@ -81,11 +81,11 @@ if (isnan(plottype) || plottype < 6 || plottype > 11)
     return;
 end
 
-trainlabels   = pmTrCVExABxElLabels;
-testlabels    = pmTestExABxElLabels;
+%trainlabels   = pmTrCVExABxElLabels;
+%testlabels    = pmTestExABxElLabels;
 [trainfeatidx, trainfeatures, trainlabels, trainpatsplit, testfeatidx, testfeatures, testlabels, testpatsplit] = ...
-            setTrainTestArraysForRunType(pmTrCVFeatureIndex, pmTrCVNormFeatures, trainlabels, pmTrCVPatientSplit, ...
-                                         pmTestFeatureIndex, pmTestNormFeatures, testlabels, pmTestPatientSplit, ...
+            setTrainTestArraysForRunType(pmTrCVFeatureIndex, pmTrCVNormFeatures, pmTrCVExABxElLabels, pmTrCVPatientSplit, ...
+                                         pmTestFeatureIndex, pmTestNormFeatures, pmTestExABxElLabels, pmTestPatientSplit, ...
                                          pmOtherRunParams.runtype);           
                                      
 if plottype == 6
@@ -122,7 +122,7 @@ elseif plottype == 8
     randmode = false;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epipredsort, epilablsort] = plotModelQualityScoresForPaper2(testfeatidx, ...
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr] = plotModelQualityScoresForPaper2(testfeatidx, ...
         pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
 elseif plottype == 9
     % Comparison to Current Clinical Practice - random classifier mode
@@ -131,7 +131,7 @@ elseif plottype == 9
     randmode = true;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epipredsort, epilablsort] = plotModelQualityScoresForPaper2(testfeatidx, ...
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr] = plotModelQualityScoresForPaper2(testfeatidx, ...
         pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
 elseif plottype == 10
     % plot measures and predictions for a single patient - version with all

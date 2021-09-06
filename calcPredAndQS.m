@@ -10,6 +10,7 @@ pmRes     = createModelDayResStuct(nexamples, 1, 0);
 pmRes     = predictPredModel(pmRes, mdl, features, labels, modelver, lossfunc);
 fprintf('LR: %.2f NT: %3d MLS: %3d MNS: %3d FVS: %.2f- ', lrval, ntrval, mlsval, mnsval, fvsval);
 fprintf('Loss: %.6f ', pmRes.Loss);
+fprintf('\n');
 
 % calculate training set quality scores
 [pmRes, ampredupd] = calcAllQualScores(pmRes, labels, nexamples, ampred, featidx, patientsplit, epilen, fpropthresh);

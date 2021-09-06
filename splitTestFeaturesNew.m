@@ -20,14 +20,14 @@ pmTestMuIndex      = pmMuIndex(testidx, :);
 pmTestSigmaIndex   = pmSigmaIndex(testidx, :);
 pmTestNormFeatures = pmNormFeatures(testidx, :);
 
-pmTestExABxElLabels   = pmExABxElLabels(testidx, :);
+pmTestExABxElLabels = pmExABxElLabels(testidx, :);
 
 pmTrCVFeatureIndex = pmFeatureIndex(~testidx, :);
 pmTrCVMuIndex      = pmMuIndex(~testidx, :);
 pmTrCVSigmaIndex   = pmSigmaIndex(~testidx, :);
 pmTrCVNormFeatures = pmNormFeatures(~testidx, :);
 
-pmTrCVExABxElLabels   = pmExABxElLabels(~testidx, :);
+pmTrCVExABxElLabels = pmExABxElLabels(~testidx, :);
 
 end
 

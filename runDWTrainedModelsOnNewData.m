@@ -153,19 +153,21 @@ for fs = 1:nfeatureparamsets
     nnormfeatures = size(normfeatures, 2);
     
     % create features for quality classifier
-    dummyarray = zeros(nexamples, totalwin, nmeasures);
-    mswinarray = zeros(nexamples, totalwin, nmeasures);
-    mswinarray(isnan(datawinarray)) = 1;
+    %dummyarray = zeros(nexamples, totalwin, nmeasures);
+    %mswinarray = zeros(nexamples, totalwin, nmeasures);
+    %mswinarray(isnan(datawinarray)) = 1;
     
-    qcmodfeatparamrow             = pmModFeatParamsRow;
-    qcmodfeatparamrow.msfeat      = qcmodfeatparamrow.rawmeasfeat;
-    qcmodfeatparamrow.rawmeasfeat = 1;
-    qcmodfeatparamrow.volfeat     = 1;
-    qcmodfeatparamrow.pmeanfeat   = 1;
+    %qcmodfeatparamrow             = pmModFeatParamsRow;
+    %qcmodfeatparamrow.msfeat      = qcmodfeatparamrow.rawmeasfeat;
+    %qcmodfeatparamrow.rawmeasfeat = 1;
+    %qcmodfeatparamrow.volfeat     = 1;
+    %qcmodfeatparamrow.pmeanfeat   = 1;
     
-    [qcfeatures, ~, qcmeasures] = createModelFeaturesFcn(dummyarray, ...
-            mswinarray, dummyarray, dummyarray, qcmodfeatparamrow, nexamples, totalwin, measures, nmeasures);
+    %[qcfeatures, ~, qcmeasures] = createModelFeaturesFcn(dummyarray, ...
+    %        mswinarray, dummyarray, dummyarray, qcmodfeatparamrow, nexamples, totalwin, measures, nmeasures);
     
+    % create features for quality classifier
+    [qcfeatures, qcfeatnames, qcmeasures, qcmodfeatparamrow] = createQCFeaturesFromDataWinArray(datawinarray, pmModFeatParamsRow, nexamples, totalwin, measures, nmeasures);
     
     % run predictive classifier on all days & calc daily qs
     fprintf('\n');
@@ -179,10 +181,14 @@ for fs = 1:nfeatureparamsets
     pmAllPCRes = createModelDayResStuct(norigex, fold, 1);
     pmAllPCRes = predictPredModel(pmAllPCRes, pcmodel, normfeatures(origidx, :), labels(origidx, :), pcmodelver, pclossfunc);
     pmAllPCRes = calcModelQualityScores(pmAllPCRes, labels(origidx, :), norigex);
-    daysscope  = 'All';
+    pmAllPCRes.DataScope  = datascope;
+    pmAllPCRes.DaysScope  = 'All';
+    pmAllPCRes.RunDays    = nexamples;
+    pmAllPCRes.TotDays    = nexamples;
+    pmAllPCRes.PosLblDays = sum(labels(origidx, :));
     pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), pmFeatureParamsRow, ...
             pcmodelresultsfile, qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
-            datascope, daysscope, nexamples, nexamples, sum(labels(origidx, :)), pmAllPCRes);
+            pmAllPCRes);
     row = row + 1;
     fprintf('\n');
     
@@ -209,10 +215,14 @@ for fs = 1:nfeatureparamsets
     pmSafePCRes = createModelDayResStuct(nsafeorigdays, fold, 1);
     pmSafePCRes = predictPredModel(pmSafePCRes, pcmodel, normfeatures(unionidx, :), labels(unionidx, :), pcmodelver, pclossfunc);
     pmSafePCRes = calcModelQualityScores(pmSafePCRes, labels(unionidx, :), nsafeorigdays);
-    daysscope  = 'Safe';
+    pmSafePCRes.DataScope  = datascope;
+    pmSafePCRes.DaysScope  = 'Safe';
+    pmSafePCRes.RunDays    = nsafedays;
+    pmSafePCRes.TotDays    = nexamples;
+    pmSafePCRes.PosLblDays = sum(labels(unionidx, :));
     pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), pmFeatureParamsRow, ...
             pcmodelresultsfile, qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
-            datascope, daysscope, nsafedays, nexamples, sum(labels(unionidx, :)), pmSafePCRes);
+            pmSafePCRes);
     row = row + 1;
     fprintf('\n');
     
@@ -267,13 +277,16 @@ for fs = 1:nfeatureparamsets
             pmTrRes = createModelDayResStuct(size(trcvfeatindex, 1), fold, 0);
             pmTrRes = predictPredModel(pmTrRes, pmNewSfDayRes.Folds(fold).Model, trcvnormfeatures, trcvlabels, pcmodelver, pclossfunc);
             pmTrRes = calcModelQualityScores(pmTrRes, trcvlabels, size(trcvfeatindex, 1));
-            datascope  = 'Train';
-            daysscope  = 'Safe';
+            pmTrRes.DataScope  = 'Train';
+            pmTrRes.DaysScope  = 'Safe';
+            pmTrRes.RunDays    = size(trcvfeatindex, 1);
+            pmTrRes.TotDays    = size(trcvfeatindex, 1);
+            pmTrRes.PosLblDays = sum(trcvlabels);
             tempfeatparams = pmFeatureParamsRow;
             tempfeatparams.StudyDisplayName = pmModFeatParamsRow.StudyDisplayName;
             pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), tempfeatparams, ...
                 'N/A', qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
-                datascope, daysscope, size(trcvfeatindex, 1), size(trcvfeatindex, 1), sum(trcvlabels), pmTrRes);
+                pmTrRes);
             row = row + 1;
             fprintf('\n');
 
@@ -281,11 +294,14 @@ for fs = 1:nfeatureparamsets
             pmTestRes = createModelDayResStuct(norigex, fold, 0);
             pmTestRes = predictPredModel(pmTestRes, pmNewSfDayRes.Folds(fold).Model, testnormfeatures(origidx, :), testlabels(origidx, :), pcmodelver, pclossfunc);
             pmTestRes = calcModelQualityScores(pmTestRes, testlabels(origidx, :), norigex);
-            datascope  = 'Test';
-            daysscope  = 'Safe';
+            pmTestRes.DataScope  = 'Test';
+            pmTestRes.DaysScope  = 'Safe';
+            pmTestRes.RunDays    = size(testfeatindex(origidx, :), 1);
+            pmTestRes.TotDays    = size(testfeatindex(origidx, :), 1);
+            pmTestRes.PosLblDays = sum(testlabels(origidx, :));
             pmTrModNewDataResTable(row, :) = updateTrModNewDataResTableRow(pmTrModNewDataResTable(row, :), tempfeatparams, ...
                 'N/A', qcmodelresultsfile, qcopthres, pmModFeatParamsRow, featureinputmatfile, ...
-                datascope, daysscope, size(testfeatindex, 1), size(testfeatindex, 1), sum(testlabels(origidx, :)), pmTestRes);
+                pmTestRes);
             row = row + 1;
             fprintf('\n');
             

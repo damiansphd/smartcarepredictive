@@ -1,6 +1,9 @@
-function [precision, recall, tpr, fpr, prauc, rocauc] = calcQualScores(labelsort, predsort)
+function [precision, recall, tpr, fpr, prauc, rocauc, predsort, labelsort] = calcQualScores(labels, pred)
 
 % calcQualScores - calculates FPR from a set of labels and predictions
+
+[predsort, sortidx] = sort(pred, 'descend');
+labelsort = labels(sortidx);
 
 nexamples = size(predsort, 1);
 precision = zeros(nexamples, 1);

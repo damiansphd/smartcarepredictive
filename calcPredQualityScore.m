@@ -1,4 +1,4 @@
-function [mdlres, pmampredupd] = calcPredQualityScore(mdlres, labels, nexamples, pmampred, featidx, patientsplit)
+function [mdlres, pmampredupd] = calcPredQualityScore(mdlres, pmampred, featidx, patientsplit)
 
 % calcPredQualityScore - calculates score based on number of high.
 % medium, low scores, separately for regular treatments (reward high predictions) 
@@ -29,7 +29,7 @@ else
     mdlres.ElecPScore = 100;
 end
 
-fprintf('PScore = %.1f%% (%d/%d/%d), ElecPScore = %.1f%% (%d/%d/%d) ', mdlres.PScore, mdlres.HighP, ...
+fprintf('PScore = %.1f%% (%d/%d/%d), ElecPScore = %.1f%% (%d/%d/%d)\n', mdlres.PScore, mdlres.HighP, ...
     mdlres.MedP, mdlres.LowP, mdlres.ElecPScore, mdlres.ElecHighP, mdlres.ElecMedP, mdlres.ElecLowP);
 
 end

@@ -1,4 +1,4 @@
-function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epipredsort, epilablsort] = plotModelQualityScoresForPaper2(featidx, ...
+function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr] = plotModelQualityScoresForPaper2(featidx, ...
     pmModelRes, labels, pmAMPred, plotsubfolder, basefilename, epilen, randmode, fpropthresh)
 
 % plotModelQualityScoresForPaper - calculates model quality scores at
@@ -8,18 +8,21 @@ function [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untr
 patients = unique(featidx.PatientNbr);
 pmAMPred = pmAMPred(ismember(pmAMPred.PatientNbr, patients),:);
 
-[~, epilabl, epipred, epilablsort, epipredsort] = convertResultsToEpisodesNew(featidx, labels, pmModelRes.pmNDayRes(1).Pred, epilen);
+alldayidx = true(size(labels, 1), 1);
+
+[epiindex, epilabl, epipred, episafeidx] = convertResultsToEpisodesNew(featidx, labels, pmModelRes.pmNDayRes(1).Pred, epilen, alldayidx);
 
 if randmode
     epilabl     = epilabl(randperm(size(epilabl, 1)));
-    epilablsort = epilablsort(randperm(size(epilablsort, 1)));
     randtext    = 'Random';
 else
     randtext    = '';
 end
 
-[epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc] = calcQualScores(epilablsort, epipredsort);
-[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
+[epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc, epipredsort, ~] = calcQualScores(epilabl(episafeidx), epipred(episafeidx));
+%[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
+[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(epiindex(logical(epilabl == 1) & episafeidx, :), featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
+
 
 % use these for label method 5/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm5
 %chosenpt10pc = 203;
@@ -42,8 +45,17 @@ end
 maxidxpt = find(epifpr < fpropthresh, 1, 'last');
 bestidxpt = find(epitpr == epitpr(maxidxpt), 1, 'first');
 
-[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt));
-untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
+%[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt));
+[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(epiindex(logical(epilabl == 1) & episafeidx, :), featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt));
+
+%untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
+%untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
+
+episafeindex = epiindex(logical(epilabl == 1) & episafeidx, :);
+untrigepi = episafeindex(logical(trigintrarray == -1), :);
+untrigepi.TreatStart = untrigepi.Todn + 1;
+untrigpmampred = innerjoin(pmAMPred, untrigepi, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'TreatStart'}, 'RightVariables', {});
+
 fprintf('\n');
 fprintf('At %.1f%% FPR (pt %d), the Triggered Intervention TPR is %.1f%%, Avg Delay Reduction is %.1f days, and Avg Trigger Delay is %.1f days\n', ...
             100 * epifpr(bestidxpt), bestidxpt, trigintrtpr(bestidxpt), epiavgdelayreduction(bestidxpt), avgtrigdelay(bestidxpt));

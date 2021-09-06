@@ -45,7 +45,7 @@ if size(mdlres.LabelSort(~mdlres.LabelSort), 1) ~= 0
 else
     mdlres.NegAcc = 100;
 end
-fprintf('PR = %.3f%%, ROC = %.3f%%, Acc = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%% ', ...
+fprintf('PR = %.3f%%, ROC = %.3f%%, Acc = %.3f%%, PosAcc = %.3f%%, NegAcc = %.3f%%\n', ...
          mdlres.PRAUC, mdlres.ROCAUC, mdlres.Acc, mdlres.PosAcc, mdlres.NegAcc);
 
 end
