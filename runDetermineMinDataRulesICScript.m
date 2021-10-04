@@ -36,9 +36,17 @@ subfolder = 'MatlabSavedVariables';
 fprintf('Loading quality classifier results data for %s\n', qcresfile);
 load(fullfile(basedir, subfolder, qcresfile), ...
         'pmMissPattArray', 'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
-        'qsmeasure', 'qsthreshold', 'fpthreshold');
+        'pmQSConstr');
+%        'qsmeasure', 'qsthreshold', 'fpthreshold');
 toc
 fprintf('\n');
+
+% backward compatibility issue since I changed the quality classifier
+% to handle more than one QS constraint - it's hard to easily fit multiple
+% qs scores into the single SelPred column for the pmQCDRIndex table - so
+% for now just use AvgEPV constraint as this is 99.9% the same as both
+% constraints.
+pmQSConstr = pmQSConstr(ismember(pmQSConstr.qsmeasure, {'AvgEPV'}), :);
 
 tic
 basedir = setBaseDir();
@@ -90,7 +98,12 @@ dwdur     = pmFeatureParamsRow.datawinduration;
 normwin = pmFeatureParamsRow.normwinduration;
 totalwin = dwdur + normwin;
 npcexamples = size(pmFeatureIndex, 1);
-pcopthresh = fpthreshold;
+
+% choose min data rule type
+[mindatarule, validresponse] = selectMinDataRuleType();
+if validresponse == 0
+    return;
+end
 
 % choose missingness pattern duration
 [mpdur, validresponse] = selectMissPatDuration();
@@ -137,27 +150,21 @@ while somegoodmoves
         [mvsetindex, mvsetmp3D] = setInitialMP(mpstartex, [], nrawmeas, mpdur, dwdur, iteration);
         printMissPattFcn(mvsetindex, mvsetmp3D, qcdrmeasures, nrawmeas, mpdur);
     else
-        [mvsetindex, mvsetmp3D] = createAllMovesSet(currmp3D, nrawmeas, mpdur, iteration);
+        [mvsetindex, mvsetmp3D] = createAllMovesSet(currmp3D, qcdrmeasures, nrawmeas, mpdur, iteration, mindatarule);
         fprintf('Iteration %d: Added %d possible moves\n', iteration, size(mvsetindex, 1));
     end
     
     for i = 1:size(mvsetindex, 1)
-        if mvsetindex.Measure(i) == 0
-            shortname = 'N/A';
-            measidx   = 0;
-        else
-            shortname = qcdrmeasures.ShortName{mvsetindex.Measure(i)};
-            measidx   = mvsetindex.MPIndex(i) - (mvsetindex.Measure(i) - 1) * mpdur;
-        end
+ 
         fprintf('Move %d of %d: %d %s | Measure %d (%s) | Index %d\n', i, size(mvsetindex, 1), mvsetindex.MoveType(i), ...
-            mvsetindex.MoveDesc{i}, mvsetindex.Measure(i), shortname, measidx);
+             mvsetindex.MoveDesc{i}, mvsetindex.Measure(i), mvsetindex.ShortName{i}, mvsetindex.MPRelIndex(i));
         
         [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred] = ...
             calcPCCyclicPredsForMP(pmModelByFold, pmFeatureIndex, pmDataWinArray, pmExABxElLabels, ...
                 pmAMPred, pmPatientSplit, nsplits, pmOverallStats, ...
                 measures, nmeasures, nrawmeas, npcexamples, pcfolds, pmBaselineQS, ...
                 pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
-                mvsetindex(i, :), mvsetmp3D(i, :, :), mpdur, dwdur, totalwin, cyclicdur, iscyclic, pcopthresh, qsmeasure, ...
+                mvsetindex(i, :), mvsetmp3D(i, :, :), mpdur, dwdur, totalwin, cyclicdur, iscyclic, pmQSConstr, ...
                 pmFeatureParamsRow, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams, pmModFeatParamsRow);
     end
     fprintf('\n');
@@ -182,7 +189,8 @@ while somegoodmoves
     else
         % add best move from this iteration as the baseline for the next
         % iteration
-        idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'last'); % need to add logic if more than one matches
+        %idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'last'); % need to add logic if more than one matches
+        idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'first'); % need to add logic if more than one matches
         
         iteration                = iteration + 1;
         currindexrow             = pmQCDRIndex(idx, :);
@@ -196,51 +204,35 @@ while somegoodmoves
             addQCDRRows(pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
                 currindexrow, currmp3D, pmQCDRDataWin(idx, :, :), pmQCDRFeatures(idx, :), pmQCDRCyclicPred(idx, :));
         
-        if pmQCDRIndex.Measure(idx) == 0
-            shortname = 'N/A';
-            measidx   = 0;
-        else
-            shortname = qcdrmeasures.ShortName{pmQCDRIndex.Measure(idx)};
-            measidx   = pmQCDRIndex.MPIndex(idx) - (pmQCDRIndex.Measure(idx) - 1) * mpdur;
-        end
-            
         fprintf('best move: %d %s | Measure %d (%s) | Index %d | Pred %.4f\n', pmQCDRIndex.MoveType(idx), ...
-            pmQCDRIndex.MoveDesc{idx}, pmQCDRIndex.Measure(idx), shortname, ...
-            measidx, pmQCDRIndex.SelPred(idx));
+            pmQCDRIndex.MoveDesc{idx}, pmQCDRIndex.Measure(idx), pmQCDRIndex.ShortName{idx}, ...
+            pmQCDRIndex.MPRelIndex(idx), pmQCDRIndex.SelPred(idx));
     end
 
     fprintf('\n');
 end
 
-printMissPattFcn(pmQCDRIndex(idx, :), pmQCDRMissPatt(idx, :), qcdrmeasures, nrawmeas, mpdur);
+printMissPattFcn(pmQCDRIndex(idx, :), pmQCDRMissPatt(idx, :, :), qcdrmeasures, nrawmeas, mpdur);
 
-pmQCDRIndex.MPRelIndex = pmQCDRIndex.MPIndex - (pmQCDRIndex.Measure - 1) * mpdur;
-pmQCDRIndex.MPRelIndex(pmQCDRIndex.MPIndex == 0) = 0;
-for i = 1:size(pmQCDRIndex, 1)
-    if pmQCDRIndex.Measure(i) == 0
-        pmQCDRIndex.Shortname{i} = 'N/A';
-    else
-        pmQCDRIndex.Shortname{i}  = qcdrmeasures.ShortName{pmQCDRIndex.Measure(i)};
-    end
-end
-
-pmQCDRIndex(pmQCDRIndex.MoveType == 0, {'Iteration', 'MoveType', 'MoveDesc', 'Measure', 'Shortname', 'MPRelIndex', 'SelPred', 'MoveAccepted'})
+pmQCDRIndex(pmQCDRIndex.MoveType == 0, {'Iteration', 'MoveType', 'MoveDesc', 'Measure', 'ShortName', 'MPRelIndex', 'SelPred', 'MoveAccepted'})
 
 
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-outputfilename = sprintf('%smd%dex%dot%.2fQCDRResultsIC.mat', baseqcresfile, mpdur, mpstartex, pcopthresh);
+outputfilename = sprintf('%smd%dex%dot%.2fdr%dQCDRResultsICNew.mat', baseqcresfile, mpdur, mpstartex, pmQSConstr.fpthresh(1), mindatarule);
 fprintf('Saving model output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder, outputfilename), ...
     'pmQCDRIndex', 'pmQCDRMissPatt', 'pmQCDRDataWin', 'pmQCDRFeatures', 'pmQCDRCyclicPred', ...
-    'qcdrmeasures', 'nrawmeas', 'dwdur', 'mpdur', 'mpstartex', 'iscyclic', 'cyclicdur', 'idx', ...
+    'qcdrmeasures', 'nrawmeas', 'dwdur', 'mpdur', 'mpstartex', 'iscyclic', 'cyclicdur', 'idx', 'mindatarule',...
+    'pmQSConstr', ...
     'pmMissPattArray', 'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
-    'qsmeasure', 'qsthreshold', 'fpthreshold', 'pcopthresh', ...
     'pmModelByFold', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamQS', 'pmOtherRunParams', ...
     'normwin', 'totalwin', 'npcexamples', ...
     'pmFeatureIndex', 'pmDataWinArray', 'pmExABxElLabels', ...
     'pmAMPred', 'pmPatientSplit', 'nsplits', 'measures', 'nmeasures', 'pmOverallStats', 'pmModFeatParamsRow');
 toc
 fprintf('\n');
+
+
 

@@ -19,15 +19,15 @@ pmtrmodnewdatarow.DaysScope{1}  = resstruct.DaysScope;
 
 pmtrmodnewdatarow.RunDays       = resstruct.RunDays;
 pmtrmodnewdatarow.TotDays       = resstruct.TotDays;
-pmtrmodnewdatarow.PctDaysRun    = round(100 * resstruct.RunDays / resstruct.TotDays, 1);
+pmtrmodnewdatarow.PctDaysRun    = round(100 * resstruct.RunDays / resstruct.TotDays, 2);
 pmtrmodnewdatarow.PosLblDays    = resstruct.PosLblDays;
-pmtrmodnewdatarow.PctPosLblDays = round(100 * resstruct.PosLblDays / resstruct.RunDays, 1);
+pmtrmodnewdatarow.PctPosLblDays = round(100 * resstruct.PosLblDays / resstruct.RunDays, 2);
 
 pmtrmodnewdatarow.RunEpi        = resstruct.RunEpi;
 pmtrmodnewdatarow.TotEpi        = resstruct.TotEpi;
-pmtrmodnewdatarow.PctEpiRun     = round(100 * resstruct.RunEpi / resstruct.TotEpi, 1);
+pmtrmodnewdatarow.PctEpiRun     = round(100 * resstruct.RunEpi / resstruct.TotEpi, 2);
 pmtrmodnewdatarow.PosLblEpi     = resstruct.PosLblEpi;
-pmtrmodnewdatarow.PctPosLblEpi  = round(100 * resstruct.PosLblEpi / resstruct.RunEpi, 1);
+pmtrmodnewdatarow.PctPosLblEpi  = round(100 * resstruct.PosLblEpi / resstruct.RunEpi, 2);
 
 pmtrmodnewdatarow.PRAUC         = round(resstruct.PRAUC, 3);
 pmtrmodnewdatarow.ROCAUC        = round(resstruct.ROCAUC, 3);

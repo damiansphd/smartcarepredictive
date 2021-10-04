@@ -6,7 +6,7 @@ function [modelrpfile] = selectQCModelResultsFile(fv1, lb1, rm1, typetext)
 
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-matchstring = sprintf('pm%s*rm%d*lm%d*%s.mat', fv1, rm1, lb1, typetext);
+matchstring = sprintf('pm%s*rm%d*lm%d*%s*.mat', fv1, rm1, lb1, typetext);
 modelresultslisting = dir(fullfile(basedir, subfolder, matchstring));
 
 modelresultsfiles = cell(size(modelresultslisting,1),1);

@@ -3,7 +3,7 @@ function [pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCycl
         pmAMPred, pmPatientSplit, nsplits, pmOverallStats, ...
         measures, nmeasures, nrawmeas, npcexamples, pcfolds, pmBaselineQS, ...
         pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
-        qcdrindexrow, qcdrmp3D, mpdur, dwdur, totalwin, cyclicdur, iscyclic, pcopthresh, qsmeasure, ...
+        qcdrindexrow, qcdrmp3D, mpdur, dwdur, totalwin, cyclicdur, iscyclic, pmQSConstr, ...
         pmFeatureParamsRow, pmModelParamsRow, pmHyperParamQS, pmOtherRunParams, pmModFeatParamsRow)
 
 % calcPCCyclicPredsForMP - run the predictive classifier for the whole dataset with a given
@@ -51,12 +51,14 @@ for c = 1:cyclicdur
 
     mpqspct(1, :) = array2table(table2array(mpqs) ./ mean(table2array(pmBaselineQS)));
     
-    qcdrcycpredrow(c) = mpqspct{1, qsmeasure};
+%    qcdrcycpredrow(c) = mpqspct{1, qsmeasure};
+    qcdrcycpredrow(c) = mpqspct{1, pmQSConstr.qsmeasure{1}};
 
 end
 
 qcdrindexrow.SelPred = min(qcdrcycpredrow);
-if qcdrindexrow.SelPred < (pcopthresh / 100)
+%if qcdrindexrow.SelPred < (pcopthresh / 100)
+if qcdrindexrow.SelPred < pmQSConstr.fpthresh(1)
     qcdrindexrow.MoveAccepted = false;
 else
     qcdrindexrow.MoveAccepted = true;

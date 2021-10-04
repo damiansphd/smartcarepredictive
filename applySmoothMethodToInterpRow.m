@@ -53,7 +53,8 @@ else
         end
     elseif smfunction == 4
         % max smoothing for fev1
-        if m == mfev1idx
+        %if m == mfev1idx
+        if ismember(m, mfev1idx)
             outputrow = movmax(outputrow, width);
         else
             % no smoothing for other measures

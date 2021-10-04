@@ -18,6 +18,7 @@ end
 if validresponse == 0
     return;
 end
+
 typetext = 'QCResults';
 [basemodelresultsfile] = selectQCModelResultsFile(fv1, lb1, rm1, typetext);
 modelresultsfile = sprintf('%s.mat', basemodelresultsfile);
@@ -36,12 +37,17 @@ load(fullfile(basedir, subfolder, modelresultsfile), ...
         'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
         'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'pmMPOtherRunParams', ...
         'measures', 'nmeasures', 'pmQSConstr');
-
 toc
 fprintf('\n');
 
 % populate run parameters
 dwdur     = pmFeatureParamsRow.datawinduration;
+
+% choose min data rule type
+[mindatarule, validresponse] = selectMinDataRuleType();
+if validresponse == 0
+    return;
+end
 
 % choose missingness pattern duration
 [mpdur, validresponse] = selectMissPatDuration();
@@ -56,7 +62,7 @@ if validresponse == 0
 end
 %qcopthres = pmQCModelRes.PredOp;
 %qcopthres = 0.95;
-qsthreshold = '';
+%qsthreshold = '';
 
 
 tpidx  = getIndexForOutcome(pmQCModelRes.Pred, labels, fplabels, qcopthres, 'TP');
@@ -101,7 +107,7 @@ while somegoodmoves
         [mvsetindex, mvsetmp3D] = setInitialMP(mpstartex, pmMissPattArray, nrawmeas, mpdur, dwdur, iteration);
         printMissPattFcn(mvsetindex, mvsetmp3D, qcdrmeasures, nrawmeas, mpdur);
     else
-        [mvsetindex, mvsetmp3D] = createAllMovesSet(currmp3D, nrawmeas, mpdur, iteration);
+        [mvsetindex, mvsetmp3D] = createAllMovesSet(currmp3D, qcdrmeasures, nrawmeas, mpdur, iteration, mindatarule);
         fprintf('Iteration %d: Added %d possible moves\n', iteration, size(mvsetindex, 1));
     end
     
@@ -134,7 +140,8 @@ while somegoodmoves
     else
         % add best move from this iteration as the baseline for the next
         % iteration
-        idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'last'); % need to add logic if more than one matches
+        %idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'last'); % need to add logic if more than one matches
+        idx = find(pmQCDRIndex.Iteration == iteration & pmQCDRIndex.SelPred == maxiterpred, 1, 'first'); % need to add logic if more than one matches
         
         iteration                = iteration + 1;
         currindexrow             = pmQCDRIndex(idx, :);
@@ -148,34 +155,27 @@ while somegoodmoves
             addQCDRRows(pmQCDRIndex, pmQCDRMissPatt, pmQCDRDataWin, pmQCDRFeatures, pmQCDRCyclicPred, ...
                 currindexrow, currmp3D, pmQCDRDataWin(idx, :, :), pmQCDRFeatures(idx, :), pmQCDRCyclicPred(idx, :));
         
-        if pmQCDRIndex.Measure(idx) == 0
-            shortname = 'N/A';
-            measidx   = 0;
-        else
-            shortname = qcdrmeasures.ShortName{pmQCDRIndex.Measure(idx)};
-            measidx   = pmQCDRIndex.MPIndex(idx) - (pmQCDRIndex.Measure(idx) - 1) * mpdur;
-        end
-            
+        %    measidx, pmQCDRIndex.SelPred(idx));
         fprintf('best move: %d %s | Measure %d (%s) | Index %d | Pred %.4f\n', pmQCDRIndex.MoveType(idx), ...
-            pmQCDRIndex.MoveDesc{idx}, pmQCDRIndex.Measure(idx), shortname, ...
-            measidx, pmQCDRIndex.SelPred(idx));
+            pmQCDRIndex.MoveDesc{idx}, pmQCDRIndex.Measure(idx), pmQCDRIndex.ShortName{idx}, ...
+            pmQCDRIndex.MPRelIndex(idx), pmQCDRIndex.SelPred(idx));
     end
 
     fprintf('\n');
 end
 
-printMissPattFcn(pmQCDRIndex(idx, :), pmQCDRMissPatt(idx, :), qcdrmeasures, nrawmeas, mpdur);
+printMissPattFcn(pmQCDRIndex(idx, :), pmQCDRMissPatt(idx, :, :), qcdrmeasures, nrawmeas, mpdur);
 
 
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-outputfilename = sprintf('%smd%dex%dot%.2fQCDRResults.mat', basemodelresultsfile, mpdur, mpstartex, qcopthres);
+outputfilename = sprintf('%smd%dex%dot%.2fdr%dQCDRResultsOCNew.mat', basemodelresultsfile, mpdur, mpstartex, qcopthres, mindatarule);
 fprintf('Saving model output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder, outputfilename), ...
     'pmQCModelRes', 'pmQCFeatNames', ...
     'pmQCDRIndex', 'pmQCDRMissPatt', 'pmQCDRDataWin', 'pmQCDRFeatures', 'pmQCDRCyclicPred', ...
-    'qcdrmeasures', 'nrawmeas', 'dwdur', 'mpdur', 'mpstartex', 'iscyclic', 'cyclicdur', 'idx', ...
+    'qcdrmeasures', 'nrawmeas', 'dwdur', 'mpdur', 'mpstartex', 'iscyclic', 'cyclicdur', 'idx', 'mindatarule', ...
     'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
     'labels', 'fplabels', 'qcsplitidx', 'nexamples', 'tpidx', ...
     'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...

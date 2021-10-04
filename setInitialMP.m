@@ -7,6 +7,7 @@ function [qcdrindexrow, qcdrmp3D] = setInitialMP(mpstartex, pmMissPattArray, nra
 qcdrindexrow.Iteration = iteration;
 qcdrindexrow.MoveType  = 0;
 qcdrindexrow.MoveDesc{1} = setMoveDescForType(qcdrindexrow.MoveType);
+qcdrindexrow.ShortName{1} = 'N/A';
 
 if mpstartex == 0
     % start pattern is no missingness - i.e. all zeros in missingness

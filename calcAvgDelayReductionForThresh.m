@@ -1,5 +1,5 @@
 function [avgdelayreduction, trigintrtpr, avgtrigdelay, intrtrigarray, count, trigcount] = ...
-                calcAvgDelayReductionForThresh(epiindex, featureindex, labels, pred, thresh)
+                calcAvgDelayReductionForThresh(epiindex, featureindex, labels, pred, thresh, printlog)
 
 % calcAvgDelayReductionForThres - calculates the average reduction in time to
 % treatment (over all interventions) for a given threshold level
@@ -52,8 +52,9 @@ for i = 1:size(epiindex, 1)
 end
 
 %fprintf('TotIntr=%d, Pred=%d, Trig=%d\n', size(pmAMPred, 1), count, trigcount);
-fprintf('TotIntr=%d, Pred=%d, Trig=%d\n', size(epiindex, 1), count, trigcount);
-
+if printlog
+    fprintf('TotIntr=%d, Pred=%d, Trig=%d\n', size(epiindex, 1), count, trigcount);
+end
 
 avgdelayreduction = sum(reduction) / count;
 trigintrtpr = 100 * trigcount / count;
