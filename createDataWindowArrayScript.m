@@ -11,8 +11,9 @@ datawinrpfile = strcat(datawinrpfile, '.xlsx');
 
 pmDataWinParams = readtable(fullfile(basedir, subfolder, datawinrpfile));
 
-maxfeatureduration = max(pmDataWinParams.datawinduration);
-maxnormwindow      = max(pmDataWinParams.normwinduration);
+% no longer needed
+%maxfeatureduration = max(pmDataWinParams.datawinduration);
+%maxnormwindow      = max(pmDataWinParams.normwinduration);
 
 fprintf('Creating Feature and Label files for %2d permutations of parameters\n', size(pmDataWinParams,1));
 fprintf('\n');
@@ -42,7 +43,8 @@ for rp = 1:size(pmDataWinParams,1)
     fprintf('Creating Feature Index, Data Window, and Label arrays\n');
     [pmFeatureIndex, pmDataWinArray, pmExABxElLabels, nexamples] ...
         = createDataWindowArrayFcn(pmPatients, pmAntibiotics, pmAMPred, pmRawDatacube, ...
-            nmeasures, npatients, maxdays, maxfeatureduration, maxnormwindow, pmDataWinParamsRow);
+            nmeasures, npatients, pmDataWinParamsRow);
+%            nmeasures, npatients, maxdays, maxfeatureduration, maxnormwindow, pmDataWinParamsRow);
     toc
     fprintf('\n');
     

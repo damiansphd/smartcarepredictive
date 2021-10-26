@@ -23,4 +23,3 @@ if size(ampredidx,1)~=0 && ...
 end
 
 end
-
