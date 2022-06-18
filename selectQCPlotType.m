@@ -13,10 +13,11 @@ fprintf(' 6. Model Calibration\n');
 fprintf(' 7. Missingness Analysis by model outcome\n');
 fprintf(' 8. Decision Tree\n');
 fprintf(' 9. Tree leaf analysis\n');
+fprintf('10. THESIS - PR, ROC, and QC Cost Curves\n');
 fprintf('\n');
 splottype = input('Choose plot type ? ', 's');
 
-nplots = 9;
+nplots = 10;
 plottype = str2double(splottype);
 
 if (isnan(plottype) || plottype < 1 || plottype > nplots)

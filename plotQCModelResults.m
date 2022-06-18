@@ -33,10 +33,10 @@ fprintf('Loading quality classifier results data for %s\n', modelresultsfile);
 load(fullfile(basedir, subfolder, modelresultsfile), ...
         'pmQCModelRes', 'pmQCFeatNames', ...
         'pmMissPattIndex', 'pmMissPattArray', 'pmMissPattQS', 'pmMissPattQSPct', ...
-        'labels', 'qcsplitidx', 'nexamples', ...
+        'labels', 'fplabels','qcsplitidx', 'nexamples', ...
         'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
         'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamsRow', 'pmOtherRunParams', ...
-        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', 'qsmeasure', 'qsthreshold', 'fpthreshold');
+        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'measures', 'nmeasures', 'pmQSConstr');
 
 toc
 fprintf('\n');
@@ -62,18 +62,30 @@ elseif plottype == 2
 elseif plottype == 3
     % plot missingness vs qs by type of quality measure
     %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
-    plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
-        qsthreshold, fpthreshold, pmQCModelRes.PredOp, basemodelresultsfile, plotsubfolder);
+    %plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, ...
+    %    pmQSConstr, fpthreshold, pmQCModelRes.PredOp, basemodelresultsfile, plotsubfolder);
+    
+    %opthresh = pmQCModelRes.PredOp;
+    opthresh = 0.95;
+    plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, fplabels, ...
+        pmQSConstr, opthresh, basemodelresultsfile, plotsubfolder);
 elseif plottype == 4
     % plot missingness vs qs by measure
     %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
-    plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
-        qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV');
+    %plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+    %    pmQSConstr, fpthreshold, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV');
+    
+    plotMissQSByMeasFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, fplabels, ...
+        pmQSConstr, pmQCModelRes.PredOp, measures, datawin, basemodelresultsfile, plotsubfolder);
 elseif plottype == 5
     % plot missingness vs qs by model outcome
     %[rocthresh, rocthreshidx] = calculateROCOpThresh(pmQCModelRes.FPR, pmQCModelRes.TPR, pmQCModelRes.PredSort);
-    plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
-        qsthreshold, fpthreshold, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV');
+    %plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, ...
+    %    pmQSConstr, fpthreshold, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder, 'AvgEPV');
+    
+    plotMissQSByOutcomeFcn(pmQCModelRes, pmMissPattArray, pmMissPattQSPct, labels, fplabels, ...
+        pmQSConstr, pmQCModelRes.PredOp, measures, pmFeatureParamsRow.datawinduration, basemodelresultsfile, plotsubfolder);
+
 elseif plottype == 6
     % plot calibration curve
     calcAndPlotQCCalibration(pmQCModelRes, labels, pmMissPattIndex, nqcfolds, basemodelresultsfile, plotsubfolder);
@@ -96,6 +108,11 @@ elseif plottype == 8
     
 elseif plottype == 9
     % plot analysis of examples by leaf
+    
+elseif plottype == 10    
+    % plot PR and ROC Curves
+    fprintf('Plotting PR and ROC Curves (Thesis version)\n');
+    plotQCPRAndROCCurvesForThesis(pmQCModelRes, plotsubfolder, basemodelresultsfile)
     
 end
 

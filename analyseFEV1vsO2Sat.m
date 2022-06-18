@@ -1,6 +1,11 @@
 clear; close all; clc;
 
-pointsize = 36;
+% add alignment model code directory to path to allow sharing of code
+basedir = setBaseDir();
+tempdir = fullfile(strrep(basedir, 'Predictive', 'Alignment'), 'Code/');
+addpath(tempdir);
+
+pointsize = 20;
 
 % choose study
 [~, studydisplayname, ~] = selectStudy();
@@ -103,6 +108,15 @@ modelinputsmatfile = sprintf('%spredictivemodelinputs.mat', studydisplayname);
 fprintf('Loading model input data\n');
 load(fullfile(basedir, subfolder, modelinputsmatfile));
 
+% need to create interpolated data cube and vol cubes here as they are no
+% longer created as part of the data pipeline
+tic
+fprintf('Creating interpolated cube\n');
+[pmInterpDatacube] = createPMInterpDatacube(pmPatients, pmRawDatacube, npatients, maxdays, nmeasures);
+[pmInterpDatacube] = handleMissingFeatures(pmPatients, pmInterpDatacube, pmOverallStats, npatients, maxdays, nmeasures);
+toc
+fprintf('\n');
+
 plotsubfolder = sprintf('Plots/%sFEV1vsO2Sat', studydisplayname);
 mkdir(fullfile(basedir, plotsubfolder));
 
@@ -134,8 +148,8 @@ end
 
 plotsacross = 1;
 plotsdown   = 1;
-xl = [-80, 0];
-yl = [-25, 0];
+xl = [-60, 0];
+yl = [-15, 0];
 
 if runtype == 1 || runtype == 2 
     
@@ -201,8 +215,8 @@ if runtype == 1 || runtype == 2
     [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
     ax1 = subplot(plotsdown, plotsacross, 1, 'Parent', p);
     hold on;
-    ugrad = plotFEV1vsO2Sat(ax1, ufev1data, uo2satdata, 'blue', xl, yl, 'FEV1 vs O2 Saturation', pointsize);
-    lgrad = plotFEV1vsO2Sat(ax1, lfev1data, lo2satdata, 'red', xl, yl, 'FEV1 vs O2 Saturation', pointsize);
+    ugrad = plotFEV1vsO2Sat(ax1, ufev1data, uo2satdata, 'blue', xl, yl, 'FEV1 vs O2 Saturation', pointsize, 1);
+    lgrad = plotFEV1vsO2Sat(ax1, lfev1data, lo2satdata, 'red', xl, yl, 'FEV1 vs O2 Saturation', pointsize, 2);
     legend(ax1, {'U50% FEV1 data', sprintf('U50%% Regression Line - Grad %.2f', ugrad), 'L50% FEV1 Data', sprintf('L50%% Regression Line - Grad %.2f', lgrad)}, ...
         'Location', 'best', 'FontSize', 6);
     hold off;
@@ -213,14 +227,18 @@ if runtype == 1 || runtype == 2
 elseif runtype == 3
     
     % plot data and regression lines for each ntile
-    plotsacross = 2;
+    plotsacross = 3;
     plotsdown   = ceil(ntiles/plotsacross);
     if plotsdown == 1
         plotsdown = 2;
     end
+    
     qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
     baseplotname = sprintf('%s - FEV1 vs O2Sat - Q-%s %s - by %s', studydisplayname, maxtext, fevsmtext, ntiletext);
-    [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    %[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    widthinch = 8.25;
+    heightinch = 5;
+    [f, p] = createFigureAndPanelForPaper('', widthinch, heightinch);
     ax1 = gobjects(ntiles,1);
     hold on;
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
@@ -254,9 +272,15 @@ elseif runtype == 3
         % plot FEV1 50:50 split results and observe any correlations
         ax1(i) = subplot(plotsdown, plotsacross, i, 'Parent', p);
         hold on;
-        grad = plotFEV1vsO2Sat(ax1(i), fev1data, o2satdata, qcolor{i}, xl, yl, plottitle, pointsize);
-        legend(ax1(i), {'FEV1 data', sprintf('Regression Line - Grad %.2f', grad)}, ...
-        'Location', 'best', 'FontSize', 6);
+        [grad, dlm] = plotFEV1vsO2Sat(ax1(i), fev1data, o2satdata, qcolor{i}, xl, yl, plottitle, pointsize, i);
+        pval = coefTest(dlm);
+        if pval < 0.001
+            pvaltext = '<.001';
+        else
+            pvaltext = sprintf('=%.4f', pval);
+        end
+        legend(ax1(i), {'FEV1 data', sprintf('Regression Line - Grad %.2f,\nR-Sq=%.3f, p-val%s', ...
+            grad, dlm.Rsquared.Ordinary, pvaltext)}, 'Location', 'best', 'FontSize', 6);
         hold off;
         
     end
@@ -267,7 +291,7 @@ elseif runtype == 3
 elseif runtype == 4 || runtype == 5
     
     % plot raw data for each ntile
-    plotsacross = 2;
+    plotsacross = 3;
     plotsdown   = ceil(ntiles/plotsacross);
     if plotsdown == 1
         plotsdown = 2;
@@ -276,7 +300,10 @@ elseif runtype == 4 || runtype == 5
     yl = [min(min(pmRawDatacube(:,:,4))) * 0.95, max(max(pmRawDatacube(:,:,4))) * 1.05];
     qcolor = [{'red'}; {'magenta'}; {'green'}; {'blue'}; {'black'}];
     baseplotname = sprintf('%s - Raw FEV1 vs O2Sat - Q-%s %s - by %s', studydisplayname, maxtext, fevsmtext, ntiletext);
-    [f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    %[f,p] = createFigureAndPanel(baseplotname, 'Portrait', 'A4');
+    widthinch = 8.25;
+    heightinch = 5;
+    [f, p] = createFigureAndPanelForPaper('', widthinch, heightinch);
     ax1 = gobjects(ntiles,1);
     patientgradients = sortrows(patientgradients, {'PatientNbr'}, 'ascend');
     for i = 1:ntiles
@@ -341,6 +368,8 @@ elseif runtype == 4 || runtype == 5
         title(ax1(i), plottitle);
         legend(ax1(i), {'FEV1 data'}, 'Location', 'best', 'FontSize', 6);
         hold off;
+        
+        fprintf('Number of points in quntile %d is %d\n', i, sum(idx));
         
     end
     basedir = setBaseDir();

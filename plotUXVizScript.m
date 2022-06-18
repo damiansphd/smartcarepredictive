@@ -24,19 +24,20 @@ end
 
 fprintf('Select Outer (Quality) Classifier model results file\n');
 typetext = 'QCResults';
-[baseqcresfile] = selectQCModelResultsFile(fv1, lb1, rm1, typetext);
-qcresfile = sprintf('%s.mat', baseqcresfile);
-baseqcresfile = strrep(baseqcresfile, typetext, '');
+[baseqcmodefile] = selectQCModelResultsFile(fv1, lb1, rm1, typetext);
+qcmodfile = sprintf('%s.mat', baseqcmodefile);
+baseqcmodefile = strrep(baseqcmodefile, typetext, '');
 
 tic
-fprintf('Loading quality classifier results data for %s\n', qcresfile);
-load(fullfile(basedir, mlsubfolder, qcresfile), ...
-        'pmQCModelRes', 'pmQCFeatNames', ...
-        'pmBaselineIndex', 'pmBaselineQS', 'nqcfolds', ...
-        'pmMPModelParamsRow', 'pmMPHyperParamsRow', 'pmMPOtherRunParams', ...
-        'measures', 'nmeasures', 'pmQSConstr');
+fprintf('Loading quality classifier results data for %s\n', qcmodfile);
+load(fullfile(basedir, mlsubfolder, qcmodfile), ...
+        'pmQCModelRes', 'nqcfolds', 'pmMPModelParamsRow');
 toc
 fprintf('\n');
+
+qcmodel    = pmQCModelRes.Folds(1).Model;
+qcmodelver = pmMPModelParamsRow.ModelVer{1};
+qclossfunc = 'hinge'; % hardcoded for now - until add this to mp other run parameters
 
 % choose the operating threshold for the quality classifier
 [qcopthres, validresponse] = selectFromArrayByIndex('Operating Threshold', [pmQCModelRes.PredOp; 0.6; 0.7; 0.8; 0.9; 0.95]);
@@ -44,25 +45,39 @@ if validresponse == 0
     return;
 end
 
-fprintf('Select Inner (Predictive) Classifier model results file\n');
+fprintf('Select Inner (Predictive) Classifier trained model file\n');
+[basepcmodfile] = selectModelResultsFile(fv1, lb1, rm1);
+pcmodfile = sprintf('%s.mat', basepcmodfile);
+basepcmodfile = strrep(basepcmodfile, ' ModelResults', '');
+
+tic
+fprintf('Loading trained Inner (Predictive) classifier and run parameters for %s\n', pcmodfile);
+load(fullfile(basedir, mlsubfolder, pcmodfile), 'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmOtherRunParams', 'pmTrCVFeatureIndex', 'pmTrCVNormFeatures');
+toc
+fprintf('\n');
+
+pcmodelres = pmModelRes.pmNDayRes(1);
+pcmodelver = pmModelParamsRow.ModelVer{1};
+pclossfunc = pmOtherRunParams.lossfunc;
+
+% load overall data statistics from trained model data inputs to ensure
+% consistent normalisation
+%featureparamsfile = generateFileNameFromModFeatureParams(pmFeatureParamsRow);
+%featureparamsfile = sprintf('%s.mat', featureparamsfile);
+%fprintf('Loading overall data statistics from the trained model data inputs %s\n', featureparamsfile);
+%load(fullfile(basedir, mlsubfolder, featureparamsfile), 'pmOverallStats');
+
+fprintf('Select model input file to run for\n');
 [basepcresfile] = selectModelResultsFile(fv1, lb1, rm1);
 pcresfile = sprintf('%s.mat', basepcresfile);
 basepcresfile = strrep(basepcresfile, ' ModelResults', '');
 
 tic
-fprintf('Loading trained Inner (Predictive) classifier and run parameters for %s\n', pcresfile);        
+fprintf('Loading run parameters for %s\n', pcresfile);        
 load(fullfile(basedir, mlsubfolder, pcresfile), ...
-    'pmTestFeatureIndex', 'pmTestNormFeatures', 'pmTestExABxElLabels', 'pmTestPatientSplit', ...
-    'pmTrCVFeatureIndex', 'pmTrCVNormFeatures', 'pmTrCVExABxElLabels', 'pmTrCVPatientSplit', ...
-    'pmModelRes', 'pmFeatureParamsRow', 'pmModelParamsRow', 'pmHyperParamQS', 'pmOtherRunParams');
+    'pmFeatureParamsRow');
 toc
 fprintf('\n');
-
-[trainfeatidx, trainfeatures, trainlabels, trainpatsplit, testfeatidx, testfeatures, testlabels, testpatsplit] = ...
-            setTrainTestArraysForRunType(pmTrCVFeatureIndex, pmTrCVNormFeatures, pmTrCVExABxElLabels, pmTrCVPatientSplit, ...
-                                         pmTestFeatureIndex, pmTestNormFeatures, pmTestExABxElLabels, pmTestPatientSplit, ...
-                                         pmOtherRunParams.runtype);
-
 % load data window arrays and other variables
 featureparamsfile = generateFileNameFromModFeatureParams(pmFeatureParamsRow);
 if pmFeatureParamsRow.augmethod > 1
@@ -72,13 +87,23 @@ if pmFeatureParamsRow.augmethod > 1
 end
 featureparamsfile = sprintf('%s.mat', featureparamsfile);
 fprintf('Loading Inner (Predictive) model input data for %s\n', featureparamsfile);
-load(fullfile(basedir, mlsubfolder, featureparamsfile), 'pmFeatureIndex', 'pmDataWinArray', 'pmExABxElLabels', ...
+load(fullfile(basedir, mlsubfolder, featureparamsfile), 'pmNormFeatures', 'pmFeatureIndex', 'pmDataWinArray', 'pmExABxElLabels', ...
     'pmPatients', 'pmAMPred', 'pmAntibiotics', 'pmRawDatacube', 'npatients', 'measures', 'nmeasures', 'maxdays', ...
     'pmOverallStats', 'pmPatientMeasStats', 'pmModFeatParamsRow');
 toc
 fprintf('\n');
 
-npcexamples = size(pmFeatureIndex, 1);
+% if I want to dynamically calculate the normalised features based on the
+% overall stats of the original trained model data, then would need to do
+% here rather than loading in (and use the OverallStats from originally).
+% or as I'll have to change the logic of normalisation, in re-creating all
+% the normalised features, they should match and so I should be able to
+% just load in.
+%npcexamples = size(pmFeatureIndex, 1);
+%[pmNormFeatures, ~, ~, ~, ...
+%    ~, ~, ~, ~, ...
+%    ~, ~, ~, ~] = createModFeaturesFromDWArrays(pmDataWinArray, ...
+%        pmOverallStats, npcexamples, measures, nmeasures, pmModFeatParamsRow);
 
 plotsubfolder = sprintf('Plots/%s', basepcresfile);
 mkdir(fullfile(basedir, plotsubfolder));
@@ -88,7 +113,7 @@ fprintf('Creating interpolated cube\n');
 [pmInterpDatacube] = handleMissingFeatures(pmPatients, pmInterpDatacube, pmOverallStats, npatients, maxdays, nmeasures);
 
 tic
-psplitfile = sprintf('%spatientsplit.mat', pmFeatureParamsRow.StudyDisplayName{1});
+psplitfile = sprintf('%spatientsplit.mat', pmModFeatParamsRow.StudyDisplayName{1});
 fprintf('Loading patient splits from file %s\n', psplitfile);
 load(fullfile(basedir, mlsubfolder, psplitfile));
 toc
@@ -98,10 +123,6 @@ if nqcfolds ~= 1
     fprintf('Need to choose an Outer (Quality) classifier model with only one fold\n');
     return
 end
-
-qcmodel    = pmQCModelRes.Folds(1).Model;
-qcmodelver = pmMPModelParamsRow.ModelVer{1};
-qclossfunc = 'hinge'; % hardcoded for now - until add this to mp other run parameters
 
 % create the mapping of pred classifier folds to quality classifier folds
 if ceil((nsplits - 1) / nqcfolds) == (nsplits - 1) / nqcfolds
@@ -120,15 +141,15 @@ uxtable  = readtable(fullfile(basedir, dfsubfolder, uxfile));
 nuxexs = size(uxtable,1);
 
 % populate run parameters
-dwdur      = pmFeatureParamsRow.datawinduration;
-normwin    = pmFeatureParamsRow.normwinduration;
+dwdur      = pmModFeatParamsRow.datawinduration;
+normwin    = pmModFeatParamsRow.normwinduration;
 totalwin   = dwdur + normwin;
-smfn       = pmFeatureParamsRow.smfunction;
-smwin      = pmFeatureParamsRow.smwindow;
-smln       = pmFeatureParamsRow.smlength;
+smfn       = pmModFeatParamsRow.smfunction;
+smwin      = pmModFeatParamsRow.smwindow;
+smln       = pmModFeatParamsRow.smlength;
 perioddays = 80;
 
-if ismember(pmFeatureParamsRow.StudyDisplayName, {'BR', 'CL'})
+if ismember(pmModFeatParamsRow.StudyDisplayName, {'BR', 'CL'})
     mfev1idx = measures.Index(ismember(measures.DisplayName, {'FEV1', 'LungFunction'}));
 else
     mfev1idx = measures.Index(ismember(measures.DisplayName, 'LungFunction'));
@@ -188,7 +209,7 @@ for ux = 1:nuxexs
     uxstudy  = uxtablerow.Study{1};
     uxscenario = uxtablerow.Description{1};
     
-    if ~ismember(uxstudy, pmFeatureParamsRow.StudyDisplayName)
+    if ~ismember(uxstudy, pmModFeatParamsRow.StudyDisplayName)
         fprintf('**** Predictive classifier study is not the same as the study of the example - skipping ****\n');
     end
     
@@ -207,7 +228,7 @@ for ux = 1:nuxexs
     ndays      = todn - fromdn + 1;
     
     
-    pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr, :);
+    %pmeasstats = pmPatientMeasStats(pmPatientMeasStats.PatientNbr == pnbr, :);
     
     % get ab treatments in the example date range
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == pnbr & pmAntibiotics.RelStopdn >= fromdn & pmAntibiotics.RelStartdn <= todn, :);
@@ -222,22 +243,35 @@ for ux = 1:nuxexs
         'LowerBound1', 'UpperBound1', 'LowerBound2', 'UpperBound2', ...
         'Pred', 'RelLB1', 'RelUB1', 'RelLB2', 'RelUB2'});
 
-    % need to create array of predictions and labels in real days (rather
-    % than just the days we predict for)
-    pfidx      = (testfeatidx.PatientNbr == pnbr & testfeatidx.ScenType == 0 );
-    pfeatindex = testfeatidx(pfidx,:);
-    ppred      = pmModelRes.pmNDayRes(1).Pred(pfidx);
-    plabel     = testlabels(pfidx);
-    pcopthres  = pmModelRes.pmNDayRes(1).EpiPredOp;
+    
+    % run trained predictive classifier on chosen data set (for the patient
+    % in this example)
+    pfidx      = (pmFeatureIndex.PatientNbr == pnbr & pmFeatureIndex.ScenType == 0);
+    npex       = sum(pfidx);
+    pfeatindex = pmFeatureIndex(pfidx, :);
+    
+
+    pnormfeats = pmNormFeatures(pfidx, :);
+    plabels    = pmExABxElLabels(pfidx);
+    pfold      = pmPatientSplit.SplitNbr(pmPatientSplit.PatientNbr == pnbr);
+    ppcmodel   = pcmodelres.Folds(pfold).Model;
+    ppcres     = createModelDayResStuct(npex, 1, 1);
+    ppcres     = predictPredModel(ppcres, ppcmodel, pnormfeats, plabels, pcmodelver, pclossfunc);
+    
+    pcopthres  = pcmodelres.EpiPredOp;
     amberthres = pcopthres * (1 - amberlowpct/100);
     redthres   = pcopthres * (1 + amberhighpct/100);
 
+    % create pred and label arrays in real days rather than just the days
+    % we predict for
     ppreddata    = nan(1, pmaxdays); % pc prediction
     plabeldata   = nan(1, pmaxdays); % pc label
-    for d = 1:size(ppred,1)
-        ppreddata(pfeatindex.CalcDatedn(d))  = ppred(d);
-        plabeldata(pfeatindex.CalcDatedn(d)) = plabel(d);
+    for d = 1:size(ppcres.Pred,1)
+        ppreddata(pfeatindex.CalcDatedn(d))  = ppcres.Pred(d);
+        plabeldata(pfeatindex.CalcDatedn(d)) = plabels(d);
     end
+    
+    % create red/amber/green array for this patient
     psclpreddata = ones(1, pmaxdays) * undefval; % pc scale prediction - default value is undefined
     psclpreddata(ppreddata <  amberthres)                          = stableval;
     psclpreddata(ppreddata >= amberthres   & ppreddata < redthres) = amberval;
@@ -245,7 +279,7 @@ for ux = 1:nuxexs
     
     % create quality classifier inputs and predictions
     qfidx        = (pmFeatureIndex.PatientNbr == pnbr & pmFeatureIndex.ScenType == 0);
-    qfeatindex = pmFeatureIndex(qfidx,:);
+    qfeatindex   = pmFeatureIndex(qfidx,:);
     datawinarray = pmDataWinArray(qfidx, :, :);
     pnex = size(datawinarray, 1); 
     [qcfeatures, ~, qcmeasures, qcmodfeatparamrow] = createQCFeaturesFromDataWinArray(datawinarray, pmModFeatParamsRow, pnex, totalwin, measures, nmeasures);
@@ -254,15 +288,19 @@ for ux = 1:nuxexs
     qcres.Loss = 0; % Loss calculation does not make sense for new data as we don't have labels to compare to
     qpred = qcres.Pred;
     
+    % create pred array in real days rather than just the days
+    % we predict for
     qpreddata    = nan(1, pmaxdays); % qc prediction
     for d = 1:size(qpred,1)
         qpreddata(qfeatindex.CalcDatedn(d)) = qpred(d);
     end
+    
+    % create safe/unsafe array for this patient
     qsclpreddata = ones(1, pmaxdays) * undefval; % qc binary prediction - default value is undefined
     qsclpreddata(qpreddata <  qcopthres) = unsafeval;
     qsclpreddata(qpreddata >= qcopthres) = safeval;
     
-    nsafedays  = sum(qsclpreddata);
+    nsafedays  = sum(qsclpreddata==3);
     fprintf('For patient %d, there are %d safe days out of a total of %d days (%.1f%%)\n', pnbr, nsafedays, pnex, 100 * nsafedays / pnex);
     
     % create the colour arrays for plots
@@ -270,7 +308,7 @@ for ux = 1:nuxexs
     qccol = qccolarray(qsclpreddata, :);
     uxcol = pccol;
     uxcol(qsclpreddata == unsafeval, :) = qccol(qsclpreddata == unsafeval, :);
-
+    
     npages    = ceil(ndays / perioddays);
     for page = 1:npages
         
@@ -280,18 +318,6 @@ for ux = 1:nuxexs
             dto = todn;
         end
         
-        %nextrund = min(pmFeatureIndex.CalcDatedn(pmFeatureIndex.PatientNbr == pnbr & ...
-        %    pmFeatureIndex.ScenType == 0 & pmFeatureIndex.CalcDatedn >= dfrom & pmFeatureIndex.CalcDatedn <= todn));
-        %if dfrom < nextrund
-        %    dfrom = nextrund;
-        %nd
-        
-        %lastrund = max(pmFeatureIndex.CalcDatedn(pmFeatureIndex.PatientNbr == pnbr & ...
-        %    pmFeatureIndex.ScenType == 0 & pmFeatureIndex.CalcDatedn >= dfrom & pmFeatureIndex.CalcDatedn <= todn));
-        %if dto > lastrund
-        %    dto = lastrund;
-        %end
-        
         plotname = sprintf('%s-UXVizP%d(%s%d)D%d-%d', ...
             basepcresfile, pnbr, patientrow.Study{1}, patientrow.ID, dfrom, dto);
         plottitle = sprintf('%s-P%d(%s%d)D%d-%d', ...
@@ -299,9 +325,14 @@ for ux = 1:nuxexs
         fprintf('Page %d: From %d - To %d\n', page, dfrom, dto);
         [f, p] = createFigureAndPanelForPaper(plottitle, widthinch, heightinch);
         
+        [tabResults] = createUXPlotResTable(dto - dfrom + 1);
+        
         days  = (dfrom:dto);
         xl    = [(dfrom - 0.5) (dfrom + 0.5 + perioddays - 1)];
         thisplot = 0;
+        
+        % populate days column in excel table
+        tabResults.Days = days';
         
         for m = 1:nmeasures
             
@@ -341,7 +372,16 @@ for ux = 1:nuxexs
                 ylim(ax, yl);
                 xlim(ax, xl);
      
-                
+                % populate measurement data in excel table
+                mcol = sprintf('%s_raw', measures.ShortName{m});
+                tabResults(:, mcol) = array2table(mdata');
+                mcol = sprintf('%s_sm', measures.ShortName{m});
+                tabResults(:, mcol) = array2table(applySmoothMethodToInterpRow(mdata, smfn, smwin, smln, midx, mfev1idx)');
+                mcol = sprintf('%s_interp', measures.ShortName{m});
+                tabResults(:, mcol) = array2table(interppts');
+                mcol = sprintf('%s_miss', measures.ShortName{m});
+                tabResults(:, mcol) = array2table(isnan(mrawdata)');
+    
             end
         end
         
@@ -365,6 +405,18 @@ for ux = 1:nuxexs
         ylabel(ax, 'Predicted Risk', 'FontSize', 6);
         ylim(ax, yl);
         xlim(ax, xl);
+        
+        % populate pred classifier results in excel table
+        mcol = 'PC_Pred';
+        tabResults(:, mcol) = array2table(ppreddata(dfrom:dto)');
+        mcol = 'PC_Label';
+        tabResults(:, mcol) = array2table(plabeldata(dfrom:dto)');
+        mcol = 'PC_Opthr';
+        tabResults(:, mcol) = array2table(ones(size(days, 2), 1) * pcopthres);
+        mcol = 'PC_Amthr';
+        tabResults(:, mcol) = array2table(ones(size(days, 2), 1) * amberthres);
+        mcol = 'PC_Rdthr';
+        tabResults(:, mcol) = array2table(ones(size(days, 2), 1) * redthres);
         
         % 7) missing data by measure and day plot
         thisplot = thisplot + 1;
@@ -434,6 +486,12 @@ for ux = 1:nuxexs
         ylim(ax, yl);
         xlim(ax, xl);
         
+        % populate qual classifier results in excel table
+        mcol = 'QC_Pred';
+        tabResults(:, mcol) = array2table(qpreddata(dfrom:dto)');
+        mcol = 'QC_Opthr';
+        tabResults(:, mcol) = array2table(ones(size(days, 2), 1) * qcopthres);
+        
         % 9 & 10 - plot for the various daily coloured results (takes up the space of two plot positions)
         thisplot = thisplot + 1;
         counter = 3;
@@ -494,18 +552,94 @@ for ux = 1:nuxexs
         xlim(ax, xl);
         
         hold on;
-        h = zeros(5, 1);
+        h = zeros(6, 1);
         h(1) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', stablecol);
-        h(2) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', unstablecol);
-        h(3) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', safecol);
-        h(4) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', unsafecol);
-        h(5) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', undefcol);
-        legend(h, {'Stable','Unstable','Safe', 'Unsafe', 'Undefined'}, 'Location', 'southoutside', 'Orientation', 'horizontal', 'NumColumns', 5);
+        h(2) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', ambercol);
+        h(3) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', unstablecol);
+        h(4) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', safecol);
+        h(5) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', unsafecol);
+        h(6) = plot(NaN,NaN, 'Marker', 's', 'LineStyle', 'none', 'MarkerEdgeColor', edgecol, 'MarkerFaceColor', undefcol);
+        legend(h, {'Stable', 'Amber', 'Unstable', 'Safe', 'Unsafe', 'Undefined'}, 'Location', 'southoutside', 'Orientation', 'horizontal', 'NumColumns', 6);
 
         hold off;
         
+        %populate colour columns in excel table
+        scorearray   = {'PC', 'QC', 'BS'};
+        colnamearray = {'R', 'G', 'B'};
+        for s = 1:size(scorearray, 2)
+            if s == 1
+                coldata = pccol(dfrom:dto, :);
+            elseif s == 2
+                coldata = qccol(dfrom:dto, :);
+            else
+                coldata = uxcol(dfrom:dto, :);
+            end
+            for c = 1:size(colnamearray, 2)
+                mcol = sprintf('%s_col_%s', scorearray{s}, colnamearray{c});
+                tabResults(:, mcol) = array2table(coldata(:, c));
+            end
+        end
+        
+        %populate ab and ex_start columns in excel table
+        for ab = 1:size(poralabsdates, 1)
+            startdn = poralabsdates.RelStartdn(ab);
+            if poralabsdates.RelStartdn(ab) < dfrom
+                startdn = dfrom;
+            end
+            stopdn  = poralabsdates.RelStopdn(ab);
+            if poralabsdates.RelStopdn(ab) > dto
+                stopdn = dto;
+            end
+            idx = tabResults.Days >= startdn & tabResults.Days <= stopdn;
+            tabResults.Ab_Oral(idx) = 1;    
+        end
+        for ab = 1:size(pivabsdates, 1)
+            startdn = pivabsdates.RelStartdn(ab);
+            if pivabsdates.RelStartdn(ab) < dfrom
+                startdn = dfrom;
+            end
+            stopdn  = pivabsdates.RelStopdn(ab);
+            if pivabsdates.RelStopdn(ab) > dto
+                stopdn = dto;
+            end
+            idx = tabResults.Days >= startdn & tabResults.Days <= stopdn;
+            tabResults.Ab_IV(idx) = 1;    
+        end
+        for ex = 1:size(pexstsdates, 1)
+            if pexstsdates.Pred(ex) >= dfrom & pexstsdates.Pred(ex) <= dto
+                idx = tabResults.Days == pexstsdates.Pred(ex);
+                tabResults.Ex_Start(idx) = 1;
+            end
+            startdn = pexstsdates.RelLB1(ex);
+            if pexstsdates.RelLB1(ex) < dfrom
+                startdn = dfrom;
+            end
+            stopdn = pexstsdates.RelUB1(ex);
+            if pexstsdates.RelUB1(ex) >= dto
+                stopdn = dto;
+            end
+            idx = tabResults.Days >= startdn & tabResults.Days <= stopdn;
+            tabResults.Ex_90Conf(idx) = 1;
+            if pexstsdates.RelLB2(ex) ~= -1
+                startdn = pexstsdates.RelLB2(ex);
+                if pexstsdates.RelLB2(ex) < dfrom
+                    startdn = dfrom;
+                end
+                stopdn = pexstsdates.RelUB2(ex);
+                if pexstsdates.RelUB2(ex) >= dto
+                    stopdn = dto;
+                end
+                idx = tabResults.Days >= startdn & tabResults.Days <= stopdn;
+                tabResults.Ex_90Conf(idx) = 1;
+            end
+        end
+        
         savePlotInDir(f, plotname, basedir, plotsubfolder);
         close(f);
+        
+        % save results to excel table
+        excelfname = sprintf('%s.csv', plotname);
+        writetable(tabResults, fullfile(basedir, 'ExcelFiles', excelfname));
         
     end
     

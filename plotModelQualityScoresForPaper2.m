@@ -21,7 +21,9 @@ end
 
 [epiprecision, epirecall, epitpr, epifpr, epiprauc, epirocauc, epipredsort, ~] = calcQualScores(epilabl(episafeidx), epipred(episafeidx));
 %[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
-[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(epiindex(logical(epilabl == 1) & episafeidx, :), featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort);
+printlog = false;
+[epiavgdelayreduction, trigintrtpr, avgtrigdelay] = calcAvgDelayReduction(epiindex(logical(epilabl == 1) & episafeidx, :), ...
+        featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort, printlog);
 
 
 % use these for label method 5/pmV3stSCfd25ff1pd10nm4nw10sf4sw2sl3rm7bf1nb2rn1vo28as1na4vs1nv4cc1pm10ps1bm1bs1np2df0dm1mvvPM1lm5
@@ -43,10 +45,11 @@ end
 % fpr threshold, then find the first point that has the same tpr as this
 % point.
 maxidxpt = find(epifpr < fpropthresh, 1, 'last');
-bestidxpt = find(epitpr == epitpr(maxidxpt), 1, 'first');
+bestidxpt = find(epitpr == epitpr(maxidxpt), 1, 'first') + 1; % hardcoded to correct due to not calculating episodic numbers for every pred day
 
 %[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(pmAMPred, featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt));
-[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(epiindex(logical(epilabl == 1) & episafeidx, :), featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt));
+printlog = true;
+[~, ~, ~, trigintrarray] = calcAvgDelayReductionForThresh(epiindex(logical(epilabl == 1) & episafeidx, :), featidx, labels, pmModelRes.pmNDayRes(1).Pred, epipredsort(bestidxpt), printlog);
 
 %untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
 %untrigpmampred = pmAMPred(logical(trigintrarray == -1), :);
@@ -69,22 +72,38 @@ axisfontsize = 10;
 unitfontsize = 10;
 smallfontsize = 8;
 
-widthinch = 7.5;
-heightinch = 3;
+widthinch = 8.25;
+heightinch = 4.5;
 name = '';
-singlehght = 1/4.5;
+singlehght = 1/3.5;
 halfhght = singlehght * 0.5;
 doublehght = singlehght * 2;
 twoandhalfhght = singlehght * 2.5;
-triplehght = singlehght * 3;
+triplehght = (singlehght * 3) - 0.05;
+plotwidth  = 1/2;
+
+pllinewidth = 2.5;
+axlinewidth = 1.5;
+
+fontname    = 'Arial';
+
+colarray = [188, 188, 229; ...
+            196, 159, 132];
+             
+colarray = colarray ./ 255;
 
 ntitles = 1;
-nplots = 3;
+%nplots = 3;
+nplots = 2;
 plotwidth  = 1/nplots;
 
-typearray = [1, 4, 5, 6];
+%typearray = [1, 4, 5, 6];
+typearray = [1, 4, 5];
 
-typehght = [singlehght, singlehght, triplehght, triplehght, triplehght, triplehght];
+
+%typehght = [singlehght, singlehght, triplehght, triplehght, triplehght, triplehght];
+typehght = [halfhght, halfhght, triplehght, triplehght, triplehght, triplehght];
+
 
 baseplotname1 = sprintf('%s-E%dQSfP%s', basefilename, epilen, randtext);
 
@@ -115,7 +134,7 @@ for i = 1:(ntitles + nplots)
                         'HorizontalAlignment', 'center', ...
                         'VerticalAlignment', 'middle', ...
                         'LineStyle', 'none', ...
-                        'FontSize', labelfontsize, ...
+                        'FontSize', titlefontsize, ...
                         'FontWeight', 'bold');
         displaytext = {'Early Warning'};
         annotation(sp(i), 'textbox',  ...
@@ -126,19 +145,19 @@ for i = 1:(ntitles + nplots)
                         'HorizontalAlignment', 'center', ...
                         'VerticalAlignment', 'middle', ...
                         'LineStyle', 'none', ...
-                        'FontSize', labelfontsize, ...
+                        'FontSize', titlefontsize, ...
                         'FontWeight', 'bold');
-        displaytext = {'Trigger Delay'};
-        annotation(sp(i), 'textbox',  ...
-                        'String', displaytext, ...
-                        'Interpreter', 'tex', ...
-                        'Units', 'normalized', ...
-                        'Position', [(2 * plotwidth), 0, plotwidth, 1], ...
-                        'HorizontalAlignment', 'center', ...
-                        'VerticalAlignment', 'middle', ...
-                        'LineStyle', 'none', ...
-                        'FontSize', labelfontsize, ...
-                        'FontWeight', 'bold'); 
+        %displaytext = {'Trigger Delay'};
+        %annotation(sp(i), 'textbox',  ...
+        %                'String', displaytext, ...
+        %                'Interpreter', 'tex', ...
+        %                'Units', 'normalized', ...
+        %                'Position', [(2 * plotwidth), 0, plotwidth, 1], ...
+        %                'HorizontalAlignment', 'center', ...
+        %                'VerticalAlignment', 'middle', ...
+        %                'LineStyle', 'none', ...
+        %                'FontSize', titlefontsize, ...
+        %                'FontWeight', 'bold'); 
     elseif type == 4
         % Triggered Interventions ROC Curve
         currhght = currhght - typehght(type);
@@ -150,24 +169,29 @@ for i = 1:(ntitles + nplots)
         ax = subplot(1, 1, 1, 'Parent', sp(i));
         
         area(ax, 100 * epifpr, trigintrtpr, ...
-            'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
+            'FaceColor', colarray(1,:), 'LineStyle', '-', 'LineWidth', pllinewidth);
         line(ax, [0, 100 * epifpr(bestidxpt)], [trigintrtpr(bestidxpt), trigintrtpr(bestidxpt)], ...
-            'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
+            'Color', 'red', 'LineStyle', '-', 'LineWidth', axlinewidth);
         line(ax, [100 * epifpr(bestidxpt), 100 * epifpr(bestidxpt)], [0, trigintrtpr(bestidxpt)], ...
-            'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
+            'Color', 'red', 'LineStyle', '-', 'LineWidth', axlinewidth);
         
         hold on;
         scatter(ax, 100 * epifpr(bestidxpt), trigintrtpr(bestidxpt), 'Marker', 'o', ...
-            'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
+            'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'red', 'SizeData', 24);
         hold off;
         
         ax.FontSize = axisfontsize; 
-        ax.TickDir = 'out';      
+        ax.FontWeight = 'bold';
+        ax.FontName   = fontname;
+        ax.TickDir    = 'out';   
+        ax.LineWidth  = axlinewidth;
+        ax.XTick  = [0, 50, 100];
+        ax.YTick  = [0, 50, 100];
         xlim(ax, xl);
         ylim(ax, yl);
         
-        xlabel(ax, 'False Positive Rate (%)');
-        ylabel(ax, 'True Positive Rate (%)');
+        xlabel(ax, 'Episodic False Positive Rate (%)');
+        ylabel(ax, 'Episodic True Positive Rate (%)');
         
         auc = trapz(epifpr, trigintrtpr);
         roctext = sprintf('AUC = %.1f%%', auc);
@@ -178,8 +202,9 @@ for i = 1:(ntitles + nplots)
                         'Position', [0.5, 0.3 0.38, 0.1], ...
                         'HorizontalAlignment', 'center', ...
                         'VerticalAlignment', 'middle', ...
-                        'BackgroundColor', 'white', ...
-                        'LineStyle', '-', ...
+                        'BackgroundColor', colarray(1,:), ...
+                        'LineStyle', 'none', ...
+                        'FontWeight', 'bold', ...
                         'FontSize', axisfontsize);
     elseif type == 5
         % Reduction in treatment delay plot
@@ -191,22 +216,28 @@ for i = 1:(ntitles + nplots)
         ax = subplot(1, 1, 1, 'Parent', sp(i));
         
         area(ax, 100 * epifpr, epiavgdelayreduction, ...
-            'FaceColor', 'blue', 'LineStyle', '-', 'LineWidth', 1.5);
+            'FaceColor', colarray(2,:), 'LineStyle', '-', 'LineWidth', pllinewidth);
         line(ax, [0, 100 * epifpr(bestidxpt)], [epiavgdelayreduction(bestidxpt), epiavgdelayreduction(bestidxpt)], ...
-            'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
+            'Color', 'red', 'LineStyle', '-', 'LineWidth', axlinewidth);
         line(ax, [100 * epifpr(bestidxpt), 100 * epifpr(bestidxpt)], [0, epiavgdelayreduction(bestidxpt)], ...
-            'Color', 'g', 'LineStyle', '-', 'LineWidth', 1.0);
+            'Color', 'red', 'LineStyle', '-', 'LineWidth', axlinewidth);
         hold on;
         
         scatter(ax, 100 * epifpr(bestidxpt), epiavgdelayreduction(bestidxpt), 'Marker', 'o', ...
-            'MarkerFaceColor', 'green', 'MarkerEdgeColor', 'green', 'SizeData', 18);
+            'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'red', 'SizeData', 24);
         
+        ax.TickDir = 'out';
         ax.FontSize = axisfontsize; 
-        ax.TickDir = 'out';      
+        ax.FontWeight = 'bold';
+        ax.FontName   = fontname;
+        ax.TickDir    = 'out';   
+        ax.LineWidth  = axlinewidth;
+        ax.XTick  = [0, 50, 100];
+        ax.YTick  = [0, 6, 12, 18];
         xlim(ax, xl);
         %ylim(ax, yl);
         
-        xlabel(ax, 'False Positive Rate (%)');
+        xlabel(ax, 'Episodic False Positive Rate (%)');
         ylabel(ax, 'Early Warning (days)');
         
         %annotation(sp(i), 'doublearrow',[epifpr(chosenpt), currclindelay ],[epifpr(chosenpt) epiavgdelayreduction(chosenpt)], 'Color', 'red' )

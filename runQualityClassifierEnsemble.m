@@ -80,16 +80,20 @@ end
 pmQSConstr = readtable(fullfile(basedir, 'DataFiles', qsconstrfile));
 
 
+% Setting operating thresholds - no longer needed as parameter file used
+% instead.
+
 %qsmeasure = 'AvgEPV';
 %[qsthreshold, validresponse] = selectThreshPercentage('Label', 0, 100);
 %if validresponse == 0
 %    return;
 %end
-
 %[fpthreshold, validresponse] = selectThreshPercentage('False Positive', 0, qsthreshold);
 %if validresponse == 0
 %    return;
 %end
+%pmQSConstr.qsthresh(ismember(pmQSConstr.qsmeasure, qsmeasure)) = qsthreshold;
+%pmQSConstr.fpthresh(ismember(pmQSConstr.qsmeasure, qsmeasure)) = fpthreshold;
 
 [mpruntype, rtsuffix, validresponse] = selectRunMode();
 if validresponse == 0

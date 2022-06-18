@@ -43,15 +43,16 @@ end
 
 fprintf('Used Patient study mean for %d/%d days/measures\n', ndefaultexamples, nexamples * nmeasures);
 
-munorm     = zeros(nmeasures, 2);
+%munorm     = zeros(nmeasures, 2);
 
 for m = 1:nmeasures
     if ismember(study, {'BR'}) && midx(m)
         pmPMeanWinArray(:, m) = pmMuIndex(:, m);
     else
-        munorm(m, 1) = mean(pmMuIndex(:,m));
-        munorm(m, 2) = std(pmMuIndex(:,m));
-        pmPMeanWinArray(:, m) = (pmMuIndex(:, m) - munorm(m, 1)) / munorm(m, 2);
+        %munorm(m, 1) = mean(pmMuIndex(:,m));
+        %munorm(m, 2) = std(pmMuIndex(:,m));
+        %pmPMeanWinArray(:, m) = (pmMuIndex(:, m) - munorm(m, 1)) / munorm(m, 2);
+        pmPMeanWinArray(:, m) = (pmMuIndex(:, m) - pmOverallStats.Mean(m)) / pmOverallStats.StdDev(m);
     end
 end
 
