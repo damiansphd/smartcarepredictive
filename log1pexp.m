@@ -6,3 +6,5 @@ i = x > 18;
 j = i & (x <= 33.3);
 y(~i) = log1p(exp(x(~i)));
 y(j) = x(j)+exp(-x(j));
+
+end

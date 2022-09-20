@@ -417,7 +417,7 @@ if all(safeparamrunarray.safemethod == 0 | safeparamrunarray.safemethod == 1)
     timenow = datestr(clock(),30);
     plsubfolder = sprintf('Plots/%s', pcbasemodelresultsfile);
     plotname = sprintf('%s Plot %s', safeparamfile, timenow);
-    fprintf('Saving plots to file %s\n', outputfilename);
+    fprintf('Saving plots to file %s\n', plotname);
     savePlotInDir(f, plotname, basedir, plsubfolder);
     %savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
     close(f);

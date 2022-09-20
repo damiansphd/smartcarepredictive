@@ -143,6 +143,40 @@ for d = 1:size(ppred2,1)
     plabeldata2(pfeatindex2.CalcDatedn(d)) = plabel2(d);
 end
 
+% set x-axis range (largely hard-code as I just need it for my thesis)
+
+xl1 = [35 150];
+xl2 = [35 150];
+if ismember(studydisplayname, {'SC'})
+    if patientnbr1 == 1 || patientnbr1 == 64
+        xl1 = [35 113];
+    end
+    if patientnbr2 == 1 || patientnbr2 == 64
+        xl2 = [35 113];
+    end
+elseif ismember(studydisplayname, {'BR'})
+    switch patientnbr1
+        case 3
+            xl1 = [245 325];
+        case 10
+            xl1 = [164 244];
+        case 154
+            xl1 = [190 270];
+        case 171
+            xl1 = [47 127];
+    end
+    switch patientnbr2
+        case 3
+            xl2 = [245 325];
+        case 10
+            xl2 = [164 244];
+        case 154
+            xl2 = [190 270];
+        case 171
+            xl2 = [47 127];
+    end
+end
+
 currhght = 1.0;
 currplot = 1;
 for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
@@ -239,6 +273,7 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
             poralabsdates = poralabsdates1;
             pexstsdates   = pexstsdates1;
             ppreddata     = ppreddata1;
+            xl            = xl1;
         elseif type == 6 || type == 7
             pmaxdays      = pmaxdays2;
             pmeasstats    = pmeasstats2;
@@ -246,10 +281,11 @@ for i = 1:(ntitles + nlabels + 2 * (tmpnmeasures + npredictions) )
             poralabsdates = poralabsdates2;
             pexstsdates   = pexstsdates2;
             ppreddata     = ppreddata2;
+            xl            = xl2;
         end
         days = (1:pmaxdays);
-        %xl = [35 pmaxdays];
-        xl = [35 113];
+        
+        %xl = [35 113];
         
         if currplot <= tmpnmeasures
             m = currplot;
