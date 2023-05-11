@@ -122,7 +122,7 @@ elseif plottype == 8
     randmode = false;
     %pmAMPred = pmAMPred(~ismember(pmAMPred.IntrNbr, elecongoingtreat.IntrNbr),:);
     pmAMPred = pmAMPred(~ismember(pmAMPred.ElectiveTreatment, 'Y'),:);
-    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr] = plotModelQualityScoresForPaper2(testfeatidx, ...
+    [epipred, epifpr, epiavgdelayreduction, trigintrtpr, avgtrigdelay, untrigpmampred, epilabl, epitpr, epiindex] = plotModelQualityScoresForPaper2(testfeatidx, ...
         pmModelRes, testlabels, pmAMPred, plotsubfolder, basemodelresultsfile, epilen, randmode, pmOtherRunParams.fpropthresh);
 elseif plottype == 9
     % Comparison to Current Clinical Practice - random classifier mode

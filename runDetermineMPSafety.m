@@ -13,7 +13,6 @@ dfsubfolder = 'DataFiles';
 if validresponse == 0
     return;
 end 
-
 % logic to load in results for a given feature&label version, label method and raw measures combination
 [fv1, validresponse] = selectFeatVer();
 if validresponse == 0
@@ -135,6 +134,11 @@ nrawmeas     = sum(measures.RawMeas);
 mpmeasures = measures(logical(measures.RawMeas), :);
 mpmeasures.Index(:) = 1:nrawmeas;
 
+[mpmeasmode, mpmeasidx, mpmeastxt, validresponse] = selectMPMeasMode(mpmeasures);
+if validresponse == 0
+    return;
+end 
+
 
 % backward compatibility issue since I changed the quality classifier
 % to handle more than one QS constraint - it's hard to easily fit multiple
@@ -195,9 +199,20 @@ for mp = 1:nmps
     %    end
     %end 
     
-    [mpindexrow, mp3D, mpdur, iscyclic, cyclicdur] = setMPAllMeasFromExcel(mptablerow, nrawmeas, dwdur);
-    printMissPattFcn(mpindexrow, mp3D, mpmeasures, nrawmeas, mpdur);
-    
+    if mpmeasmode == 1
+        [mpindexrow, mp3D, mpdur, iscyclic, cyclicdur] = setMPAllMeasFromExcel(mptablerow, nrawmeas, dwdur);
+        printMissPattFcn(mpindexrow, mp3D, mpmeasures, nrawmeas, mpdur);
+    elseif mpmeasmode == 2
+        [mpindexrow, mp3D, mpdur, iscyclic, cyclicdur] = setMPOneMeasFromExcel(mptablerow, mpmeasures, mpmeasidx, nrawmeas, dwdur, mpmeasmode);
+        printMissPattFcn(mpindexrow, mp3D, mpmeasures, nrawmeas, mpdur);
+    elseif mpmeasmode == 3
+        [mpindexrow, mp3D, mpdur, iscyclic, cyclicdur] = setMPOneMeasFromExcel(mptablerow, mpmeasures, mpmeasidx, nrawmeas, dwdur, mpmeasmode);
+        printMissPattFcn(mpindexrow, mp3D, mpmeasures, nrawmeas, mpdur);
+    else
+        % should never get here
+        fprintf('Invalid measures mode\n');
+    end
+        
     if runqc
         [mpqcIndex, mpqcMissPatt, mpqcDataWin, mpqcFeatures, mpqcCyclicPred] = ...
             calcCyclicPredsForMP(pmQCModelRes, pmMPModelParamsRow.ModelVer, ...
@@ -223,7 +238,7 @@ end
 tic
 basedir = setBaseDir();
 exsubfolder = 'ExcelFiles';
-outputfilename = sprintf('%s%srm%dMPSafety.xlsx', basempfile, baseqcresfile, mpmodmode);
+outputfilename = sprintf('%s%srm%dmpm%d%sMPS.xlsx', basempfile, baseqcresfile, mpmodmode, mpmeasmode, mpmeastxt);
 fprintf('Saving model output variables to file %s\n', outputfilename);
 if runqc
     mpqcIndex.Properties.VariableNames({'MoveDesc'}) = {'Pattern'};

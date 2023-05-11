@@ -3,7 +3,7 @@ function [tabResults] = createUXPlotResTable(nrows)
 % createUXPlotResTable - creates the table to store the UX plot results for
 % excel dump
 
-tabResults = table('Size',[nrows, 41], ...
+tabResults = table('Size',[nrows, 42], ...
                    'VariableTypes', {'double', ...                                          %days
                                       'double', 'double', 'double', 'logical',...           %meas1
                                       'double', 'double', 'double', 'logical',...           %meas2
@@ -16,7 +16,8 @@ tabResults = table('Size',[nrows, 41], ...
                                       'double', 'double', 'double', ...
                                       'double', 'double', 'double', ...
                                       'double', 'double', ...                               % oral and iv info
-                                      'double', 'double'}, ...                              % ex start info                    
+                                      'double', 'double', ...                               % ex start info
+                                      'double'}, ...                                        % python predictions
                    'VariableNames', {'Days', ...                                            %days
                                       'Co_raw', 'Co_sm', 'Co_interp', 'Co_miss', ...        %meas1
                                       'Lu_raw', 'Lu_sm', 'Lu_interp', 'Lu_miss', ...        %meas2
@@ -29,7 +30,8 @@ tabResults = table('Size',[nrows, 41], ...
                                       'QC_col_R', 'QC_col_G', 'QC_col_B', ...
                                       'BS_col_R', 'BS_col_G', 'BS_col_B', ...
                                       'Ab_Oral',  'Ab_IV', ...                              % oral and iv info
-                                      'Ex_Start',  'Ex_90Conf'});                           % ex start info 
+                                      'Ex_Start',  'Ex_90Conf', ...                         % ex start info
+                                      'Py_PC_Pred'});                                       % python predictions   
                               
 end
 
