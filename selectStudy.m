@@ -10,12 +10,13 @@ fprintf('2: Telemed\n');
 fprintf('3: Both Smartcare and Telemed\n');
 fprintf('4: Climb\n');
 fprintf('5: Breathe\n');
+fprintf('6: ACE-CF\n');
 fprintf('\n');
 sstudynbr = input('Choose study to run for: ', 's');
 
 studynbr = str2double(sstudynbr);
 
-if (isnan(studynbr) || studynbr < 1 || studynbr > 5)
+if (isnan(studynbr) || studynbr < 1 || studynbr > 6)
     fprintf('Invalid choice\n');
     studynbr = -1;
     studydisplayname = '**';
@@ -39,6 +40,9 @@ elseif studynbr == 4
 elseif studynbr == 5
     study = {'BR'};
     studydisplayname = 'BR';
+elseif studynbr == 6
+    study = {'AC'};
+    studydisplayname = 'AC';    
 else
     fprintf('Invalid study\n');
     return;
@@ -80,6 +84,12 @@ for a = 1:size(study,1)
         %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V-3_vs1_vm0.5_ni66_ex-28_obj1.12165445.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V-3_vs1_vm0.5_ni52_ex-28_obj1.12757342.mat';
         pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V_vs1_vm0.5_ni103_ex-29_obj1.17420143.mat';
+    elseif isequal(study(a), {'AC'})
+        pmStudyInfo.StudyName{a}            = 'ACE-CF';
+        pmStudyInfo.MeasurementMatFile{a}   = 'acecfdata-nofilt.mat';
+        pmStudyInfo.ClinicalMatFile{a}      = 'acecfclinicaldata.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni50_ex-32_obj5.45632170.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-28_obj4.57799012.mat';
 
     else
         fprintf('Unknown study\n')

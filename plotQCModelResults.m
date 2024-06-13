@@ -66,7 +66,7 @@ elseif plottype == 3
     %    pmQSConstr, fpthreshold, pmQCModelRes.PredOp, basemodelresultsfile, plotsubfolder);
     
     %opthresh = pmQCModelRes.PredOp;
-    opthresh = 0.95;
+    opthresh = 0.625;
     plotMissingnessQSFcn(pmQCModelRes, pmMissPattIndex, pmMissPattQSPct, labels, fplabels, ...
         pmQSConstr, opthresh, basemodelresultsfile, plotsubfolder);
 elseif plottype == 4

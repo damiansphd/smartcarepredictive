@@ -51,7 +51,7 @@ for p = 1:npatients
         maxdays = pmPatients.RelLastMeasdn(p);
     end
 
-    if ismember(study, {'CL','BR'})
+    if ismember(study, {'CL','BR', 'AC'})
         tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticName', 'Route', 'HomeIV_s', 'StartDate', 'StopDate'});
         tempAntibiotics.Properties.VariableNames({'HomeIV_s'}) =  {'HomeIV_s_'};
         tempAntibiotics.AntibioticID(:) = 0;
@@ -78,7 +78,7 @@ pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys
 % little extra flexibility - but intention is to have the override table
 % match the same electives as the original table has.
 % **** no need for the override for project breathe
-if ~ismember(study, {'BR'})
+if ~ismember(study, {'BR', 'AC'})
     pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
     pmAMPred.ElectiveTreatment = [];
     pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});
