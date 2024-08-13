@@ -72,7 +72,14 @@ for fs = 1:nfeatureparamsets
         featureinputmatfile = sprintf('%s.mat',fbasefilename);
         fprintf('Loading predictive model input data from file %s\n', featureinputmatfile);
         load(fullfile(basedir, subfolder, featureinputmatfile));
-        psplitfile = sprintf('%spatientsplit.mat', pmThisFeatureParams.StudyDisplayName{fs});
+        % add override for feature ver V6 to identify TT only version of
+        % data
+        if ismember(fv1name, {'V6'})
+            dfdisplayname = 'TT';
+        else
+            dfdisplayname = '';
+        end
+        psplitfile = sprintf('%spatientsplit%s.mat', pmThisFeatureParams.StudyDisplayName{fs}, dfdisplayname);
         fprintf('Loading patient splits from file %s\n', psplitfile);
         load(fullfile(basedir, subfolder, psplitfile));
         toc

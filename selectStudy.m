@@ -83,7 +83,9 @@ for a = 1:size(study,1)
         %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct5_sc13-V_vs1_vm0.5_ni200_ex-27_obj1.12618389.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V-3_vs1_vm0.5_ni66_ex-28_obj1.12165445.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm13_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V-3_vs1_vm0.5_ni52_ex-28_obj1.12757342.mat';
-        pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V_vs1_vm0.5_ni103_ex-29_obj1.17420143.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2021-V_vs1_vm0.5_ni103_ex-29_obj1.17420143.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in3_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-VTT_vs1_vm0.7_ni86_ex-20_obj1.10457516.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in3_im1_cm2_mm26_mo20_dw25_nl1_rs4_ds1_ct3_sc2024-VTT_vs1_vm0.7_ni48_ex-24_obj1.11244928.mat';
     elseif isequal(study(a), {'AC'})
         pmStudyInfo.StudyName{a}            = 'ACE-CF';
         pmStudyInfo.MeasurementMatFile{a}   = 'acecfdata-nofilt.mat';

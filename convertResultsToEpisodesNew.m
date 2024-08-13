@@ -46,18 +46,32 @@ for i = 1:size(patients, 1)
         
         nextlabelchgidx = find(plabel == nextlabel & pfeat.CalcDatedn >= date, 1, 'first');
         if size(nextlabelchgidx, 1) == 0
+            nextlblfnd      = false;
             nextlabelchgidx = size(pfeat, 1);
+        else
+            nextlblfnd      = true; 
         end
+        
         nexttreatidx    = find(pdiff  ~= 1         & pfeat.CalcDatedn >  date, 1, 'first');
         if size(nexttreatidx, 1) == 0
+            nexttreatfnd    = false;
             nexttreatidx = size(pfeat, 1);
+        else
+            nexttreatfnd    = true;
         end
+        
+        nextfnd = nextlblfnd || nexttreatfnd;
         nextidx = min(nextlabelchgidx, nexttreatidx);
         
-        if size(nextidx, 1) == 0 || nextidx == size(pfeat, 1)
-            % if no label change over whole patient study period, set block
+        %if size(nextidx, 1) == 0 || nextidx == size(pfeat, 1)
+        if ~nextfnd && nextidx == size(pfeat, 1)
+            % if no label change or next treatment over the remaining study period, set block
             % end date to be maxdate
             blockenddt = maxdate;
+        %elseif nextfnd && nextidx == size(pfeat, 1)
+            % if there is either a label change or next treatment in the remaining study period 
+            %but on the last measurement day, set block end date to be maxdate
+            
         else
             % else set the block end date to the date of the row in feature
             % index prior to the label change

@@ -2,10 +2,15 @@ clear; clc; close all;
 
 [~, studydisplayname, ~] = selectStudy();
 
+[datafiltmthd, dfdisplayname, validresponse] = selectDataFiltMethod();
+if validresponse == 0
+    return;
+end
+
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-inputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
+inputfilename = sprintf('%spredictivemodelinputs%s.mat', studydisplayname, dfdisplayname);
 load(fullfile(basedir, subfolder, inputfilename));
 
 nsplits = 5;
@@ -44,7 +49,7 @@ pmPatientSplit = sortrows([pinter; pnointer], {'PatientNbr'}, {'ascend'});
 
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-outputfilename = sprintf('%spatientsplit.mat', studydisplayname);
+outputfilename = sprintf('%spatientsplit%s.mat', studydisplayname, dfdisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'pmPatientSplit', 'nsplits');
 toc

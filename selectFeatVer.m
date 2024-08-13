@@ -10,12 +10,13 @@ fprintf('2: N/A\n');
 fprintf('3: V3\n');
 fprintf('4: V4\n');
 fprintf('5: V5\n');
+fprintf('6: V6 (same as V5 but only TT data)\n');
 
 sfv1 = input('Choose code version for features ? ', 's');
 
 fv1 = str2double(sfv1);
 
-if (isnan(fv1) || fv1 < 1 || fv1 > 5)
+if (isnan(fv1) || fv1 < 1 || fv1 > 6)
     fprintf('Invalid choice\n');
     validresponse = false;
     fv1 = 0;

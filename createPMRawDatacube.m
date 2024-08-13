@@ -1,5 +1,5 @@
 function [pmStudyInfo, pmPatients, pmAntibiotics, pmAMPred, pmDatacube, npatients, maxdays] = ...
-    createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder)
+    createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder, datafiltmthd)
 
 % createPMDataCube - creates the raw data cube for the predictive model
 % across one or more studies
@@ -9,7 +9,7 @@ for a = 1:nstudies
     study = pmStudyInfo.Study{a};
     [datamatfile, clinicalmatfile, ~] = getRawDataFilenamesForStudy(study);
     [physdata, offset] = loadAndHarmoniseMeasVars(datamatfile, subfolder, study);
-    [cdPatient, ~, ~, cdAntibiotics, ~, ~, ~, ...
+    [cdPatient, cdDrugTherapy, ~, cdAntibiotics, ~, ~, ~, ...
         ~, ~, ~, ~, ~, ~, ~] = loadAndHarmoniseClinVars(clinicalmatfile, subfolder, study);
     
     fprintf('Loading alignment model prediction results\n');
@@ -25,6 +25,11 @@ for a = 1:nstudies
         
     % store the study offset in pmStudyInfo table
     pmStudyInfo.Offset(a) = offset;
+    
+    % filter data based on datafiltmthd - only do this for BR and AC studies
+    if ismember(study, {'BR', 'AC'})
+        [physdata, cdAntibiotics, amInterventions] = filtMeasData(physdata, cdDrugTherapy, cdAntibiotics, amInterventions, datafiltmthd); 
+    end
     
     % create datacube - 3D array of patients/days/measures for model
     fprintf('Creating patient, antibiotics, prediction, and 3D datacube arrays\n');

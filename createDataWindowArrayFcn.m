@@ -18,6 +18,10 @@ for p = 1:npatients
     pabs = pmAntibiotics(pmAntibiotics.PatientNbr == p, :);
     pampred = pmAMPred(pmAMPred.PatientNbr == p, :);
     for d = pmPatients.RelFirstMeasdn(p):pmPatients.RelLastMeasdn(p)
+        % if rundays == 3, include all days,
+        % if rundays == 2, include first 35 day period, but exclude time on antibiotics.
+        % if rundays == 1, exclude first 35 day period and time on antibiotics.
+        % nb antibiotics both from raw AB treatment data plus grouped AB treatment data from intervention list.
         if datawinparamsrow.rundays == 3 || ...
            ... 
            ((datawinparamsrow.rundays == 2 || ...
@@ -40,10 +44,10 @@ for p = 1:npatients
     
     %for d = (maxfeatureduration + maxnormwindow):maxdays
     for d = pmPatients.RelFirstMeasdn(p):pmPatients.RelLastMeasdn(p)
-        % if running for all days (rundays == 2), include all days,
-        % otherwise, only include this run day for the period between first and last measurement for
-        % patient for days when the patient wasn't on antibiotics (both from raw AB treatment 
-        % data plus grouped AB treatment data from intervention list.
+        % if rundays == 3, include all days,
+        % if rundays == 2, include first 35 day period, but exclude time on antibiotics.
+        % if rundays == 1, exclude first 35 day period and time on antibiotics.
+        % nb antibiotics both from raw AB treatment data plus grouped AB treatment data from intervention list.
         
         %if (d <= (pmPatients.LastMeasdn(p) - pmPatients.FirstMeasdn(p) + 1)) && ...
         if datawinparamsrow.rundays == 3 || ...

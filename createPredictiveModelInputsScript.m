@@ -7,6 +7,11 @@ addpath(tempdir);
 [studynbr, studydisplayname, pmStudyInfo] = selectStudy();
 nstudies = size(pmStudyInfo,1);
 
+[datafiltmthd, dfdisplayname, validresponse] = selectDataFiltMethod();
+if validresponse == 0
+    return;
+end
+
 subfolder = 'MatlabSavedVariables';
 
 tic
@@ -17,7 +22,7 @@ fprintf('\n');
 
 tic
 fprintf('Creating Raw Datacube\n');
-[pmStudyInfo, pmPatients, pmAntibiotics, pmAMPred, pmRawDatacube, npatients, maxdays] = createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder);
+[pmStudyInfo, pmPatients, pmAntibiotics, pmAMPred, pmRawDatacube, npatients, maxdays] = createPMRawDatacube(pmStudyInfo, measures, nmeasures, nstudies, basedir, subfolder, datafiltmthd);
 toc
 fprintf('\n');
 
@@ -31,7 +36,7 @@ fprintf('\n');
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-outputfilename = sprintf('%spredictivemodelinputs.mat', studydisplayname);
+outputfilename = sprintf('%spredictivemodelinputs%s.mat', studydisplayname, dfdisplayname);
 fprintf('Saving output variables to file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', 'pmStudyInfo', ...
     'pmPatients', 'npatients', 'pmAntibiotics', 'pmAMPred', ...
