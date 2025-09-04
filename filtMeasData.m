@@ -5,7 +5,7 @@ function [physdata, cdAntibiotics, amInterventions] = filtMeasData(physdata, cdD
 %   datafiltmthd == 1 - no filtering
 %   datafiltmthd == 2 - only keep data while patients are on triple therapy
 
-ttname = {'Kaftrio/Trikafta/TripleTherapy'};
+ttname = {'Kaftrio/Trikafta/Triple Therapy'};
 
 % extract start date of most recent continuous period on triple therapy
 ttdrugtherapy = cdDrugTherapy(ismember(cdDrugTherapy.DrugTherapyType, ttname) & isnat(cdDrugTherapy.DrugTherapyStopDate), {'ID', 'DrugTherapyStartDate'});

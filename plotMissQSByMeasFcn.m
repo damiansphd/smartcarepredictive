@@ -52,6 +52,7 @@ for i = 1:size(pmQSConstr.qsmeasure, 1)
 
         basedir = setBaseDir();
         savePlotInDir(f, baseplotname, basedir, plotsubfolder);
+        savePlotInDirAsSVG(f, baseplotname, plotsubfolder);
         close(f);
 
     end

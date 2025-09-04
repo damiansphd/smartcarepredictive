@@ -167,6 +167,11 @@ elseif plottype == 8
         measures, nmeasures, mvolstats, plotsubfolder, basemodelresultsfile);
 elseif plottype == 9
     % visualise the best and worst results
+    % for project breathe, only plot selected measures
+    if ismember(studydisplayname, {'BR'})
+        measures = measures(measures.RawMeas == 1, :);
+        nmeasures = size(measures, 1);
+    end
     [pmAMPredTest] = plotBestAndWorstPred(pmPatients, pmAntibiotics, ...
         pmAMPred(ismember(pmAMPred.PatientNbr, testpatsplit.PatientNbr),:), ...
         pmRawDatacube, pmInterpDatacube, testpatsplit, ...

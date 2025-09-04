@@ -29,16 +29,36 @@ fprintf('\n');
 
 %pmPatMerge = innerjoin(pmPatients, cdPatient, 'LeftKeys', {'ID'}, 'RightKeys', {'ID'}, 'RightVariables', {'StudyNumber', 'StudyNumber2', 'StudyEmail', 'Cohort'});
 
-inputfile = 'Input-DanielList.xlsx';
+% **** update the file name here ****
+inputfile = 'Input-DanielList 20250113.xlsx';
 
+dlopts = detectImportOptions(fullfile(basedir, dfsubfolder, inputfile));
 inputtable  = readtable(fullfile(basedir, dfsubfolder, inputfile));
 nuxexs = size(inputtable,1);
 
+% ***** check the columns in the input file - in the Study ID column, Daniel
+% sometimes includes StudyNumber2, and also the Study Number field ****
+% current columns selected work for the 20240913 version of the example
+% list
+
+if sum(~ismember(inputtable.StudyID, cdPatient.StudyNumber2)) > 0
+    fprintf("Patients in Daniel List not found in Clinical Data\n");
+    inputtable(~ismember(inputtable.StudyID, cdPatient.StudyNumber2),:)
+end
 
 pmPatMerge = innerjoin(inputtable, cdPatient,  'LeftKeys', {'StudyID'}, 'RightKeys', {'StudyNumber2'}, ...
-        'LeftVariables', {'StudyNumber', 'Start', 'End'}, 'RightVariables', {'ID', 'Hospital', 'StudyNumber2', 'StudyDate', 'StudyEmail', 'Cohort'});
+        'LeftVariables', {'Start', 'End'}, 'RightVariables', {'ID', 'Hospital', 'StudyNumber', 'StudyNumber2', 'StudyDate', 'StudyEmail', 'Cohort'});
+
+if sum(~ismember(pmPatMerge.ID, pmPatients.ID)) > 0
+    fprintf("Patients in Daniel List who have entered no data)\n");
+    inputtable(~ismember(pmPatMerge.ID, pmPatients.ID),:)
+end
+
 pmPatMerge = innerjoin(pmPatMerge, pmPatients, 'LeftKeys', {'ID'}, 'RightKeys', {'ID'}, 'RightVariables', ...
         {'Study', 'PatientNbr', 'FirstMeasDate', 'LastMeasDate', 'StudyStartdn', 'FirstMeasdn', 'LastMeasdn'});
+
+
+
 nrows = size(pmPatMerge, 1);
 
 % create table to hold breathe scores
@@ -65,7 +85,12 @@ for i = 1:nrows
     pmUXVizExamples.PatientID(i), pmUXVizExamples.StudyNumber{i}, pmUXVizExamples.StudyNumber2{i}, pmUXVizExamples.Cohort{i});
 end
 
-pmUXVizExamples(pmUXVizExamples.Period < 25, :) = [];
+if sum(pmUXVizExamples.Period <= 0) > 0
+    fprintf("Patients in Daniel List who have no data in the requested time window\n");
+    pmUXVizExamples(pmUXVizExamples.Period <= 0, {'StudyNumber2' , 'StudyEmail'})
+end
+
+pmUXVizExamples(pmUXVizExamples.Period <= 0, :) = [];
 
 % save results - matlab archive and excel
 tic

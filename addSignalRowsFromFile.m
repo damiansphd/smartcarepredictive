@@ -7,8 +7,8 @@ basedir = setBaseDir();
 subfolder = sprintf('DataFiles/%s/%s', signaldir, study);
 
 % only ingest the 11pm (ish) versions - skip other manual runs
-officialruntime = '23-0';
-if (matches(extractBefore(extractAfter(signalfile, 19), 5), officialruntime))
+officialruntime = '23-';
+if (matches(extractBefore(extractAfter(signalfile, 19), 4), officialruntime))
     
     % load in file
     sfopts = detectImportOptions(fullfile(basedir, subfolder, signalfile));
@@ -43,7 +43,7 @@ if (matches(extractBefore(extractAfter(signalfile, 19), 5), officialruntime))
                     rowtoadd = [];
                 else
                     fprintf('\tPartition Key %s (%d/%s/%s) on date %s returned an error - skipping\n', tempSignal.UserId{i}, scid, ...
-                    cdPatient.StudyNumber{cdPatient.ID == scid}, cdPatient.StudyNumber2{cdPatient.ID == scid}, tempSignal.WhenCalculated{i});
+                    cdPatient.StudyNumber{cdPatient.ID == scid}, cdPatient.StudyNumber2{cdPatient.ID == scid}, tempSignal.WhenCalculated(i));
                 end
             else
                 fprintf('\tPartition Key %s (%d/%s/%s) has no data - skipping\n', tempSignal.UserId{i}, scid, ...

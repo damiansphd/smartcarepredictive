@@ -100,7 +100,7 @@ hold off;
 
 basedir = setBaseDir();
 savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
-%savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
+savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
 close(f);
 
 % 2) ROC Curve
@@ -161,7 +161,7 @@ hold off;
 
 basedir = setBaseDir();
 savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
-%savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
+savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
 close(f);
 
 % 3) QC Cost Curve
@@ -223,7 +223,7 @@ hold off;
 
 basedir = setBaseDir();
 savePlotInDir(f, baseplotname1, basedir, plotsubfolder);
-%savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
+savePlotInDirAsSVG(f, baseplotname1, plotsubfolder);
 close(f);
 
 end

@@ -51,8 +51,8 @@ ax1 = gobjects(plotsdown * plotsacross,1);
 for m = 1:nmeasures
     
     midx       = measures.Index(m);
-    mrawdata  = pmRawDatacube(pnbr, dfrom:dto, m);
-    mdata     = pmInterpDatacube(pnbr, dfrom:dto, m);
+    mrawdata  = pmRawDatacube(pnbr, dfrom:dto, midx);
+    mdata     = pmInterpDatacube(pnbr, dfrom:dto, midx);
     interppts = mdata;
     interppts(~isnan(mrawdata)) = nan;
     %[combinedmask, plottext, left_color, lint_color, right_color, rint_color] = setPlotColorsAndText(measures(m, :));

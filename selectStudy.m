@@ -91,8 +91,9 @@ for a = 1:size(study,1)
         pmStudyInfo.MeasurementMatFile{a}   = 'acecfdata-nofilt.mat';
         pmStudyInfo.ClinicalMatFile{a}      = 'acecfclinicaldata.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni50_ex-32_obj5.45632170.mat';
-        pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-28_obj4.57799012.mat';
-
+        %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-28_obj4.57799012.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-28_obj4.41184619.mat';
+        pmStudyInfo.AMPredMatFile{a}        =  'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-31_obj3.29963689.mat';
     else
         fprintf('Unknown study\n')
         return;

@@ -89,7 +89,12 @@ end
                                          pmOtherRunParams.runtype);           
                                      
 if plottype == 6
-    % nb patients used for paper are p1(scid23) and p64(scid139)
+    % nb patients used for paper are :-
+    %   Smartcare - p1(scid23) and p64(scid139)
+    %   Breathe   - p171 (redcapid == 276)and p3 (redcapid == 103)
+    %   Breathe TT - p307 (redcapid == 531) and p314 (redcapid == 542)
+    %           or - p204 (redcapid == 397) and p111 (redcapid == 258)
+    
     % plot measures and predictions for a single patient
     [pnbr1, validresponse] = selectPatientNbr(testpatsplit.PatientNbr);
     if ~validresponse

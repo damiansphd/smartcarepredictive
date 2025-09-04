@@ -160,20 +160,36 @@ elseif ismember(studydisplayname, {'BR'})
             xl1 = [245 325];
         case 10
             xl1 = [164 244];
+        case 111
+            xl1 = [207 287];
         case 154
             xl1 = [190 270];
         case 171
             xl1 = [47 127];
+        case 204
+            xl1 = [612 692];
+        case 307
+            xl1 = [1 64];
+        case 314
+            xl1 = [1 58];    
     end
     switch patientnbr2
         case 3
             xl2 = [245 325];
         case 10
             xl2 = [164 244];
+        case 111
+            xl2 = [207 287];
         case 154
             xl2 = [190 270];
         case 171
             xl2 = [47 127];
+        case 204
+            xl2 = [612 692];
+        case 307
+            xl2 = [1 64];
+        case 314
+            xl2 = [1 58];    
     end
 end
 

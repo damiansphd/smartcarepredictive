@@ -8,8 +8,13 @@ function [pmampred] = plotBestAndWorstPred(pmPatients, pmAntibiotics, pmampred, 
 
 [pmampred] = getPredictedIntr(pmampred, pmTrCVFeatureIndex, pmTrCVPatientSplit, pmModelRes.pmNDayRes(labelidx));
 
-patperpage  = 6;
-plotsacross = 5;
+% updated pats per page and plots across when switching to just using
+% selected measures
+%patperpage  = 6;
+%plotsacross = 5;
+patperpage  = 5;
+plotsacross = 3;
+
 npred       = 1;
 dbfab       = 30; % number of days before ab start to plot
 dafab       = 2;  % number of days after ab start to plot
