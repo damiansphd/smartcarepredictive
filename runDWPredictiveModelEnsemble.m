@@ -52,7 +52,11 @@ nbssamples = 50; % temporary hardcoding - replace with model parameter when have
 epilen     = 7;  % temporary hardcoding - replace with feature parameter when have more time
 lossfunc   = 'hinge'; % temporary hardcoding - replace with model parameter when have more time
 plotbyfold = 0; % set to 1 if you want to print the pr & roc curves by fold
-fpropthresh = 0.221; % set the operating threshold as the acceptable max of false positives
+if(~ismember(pmThisFeatureParams.StudyDisplayName(1), 'BE'))
+    fpropthresh = 0.221; % set the operating threshold as the acceptable max of false positives
+else
+    fpropthresh = 0.3; % set the operating threshold as the acceptable max of false positives
+end
 
 pmBSAllQS = struct('FeatureParams', [], 'ModelParams', [], 'OtherRunParams', [], 'hpsuffix', [], 'rtsuffix', [], 'btsuffix', []);
 

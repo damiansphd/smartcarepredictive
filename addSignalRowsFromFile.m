@@ -13,6 +13,9 @@ if (matches(extractBefore(extractAfter(signalfile, 19), 4), officialruntime))
     % load in file
     sfopts = detectImportOptions(fullfile(basedir, subfolder, signalfile));
     sfopts.DataLines(1) = 2;
+    sfopts.VariableTypes(4) = {'double'};
+    sfopts.VariableTypes(5) = {'double'};
+
     tempSignal = readtable(fullfile(basedir, subfolder, signalfile), sfopts);
     nrows = size(tempSignal, 1);
     widgeterrorstr = 'ErrorCallingWidget';
@@ -34,7 +37,8 @@ if (matches(extractBefore(extractAfter(signalfile, 19), 4), officialruntime))
                     rowtoadd.CalcDate      = tempSignal.WhenCalculated(i);
                     rowtoadd.CalcDatedt    = datetime(rowtoadd.CalcDate, 'Format','yyyy-MM-dd''T''HH:mm:ss');
                     rowtoadd.CalcDatedn    = ceil(datenum(rowtoadd.CalcDatedt+seconds(1)) - acoffset);
-                    rowtoadd.RelCalcDatedn = rowtoadd.CalcDatedn - pmPatients.StudyStartdn(pmPatients.ID == scid) + 1;
+                    %rowtoadd.RelCalcDatedn = rowtoadd.CalcDatedn - pmPatients.StudyStartdn(pmPatients.ID == scid) + 1;
+                    rowtoadd.RelCalcDatedn = rowtoadd.CalcDatedn - pmPatients.FirstMeasdn(pmPatients.ID == scid) + 1;
                     rowtoadd.PredScore     = tempSignal.OutputScore(i);
                     rowtoadd.SafetyScore   = tempSignal.SafetyScore(i);
                     rowtoadd.SignalState   = tempSignal.SignalState(i);

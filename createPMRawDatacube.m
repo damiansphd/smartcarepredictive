@@ -14,9 +14,20 @@ for a = 1:nstudies
     
     fprintf('Loading alignment model prediction results\n');
     load(fullfile(basedir, subfolder, pmStudyInfo.AMPredMatFile{a}), 'amInterventions', 'ex_start');
+    
+    % for Bronch-Ex & ACE-CF studies, add override to load amInterventions table from
+    % excel file with expert judgement overrides in
+    %if ismember(study, {'AC', 'BE'})
+    %    fprintf('\n');
+    %    fprintf('*** For %s study, overriding predicted ex_start dates with expert judgement ***\n', pmStudyInfo.StudyName{:});
+    %    fprintf('\n');
+    %    amInterventionsExpert = readtable(fullfile(basedir, 'DataFiles', sprintf('%samInterventions ExpPred.xlsx', pmStudyInfo.Study{:})));
+    %    amInterventions.Pred = amInterventionsExpert.Pred;
+    %end
+    
     % now we store elective treatment info in the alignment model results,
     % so for project breathe, no need for the override file
-    if ~ismember(study, {'BR', 'AC'})
+    if ~ismember(study, {'BR', 'AC', 'BE'})
         fprintf('Loading elective treatments\n');
         pmElectiveTreatments = readtable(fullfile(basedir, 'DataFiles', pmStudyInfo.ElectiveTrFile{a}));
     else

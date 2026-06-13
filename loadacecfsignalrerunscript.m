@@ -35,8 +35,10 @@ fprintf('\n');
 tic
 % find all breathe score files
 signaldir = 'Signal';
-basesignalfilename = 'signals-';
-[signalfiles, nsignalfiles] = getSignalFiles(study, signaldir, basesignalfilename);
+basesignalfilename = 'patient_';
+rerundir = sprintf('%sRerun', study);
+
+[signalfiles, nsignalfiles] = getSignalFiles(rerundir, signaldir, basesignalfilename);
 
 fprintf('Starting ingestion of files\n');
 fprintf('---------------------------\n');
@@ -48,7 +50,7 @@ fprintf('---------------------------\n');
 
 for i = 1:nsignalfiles
     fprintf('%3d of %3d: Processing file %s\n', i, nsignalfiles, signalfiles{i});
-    pmSignal = addSignalRowsFromFile(study, signaldir, acoffset, signalfiles{i}, pmSignal, pmPatients, cdPatient);
+    pmSignal = addSignalRowsFromRerunFile(study, signaldir, acoffset, signalfiles{i}, pmSignal, pmPatients, cdPatient);
 end
 toc
 fprintf('\n');
@@ -70,13 +72,13 @@ pmSignal = sortrows(pmSignal, {'PatientNbr', 'RelCalcDatedn'});
 tic
 basedir = setBaseDir();
 subfolder = 'MatlabSavedVariables';
-outputfilename = sprintf('%ssignals.mat', study);
+outputfilename = sprintf('%ssignalsrerun.mat', study);
 fprintf('Saving signal data to matlab file %s\n', outputfilename);
 save(fullfile(basedir, subfolder,outputfilename), 'studynbr', 'studydisplayname', ...
     'pmStudyInfo', 'pmSignal');
 
 subfolder = 'ExcelFiles';
-outputfilename = sprintf('%ssignals.xlsx', study);
+outputfilename = sprintf('%ssignalsrerun.xlsx', study);
 fprintf('Saving signal data to excel file %s\n', outputfilename);
 writetable(pmSignal, fullfile(basedir, subfolder, outputfilename), 'Sheet', 'pmSignal');
 toc
@@ -98,3 +100,5 @@ if (sum(bothnullidx) == sum(eithernullidx))
 else
     fprintf('**** Some results have null for only one classifier - investigate ****\n');
 end
+
+

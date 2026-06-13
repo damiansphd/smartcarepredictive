@@ -58,7 +58,7 @@ fprintf('Creating interpolated cube\n');
 % load ACE-CF signal results (for the predictive and safety classifier
 % results, along with overall breathe score
 
-signalfile = sprintf('%ssignals', pmModFeatParamsRow.StudyDisplayName{1});
+signalfile = sprintf('%ssignalsrerun.mat', pmModFeatParamsRow.StudyDisplayName{1});
 load(fullfile(basedir, mlsubfolder, signalfile), 'pmSignal');
 
 [baseuxfile, validresponse] = selectUXExampleFile();

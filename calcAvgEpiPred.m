@@ -29,7 +29,7 @@ mdlres.AvgEPV      = mdlres.AvgEpiTPred - mdlres.AvgEpiFPred;
 % point.
 [~, ~, epitpr, epifpr, ~, ~, epipredsort, ~] = calcQualScores(epilablsafe, epipredsafe);
 maxidxpt     = find(epifpr < fpropthresh, 1, 'last');
-mdlres.IdxOp = find(epitpr == epitpr(maxidxpt), 1, 'first');
+mdlres.IdxOp = find(epitpr == epitpr(maxidxpt), 1, 'first') + 1;
 
 % add logic to traverse back to first one where epifpr is the same as at
 % the threshold

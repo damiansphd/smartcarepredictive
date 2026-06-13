@@ -10,13 +10,13 @@ study = pmStudyInfoRow.Study{1};
 patients = unique(physdata.SmartCareID);
 npatients = size(patients,1);
 
-pmPatients = table('Size',[npatients, 17], ...
-    'VariableTypes', {'double', 'cell', 'double', 'cell', 'double', 'cell', ...
-    'double', 'double', 'double', 'datetime', 'datetime', 'datetime', ...
-    'double', 'double', 'double', 'double', 'double'}, ...
-    'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'Age', 'Sex', ...
-    'Height', 'Weight', 'PredFEV1','StudyStartDate', 'FirstMeasDate', 'LastMeasDate', ...
-    'StudyStartdn', 'FirstMeasdn', 'LastMeasdn', 'RelFirstMeasdn', 'RelLastMeasdn'});
+pmPatients = table('Size',[npatients, 24], ...
+    'VariableTypes', {'double', 'cell', 'double', 'cell', 'cell', 'double', 'cell', ...
+    'double', 'double', 'double', 'datetime', 'datetime', 'datetime', 'datetime', ...
+    'double', 'double', 'double', 'double', 'double', 'double', 'cell', 'cell', 'cell', 'cell'}, ...
+    'VariableNames', {'PatientNbr', 'Study', 'ID', 'Hospital', 'Cohort', 'Age', 'Sex', ...
+    'Height', 'Weight', 'PredFEV1','StudyStartDate', 'StudyEndDate', 'FirstMeasDate', 'LastMeasDate', ...
+    'StudyStartdn', 'StudyEnddn', 'FirstMeasdn', 'LastMeasdn', 'RelFirstMeasdn', 'RelLastMeasdn', 'StudyNumber', 'StudyNumber2', 'StudyEmail', 'PartitionKey'});
 
 pmAntibiotics = table('Size',[0, 14], ...
     'VariableTypes', {'double', 'cell', 'double', 'cell', 'double', 'cell', ...
@@ -37,9 +37,20 @@ for p = 1:npatients
     pmPatients.Weight(p)     = cdPatient.Weight(cdPatient.ID == scid);
     pmPatients.PredFEV1(p)   = cdPatient.CalcPredictedFEV1(cdPatient.ID == scid);
     
+    if study == 'AC'
+        pmPatients.Cohort(p)       = cdPatient.Cohort(cdPatient.ID == scid);
+        pmPatients.StudyNumber(p)  = cdPatient.StudyNumber(cdPatient.ID == scid);
+        pmPatients.StudyNumber2(p) = cdPatient.StudyNumber2(cdPatient.ID == scid);
+        pmPatients.StudyEmail(p)   = cdPatient.StudyEmail(cdPatient.ID == scid);
+        pmPatients.PartitionKey(p) = cdPatient.PartitionKey(cdPatient.ID == scid);
+    end
+
     pmPatients.StudyStartDate(p) = cdPatient.StudyDate(cdPatient.ID == scid);
     pmPatients.StudyStartdn(p)   = ceil(datenum(pmPatients.StudyStartDate(p) + seconds(1))) - offset;
-    
+
+    pmPatients.StudyEndDate(p)   = cdPatient.StudyEndDate(cdPatient.ID == scid);
+    pmPatients.StudyEnddn(p)     = ceil(datenum(pmPatients.StudyEndDate(p) + seconds(1))) - offset;
+
     tempdata = physdata(physdata.SmartCareID == scid,:);
     pmPatients.FirstMeasDate(p)  = dateshift(min(tempdata.Date_TimeRecorded), 'start', 'day');
     pmPatients.FirstMeasdn(p)    = ceil(datenum(datetime(pmPatients.FirstMeasDate(p)) + seconds(1)) - offset);
@@ -55,6 +66,10 @@ for p = 1:npatients
         tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticName', 'Route', 'HomeIV_s', 'StartDate', 'StopDate'});
         tempAntibiotics.Properties.VariableNames({'HomeIV_s'}) =  {'HomeIV_s_'};
         tempAntibiotics.AntibioticID(:) = 0;
+    elseif ismember(study, {'BE'})
+        tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticName', 'Route', 'StartDate', 'StopDate'});
+        tempAntibiotics.HomeIV_s_(:) = cellstr('');
+        tempAntibiotics.AntibioticID(:) = 0;    
     else
         tempAntibiotics = cdAntibiotics(cdAntibiotics.ID == scid,{'ID', 'Hospital', 'AntibioticID', 'AntibioticName', 'Route', 'HomeIV_s_', 'StartDate', 'StopDate'});
     end
@@ -63,8 +78,8 @@ for p = 1:npatients
     tempstudy = array2table(cell(size(tempAntibiotics,1),1));
     tempstudy.Properties.VariableNames({'Var1'}) = {'Study'};
     tempstudy.Study(:) = {study};
-    tempAntibiotics.Startdn = ceil(datenum(datetime(tempAntibiotics.StartDate) + seconds(1)) - offset);
-    tempAntibiotics.Stopdn  = ceil(datenum(datetime(tempAntibiotics.StopDate)  + seconds(1)) - offset);
+    tempAntibiotics.Startdn    = ceil(datenum(datetime(tempAntibiotics.StartDate) + seconds(1)) - offset);
+    tempAntibiotics.Stopdn     = ceil(datenum(datetime(tempAntibiotics.StopDate)  + seconds(1)) - offset);
     tempAntibiotics.RelStartdn = tempAntibiotics.Startdn - (pmPatients.FirstMeasdn(p) - 1);
     tempAntibiotics.RelStopdn  = tempAntibiotics.Stopdn  - (pmPatients.FirstMeasdn(p) - 1);
     tempAntibiotics = [temppnbr, tempstudy, tempAntibiotics];
@@ -77,8 +92,9 @@ pmAMPred = innerjoin(pmPatients, amInterventions, 'LeftKeys', {'ID'}, 'RightKeys
 % alignment model interventions table. Leaving here as it does give a
 % little extra flexibility - but intention is to have the override table
 % match the same electives as the original table has.
-% **** no need for the override for project breathe
-if ~ismember(study, {'BR', 'AC'})
+% **** no need for the override for project breathe, ace-cf, or bronch-ex
+% **** studies
+if ~ismember(study, {'BR', 'AC', 'BE'})
     pmElectiveTreatments.ElectiveTreatment(:) = 'Y';
     pmAMPred.ElectiveTreatment = [];
     pmAMPred = outerjoin(pmAMPred, pmElectiveTreatments, 'LeftKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightKeys', {'PatientNbr', 'IVScaledDateNum'}, 'RightVariables', {'ElectiveTreatment'});

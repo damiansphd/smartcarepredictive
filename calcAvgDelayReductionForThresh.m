@@ -33,7 +33,7 @@ for i = 1:size(epiindex, 1)
     intrfeatidx = featureindex(featureindex.PatientNbr == pnbr & featureindex.ScenType == 0 & featureindex.CalcDatedn >= exstart & featureindex.CalcDatedn < treatstart, :);
     
     if size(intrpred, 1) ~= 0
-        triggeridx = find(intrpred > thresh, 1, 'first');
+        triggeridx = find(intrpred >= thresh, 1, 'first');
         if size(triggeridx, 1) ~= 0
             trigdn = intrfeatidx.CalcDatedn(triggeridx);
             %reduction(i) = size(intrpred, 1) + 1 - triggeridx;

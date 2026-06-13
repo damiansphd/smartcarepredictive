@@ -11,12 +11,13 @@ fprintf('3: Both Smartcare and Telemed\n');
 fprintf('4: Climb\n');
 fprintf('5: Breathe\n');
 fprintf('6: ACE-CF\n');
+fprintf('7: Bronch-Ex\n');
 fprintf('\n');
 sstudynbr = input('Choose study to run for: ', 's');
 
 studynbr = str2double(sstudynbr);
 
-if (isnan(studynbr) || studynbr < 1 || studynbr > 6)
+if (isnan(studynbr) || studynbr < 1 || studynbr > 7)
     fprintf('Invalid choice\n');
     studynbr = -1;
     studydisplayname = '**';
@@ -42,7 +43,10 @@ elseif studynbr == 5
     studydisplayname = 'BR';
 elseif studynbr == 6
     study = {'AC'};
-    studydisplayname = 'AC';    
+    studydisplayname = 'AC';
+elseif studynbr == 7
+    study = {'BE'};
+    studydisplayname = 'BE';  
 else
     fprintf('Invalid study\n');
     return;
@@ -88,12 +92,21 @@ for a = 1:size(study,1)
         pmStudyInfo.AMPredMatFile{a}        = 'BRvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in3_im1_cm2_mm26_mo20_dw25_nl1_rs4_ds1_ct3_sc2024-VTT_vs1_vm0.7_ni48_ex-24_obj1.11244928.mat';
     elseif isequal(study(a), {'AC'})
         pmStudyInfo.StudyName{a}            = 'ACE-CF';
-        pmStudyInfo.MeasurementMatFile{a}   = 'acecfdata-nofilt.mat';
+        pmStudyInfo.MeasurementMatFile{a}   = 'acecfdata-studyperiod-bothcohorts.mat';
         pmStudyInfo.ClinicalMatFile{a}      = 'acecfclinicaldata.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni50_ex-32_obj5.45632170.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-28_obj4.57799012.mat';
         %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-28_obj4.41184619.mat';
-        pmStudyInfo.AMPredMatFile{a}        =  'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-31_obj3.29963689.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-31_obj3.29963689.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2024-1_vs0_vm0.0_ni200_ex-37_obj2.41780148.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2026-1V_vs1_vm0.5_ni31_ex-31_obj1.31745995.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'ACvEMMC_gp10_lm1_sig4_mu4_ca2_sm1_rm4_in1_im1_cm2_mm26_mo25_dw25_nl1_rs4_ds1_ct3_sc2026-1V_vs1_vm0.7_ni48_ex-30_obj1.31290455.mat';
+    elseif isequal(study(a), {'BE'})
+        pmStudyInfo.StudyName{a}            = 'BronchEx';
+        pmStudyInfo.MeasurementMatFile{a}   = 'bronchexdata.mat';
+        pmStudyInfo.ClinicalMatFile{a}      = 'bronchexclinicaldata.mat';
+        %pmStudyInfo.AMPredMatFile{a}        = 'BEvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm31_mo25_dw25_nl1_rs4_ds1_ct5_sc2025-3V_vs1_vm0.7_ni51_ex-30_obj1.23168620.mat';
+        pmStudyInfo.AMPredMatFile{a}        = 'BEvEMMC_gp10_lm1_sig4_mu4_ca2_sm2_rm4_in1_im1_cm2_mm31_mo25_dw25_nl1_rs4_ds1_ct3_sc2025-3V_vs1_vm0.7_ni39_ex-32_obj1.28613017.mat';
     else
         fprintf('Unknown study\n')
         return;

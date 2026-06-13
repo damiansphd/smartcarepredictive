@@ -5,7 +5,7 @@ function [signalfiles, nsignalfiles] = getSignalFiles(study, signaldir, basesign
 
 basedir = setBaseDir();
 subfolder = sprintf('DataFiles/%s/%s', signaldir, study);
-matchstring = sprintf('%s-*.csv', basesignalfilename);
+matchstring = sprintf('%s*.csv', basesignalfilename);
 
 signalfilelisting = dir(fullfile(basedir, subfolder, matchstring));
 

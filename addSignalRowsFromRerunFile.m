@@ -1,0 +1,81 @@
+function pmSignal = addSignalRowsFromRerunFile(study, signaldir, acoffset, signalfile, pmSignal, pmPatients, cdPatient)
+
+% addSignalRowsFromFile - adds the rows from a given breathe signal
+% file 
+
+basedir = setBaseDir();
+rerundir = sprintf('%sRerun', study);
+subfolder = sprintf('DataFiles/%s/%s', signaldir, rerundir);
+
+% load in file
+sfopts = detectImportOptions(fullfile(basedir, subfolder, signalfile));
+sfopts.Delimiter = {','};
+sfopts.DataLines(1) = 2;
+sfopts.VariableNamesLine = 1;
+if size(sfopts.VariableNames, 2) == 6
+    sfopts.VariableTypes = {'char', 'char', 'char', 'char', 'double', 'double'};
+elseif size(sfopts.VariableNames, 2) == 7
+    sfopts.VariableTypes = {'char', 'char', 'char', 'char', 'double', 'double', 'char'};
+else
+    fprintf('**** File format has the wrong number of columns - investigate ****\n');
+end
+%sfopts.VariableTypes(5) = {'double'};
+%sfopts.VariableTypes(6) = {'double'};
+
+tempSignal = readtable(fullfile(basedir, subfolder, signalfile), sfopts);
+nrows = size(tempSignal, 1);
+patSignal = createSignalTable(nrows);
+
+widgeterrorstr = 'ErrorCallingWidget';
+
+% ingest each row and add row to pmSignal table, along with additional info
+for i = 1:nrows
+    if any(ismember(cdPatient.PartitionKey, tempSignal.PartitionKey(i)))
+        scid = cdPatient.ID(ismember(cdPatient.PartitionKey, tempSignal.PartitionKey(i)));
+        
+        if any(pmPatients.ID == scid)
+            if ~matches(tempSignal.SignalState{i}, widgeterrorstr)
+                patSignal.PatientNbr(i)    = pmPatients.PatientNbr(pmPatients.ID == scid);
+                patSignal.Study(i)         = {study};
+                patSignal.SmartCareID(i)   = scid;
+                patSignal.StudyNumber(i)   = cdPatient.StudyNumber(cdPatient.ID == scid);
+                patSignal.StudyNumber2(i)  = cdPatient.StudyNumber2(cdPatient.ID == scid);
+                patSignal.Hospital(i)      = cdPatient.Hospital(cdPatient.ID == scid);
+                patSignal.PartitionKey(i)  = tempSignal.PartitionKey(i);
+                patSignal.CalcDate(i)      = extractBefore(tempSignal.SignalDate(i), 20);
+                patSignal.CalcDatedt(i)    = datetime(patSignal.CalcDate(i), 'Format','yyyy-MM-dd''T''HH:mm:ss');
+                patSignal.CalcDatedn(i)    = ceil(datenum(patSignal.CalcDatedt(i)) - acoffset);
+                %patSignal.RelCalcDatedn(i) = patSignal.CalcDatedn(i) - pmPatients.StudyStartdn(pmPatients.ID == scid) + 1;
+                patSignal.RelCalcDatedn(i) = patSignal.CalcDatedn(i) - pmPatients.FirstMeasdn(pmPatients.ID == scid) + 1;
+                patSignal.PredScore(i)     = tempSignal.OutputScore(i);
+                patSignal.SafetyScore(i)   = tempSignal.SafetyScore(i);
+                patSignal.SignalState(i)   = tempSignal.SignalState(i);
+                
+                if i == 1
+                    fprintf('Loading data for patient scid %d (%d/%s/%s/%s)\n', scid, patSignal.PatientNbr(i), patSignal.StudyNumber{i}, patSignal.StudyNumber2{i}, patSignal.PartitionKey{i});
+                end
+            else
+                fprintf('\tPartition Key %s (%d/%s/%s) on date %s returned an error - skipping\n', tempSignal.PartitionKey{i}, scid, ...
+                cdPatient.StudyNumber{cdPatient.ID == scid}, cdPatient.StudyNumber2{cdPatient.ID == scid}, tempSignal.WhenCalculated(i));
+            end
+        else
+            fprintf('\tPartition Key %s (%d/%s/%s) has no data - skipping\n', tempSignal.PartitionKey{i}, scid, ...
+                cdPatient.StudyNumber{cdPatient.ID == scid}, cdPatient.StudyNumber2{cdPatient.ID == scid});
+        end
+    else
+        fprintf('\tPartition Key %s not in %s study - skipping\n', tempSignal.PartitionKey{i}, study);
+    end
+end
+
+nbrids = size(unique(patSignal.SmartCareID), 1);
+if nbrids > 1
+    fprintf('**** File contains more than one patient - please investigate ****\n');
+end
+fprintf('\n');
+
+pmSignal = [pmSignal; patSignal];
+patSignal = [];
+
+
+end
+
